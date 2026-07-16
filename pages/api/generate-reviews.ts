@@ -1,0 +1,18 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import { generateReviews } from "@/lib/reviewGenerator";
+import type { CuddlytailsReview } from "@/lib/types";
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<{ reviews: CuddlytailsReview[] } | { error: string }>
+) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+  try {
+    const reviews = await generateReviews();
+    res.status(200).json({ reviews });
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+}
