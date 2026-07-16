@@ -1,4 +1,4 @@
-# CuddlyTails Content Suite
+# CrossPostr
 
 A 3-step internal tool for repurposing and generating CuddlyTails social content:
 
