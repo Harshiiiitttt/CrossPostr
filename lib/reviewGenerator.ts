@@ -1,96 +1,168 @@
-import type { CuddlytailsReview } from "./types";
+import type { PetCareReview } from "./types";
 
-const SERVICES: CuddlytailsReview["service"][] = [
-  "Pet Sitter",
-  "Dog Walker",
-  "AI Vet",
-  "AI Pet Nutrition",
-];
+const BRAND = "CuddlyTails";
 
-const SYSTEM_PROMPT = `You write short customer reviews for cuddlytails.com as if you were a real
-dog owner who used the service. Return ONLY valid JSON, no markdown fences, no preamble.`;
+const SYSTEM_PROMPT = `You are an expert copywriter specializing in authentic, user-generated
+content. Return ONLY valid JSON matching the requested schema. Do not include markdown fences
+or preamble text.`;
 
-function buildUserPrompt(service: string): string {
-  return `Write one highly humanized customer review for the "${service}" service on
-cuddlytails.com. Requirements:
-- The review TEXT itself must be 70 to 90 words, exactly in that range.
-- Mention a specific dog by name (invent one) as the reviewer's own dog.
-- Mention a specific service person by name (invent a realistic first + last name).
-- Sound like a real, slightly imperfect person wrote it - casual, specific, no marketing language.
-- Naturally weave in 2-4 relevant emojis inside the review text itself (dog/paw/heart/sparkle
-  style emojis), placed like a real person texting, not clustered all at once.
-- Separately (not counted in the 70-90 word count), provide 5-7 short hashtags relevant to the
-  service and the dog-care topic, written without the "#" symbol (it gets added later). Always
-  include "CuddlyTails" as one of them.
-Return JSON: {
-  "reviewerName": string,
-  "dogName": string,
-  "servicePersonName": string,
-  "text": string,
-  "hashtags": string[]
+const REFERENCE_EXAMPLE = `"We found Jake through CuddlyTails when we needed someone to watch
+our Labrador, Max, for a weekend. He kept us updated with photos and messages, which made it so
+much easier to enjoy our trip. Max looked happy the entire time and came home relaxed. We'll
+definitely be booking with Jake again!"`;
+
+function buildPrompt(): string {
+  return `Your task is to generate exactly THREE highly realistic pet-care reviews. Analyze the
+typical style of detailed, story-driven reviews on platforms like Rover.com and replicate that
+genuine, personal tone.
+
+Here is a baseline reference example of the tone you must match, but YOU MUST ADD SLIGHTLY MORE STORY/NARRATIVE DEPTH than this example:
+${REFERENCE_EXAMPLE}
+
+CRUCIAL REQUIREMENTS FOR EVERY REVIEW:
+1. Narrative/Story: Tell a detailed, 3-4 sentence story about a specific situation. Add narrative depth by including a specific slice-of-life detail—such as the dog's unique quirk, a minor complication (like a last-minute flight change or a picky eater), or the owner's initial hesitation before booking. 
+2. Character Names: You must explicitly include a realistic name for the Dog and a realistic
+   name for the Service Provider (the sitter/walker).
+3. The Brand Rule: You must mention the brand name "${BRAND}" EXACTLY ONCE in the text of each
+   review. Do not mention it more than once per review so it sounds organic, not like an ad.
+4. Tone: Authentic, relieved, and grateful. Use natural phrasing and everyday language.
+5. Rating: All three reviews are 5-star testimonials, so "rating" must be 5 for all three.
+6. Make the three reviews distinct from each other - different situations, different dogs,
+   different providers - do not reuse the reference example's names or scenario.
+
+Return ONLY valid JSON matching this exact schema. Do not include markdown fences (\`\`\`json)
+or preamble text.
+{
+  "reviews": [
+    {
+      "reviewerName": "string",
+      "providerName": "string",
+      "dogName": "string",
+      "reviewText": "string",
+      "rating": 5
+    },
+    {
+      "reviewerName": "string",
+      "providerName": "string",
+      "dogName": "string",
+      "reviewText": "string",
+      "rating": 5
+    },
+    {
+      "reviewerName": "string",
+      "providerName": "string",
+      "dogName": "string",
+      "reviewText": "string",
+      "rating": 5
+    }
+  ]
 }`;
 }
 
-async function callGemini(prompt: string): Promise<{
-  reviewerName: string;
-  dogName: string;
-  servicePersonName: string;
-  text: string;
-  hashtags: string[];
-}> {
+const RESPONSE_SCHEMA = {
+  type: "OBJECT",
+  properties: {
+    reviews: {
+      type: "ARRAY",
+      minItems: 3,
+      maxItems: 3,
+      items: {
+        type: "OBJECT",
+        properties: {
+          reviewerName: { type: "STRING" },
+          providerName: { type: "STRING" },
+          dogName: { type: "STRING" },
+          reviewText: { type: "STRING" },
+          rating: { type: "INTEGER" },
+        },
+        required: ["reviewerName", "providerName", "dogName", "reviewText", "rating"],
+      },
+    },
+  },
+  required: ["reviews"],
+};
+
+function isTransientStatus(status: number): boolean {
+  return status === 429 || status === 503;
+}
+
+async function callGemini(prompt: string): Promise<{ reviews: PetCareReview[] }> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents: [
-          {
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-        },
-      }),
-    }
-  );
+  const maxRetries = 3;
 
-  if (!res.ok) {
-    const errorData = await res.text();
-    throw new Error(`Gemini API error: ${res.status} - ${errorData}`);
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: RESPONSE_SCHEMA,
+            maxOutputTokens: 2048,
+            temperature: 0.9,
+            thinkingConfig: {
+              thinkingBudget: 0,
+            },
+          },
+        }),
+      }
+    );
+
+    if (!res.ok) {
+      const errBody = await res.text();
+      if (isTransientStatus(res.status) && attempt < maxRetries) {
+        const delayMs = 1000 * Math.pow(2, attempt);
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw new Error(
+        isTransientStatus(res.status)
+          ? "Gemini is currently overloaded (high demand) and didn't recover after retries. Try again in a minute."
+          : `Gemini API error: ${res.status} - ${errBody}`
+      );
+    }
+
+    const data = await res.json();
+    const candidate = data.candidates?.[0];
+
+    if (candidate?.finishReason === "MAX_TOKENS") {
+      throw new Error("Gemini truncated the review response before finishing the JSON.");
+    }
+
+    const raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+    return JSON.parse(raw) as { reviews: PetCareReview[] };
   }
 
-  const data = await res.json();
-  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-
-  return JSON.parse(raw.replace(/```json|```/g, "").trim());
+  throw new Error("Gemini request failed after retries.");
 }
 
-export async function generateReviews(): Promise<CuddlytailsReview[]> {
-  const reviews: CuddlytailsReview[] = [];
-  for (const service of SERVICES) {
-    const result = await callGemini(buildUserPrompt(service));
+function countBrandMentions(text: string): number {
+  return (text.match(new RegExp(BRAND, "gi")) ?? []).length;
+}
 
-    const hashtagLine = result.hashtags
-      .map((h) => `#${h.replace(/^#/, "")}`)
-      .join(" ");
-    const fullText = `${result.text}\n\n🔗 [link]\n${hashtagLine}`;
+/** Every review must mention the brand exactly once - validate and retry rather than
+ *  trusting the prompt alone, since the model can drift (0 mentions or 2+). */
+async function generateValidatedReviews(): Promise<PetCareReview[]> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await callGemini(buildPrompt());
+    const reviews = result.reviews;
 
-    reviews.push({
-      service,
-      reviewerName: result.reviewerName,
-      dogName: result.dogName,
-      servicePersonName: result.servicePersonName,
-      text: fullText,
-      wordCount: result.text.trim().split(/\s+/).length,
-    });
+    const shapeOk = Array.isArray(reviews) && reviews.length === 3;
+    const brandOk = shapeOk && reviews.every((r) => countBrandMentions(r.reviewText) === 1);
+
+    if (shapeOk && brandOk) return reviews;
   }
-  return reviews;
+  throw new Error(
+    "Could not generate 3 reviews each mentioning CuddlyTails exactly once after two attempts."
+  );
+}
+
+export async function generateReviews(): Promise<PetCareReview[]> {
+  return generateValidatedReviews();
 }

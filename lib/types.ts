@@ -15,6 +15,11 @@ export interface WatermarkConfig {
 
 export interface WatermarkedMedia extends ExtractedMedia {
   watermarkedPath: string;
+  /** Public HTTPS URL of the watermarked video, set after the upload-to-storage
+   *  step. Required before any platform publish call, since Instagram/Pinterest/X
+   *  all need the media to already be reachable at a public URL - none of them
+   *  accept a direct file upload for video posts. */
+  publicUrl?: string;
 }
 
 export interface PublishResult {
@@ -93,4 +98,13 @@ export interface LinkedInPosts {
   safeBet: string;
   cleanLabel: string;
   microStory: string;
+}
+/** A single narrative, Rover-style customer review generated for CuddlyTails,
+ *  mentioning the brand name exactly once. */
+export interface PetCareReview {
+  reviewerName: string;
+  providerName: string;
+  dogName: string;
+  reviewText: string;
+  rating: number;
 }

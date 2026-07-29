@@ -1,8 +1,3 @@
-// Cross-posts a watermarked video to the platforms the user selected,
-// formatting the post text from the extracted caption + owner username.
-// Every function here posts to accounts the user has authorized via
-// env-configured tokens - never to a third party's account.
-
 import fs from "fs/promises";
 import type { Platform, PublishResult, WatermarkedMedia } from "./types";
 
@@ -10,14 +5,25 @@ function formatCaption(media: WatermarkedMedia): string {
   return `${media.caption}\n\n(originally by @${media.ownerUsername})`;
 }
 
+function requirePublicUrl(media: WatermarkedMedia): string {
+  if (!media.publicUrl) {
+    throw new Error(
+      "Media has no public URL - lib/storage.ts's uploadToPublicStorage() must run before " +
+        "any platform publish call."
+    );
+  }
+  return media.publicUrl;
+}
+
 async function postToInstagram(media: WatermarkedMedia): Promise<PublishResult> {
   try {
     const token = process.env.IG_ACCESS_TOKEN;
     const businessAccountId = process.env.IG_BUSINESS_ACCOUNT_ID;
     if (!token || !businessAccountId) throw new Error("Instagram credentials missing.");
-    // Real implementation: upload watermarked video to a public-reachable
-    // temp URL, then POST to /{ig-user-id}/media and /{ig-user-id}/media_publish.
-    // Left as an integration point - see init.md for the exact Graph API calls.
+    const videoUrl = requirePublicUrl(media);
+    // Real implementation: POST {video_url: videoUrl, caption: formatCaption(media)}
+    // to /{ig-user-id}/media to create a container, poll its status_code until
+    // FINISHED, then POST to /{ig-user-id}/media_publish with the container id.
     return { platform: "Instagram", success: true, postUrl: "https://instagram.com/p/placeholder" };
   } catch (err) {
     return { platform: "Instagram", success: false, error: (err as Error).message };
@@ -28,8 +34,9 @@ async function postToPinterest(media: WatermarkedMedia): Promise<PublishResult> 
   try {
     const token = process.env.PINTEREST_ACCESS_TOKEN;
     if (!token) throw new Error("Pinterest credentials missing.");
+    const videoUrl = requirePublicUrl(media);
     // Real implementation: POST to https://api.pinterest.com/v5/pins with
-    // media_source pointing at the watermarked video.
+    // media_source: { source_type: "video_url", url: videoUrl, cover_image_url: ... }.
     return { platform: "Pinterest", success: true, postUrl: "https://pinterest.com/pin/placeholder" };
   } catch (err) {
     return { platform: "Pinterest", success: false, error: (err as Error).message };
@@ -40,7 +47,10 @@ async function postToX(media: WatermarkedMedia): Promise<PublishResult> {
   try {
     const token = process.env.X_ACCESS_TOKEN;
     if (!token) throw new Error("X credentials missing.");
-    // Real implementation: chunked media upload via X API v2, then create a post.
+    const videoUrl = requirePublicUrl(media);
+    // Real implementation: fetch videoUrl server-side, then chunked media upload
+    // via X API v2 (INIT/APPEND/FINALIZE), then create a post referencing the
+    // resulting media_id. Note: video upload requires a paid X API tier.
     return { platform: "X", success: true, postUrl: "https://x.com/i/status/placeholder" };
   } catch (err) {
     return { platform: "X", success: false, error: (err as Error).message };
@@ -51,8 +61,11 @@ async function postToYouTube(media: WatermarkedMedia): Promise<PublishResult> {
   try {
     const token = process.env.YOUTUBE_ACCESS_TOKEN;
     if (!token) throw new Error("YouTube credentials missing.");
-    // Real implementation: resumable upload via YouTube Data API v3
-    // videos.insert, part=snippet,status.
+    const videoUrl = requirePublicUrl(media);
+    // Real implementation: fetch videoUrl server-side, then resumable upload
+    // via YouTube Data API v3 videos.insert, part=snippet,status. (YouTube's
+    // API takes the raw bytes directly rather than a URL - fetch videoUrl into
+    // a stream and pipe it into the resumable upload session.)
     return { platform: "YouTube", success: true, postUrl: "https://youtube.com/shorts/placeholder" };
   } catch (err) {
     return { platform: "YouTube", success: false, error: (err as Error).message };
@@ -83,7 +96,5 @@ export async function publishToPlatforms(
 }
 
 export async function cleanupTempFiles(paths: string[]): Promise<void> {
-  await Promise.all(
-    paths.map((p) => fs.unlink(p).catch(() => undefined))
-  );
+  await Promise.all(paths.map((p) => fs.unlink(p).catch(() => undefined)));
 }

@@ -22,6 +22,7 @@ export default function Page3({ onBack }: Page3Props) {
   const [postsError, setPostsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<keyof LinkedInPosts>("safeBet");
   const [copied, setCopied] = useState(false);
+  const [blogCopied, setBlogCopied] = useState(false);
 
   const generate = async () => {
     setLoading(true);
@@ -72,7 +73,8 @@ export default function Page3({ onBack }: Page3Props) {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const exportAsText = (b: SeoBlog) => {
+  // 1. Helper function to format the blog as Markdown text
+  const getBlogText = (b: SeoBlog) => {
     const sectionBlocks = b.sections
       .map((s) => {
         const paragraphBlock = (s.paragraphs ?? []).join("\n\n");
@@ -87,7 +89,7 @@ export default function Page3({ onBack }: Page3Props) {
       .join("\n\n");
 
     const faqBlock = b.faqs.map((f) => `**${f.question}**\n${f.answer}`).join("\n\n");
-    const full = [
+    return [
       `# ${b.title}`,
       b.intro.join("\n\n"),
       sectionBlocks,
@@ -97,13 +99,25 @@ export default function Page3({ onBack }: Page3Props) {
       `## FAQs`,
       faqBlock,
     ].join("\n\n");
+  };
 
-    const blobUrl = URL.createObjectURL(new Blob([full], { type: "text/markdown" }));
+  // 2. Updated Export function
+  const exportAsText = (b: SeoBlog) => {
+    const fullText = getBlogText(b);
+    const blobUrl = URL.createObjectURL(new Blob([fullText], { type: "text/markdown" }));
     const a = document.createElement("a");
     a.href = blobUrl;
     a.download = `${b.title.replace(/\s+/g, "-").toLowerCase()}.md`;
     a.click();
     URL.revokeObjectURL(blobUrl);
+  };
+
+  // 3. New Copy function
+  const copyBlogToClipboard = async (b: SeoBlog) => {
+    const fullText = getBlogText(b);
+    await navigator.clipboard.writeText(fullText);
+    setBlogCopied(true);
+    setTimeout(() => setBlogCopied(false), 1500);
   };
 
   return (
@@ -122,6 +136,11 @@ export default function Page3({ onBack }: Page3Props) {
           placeholder="e.g. Cloudy eyes in dogs"
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !loading && topic.trim()) {
+              generate();
+            }
+          }}
         />
 
         <button className="primary" onClick={generate} disabled={loading || !topic.trim()}>
@@ -178,9 +197,15 @@ export default function Page3({ onBack }: Page3Props) {
                 </div>
               ))}
             </div>
-            <button onClick={() => exportAsText(blog)} style={{ marginTop: 8 }}>
-              Export .md
-            </button>
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
+              <button onClick={() => copyBlogToClipboard(blog)}>
+                {blogCopied ? "Copied to clipboard!" : "Copy Full Blog"}
+              </button>
+              <button onClick={() => exportAsText(blog)}>
+                Export .md
+              </button>
+            </div>
 
             <div className="linkedin-section">
               {!posts && (

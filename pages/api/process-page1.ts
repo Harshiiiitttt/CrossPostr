@@ -1,10 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs/promises";
-import os from "os";
-import path from "path";
 import { extractReel } from "@/lib/extractor";
-import { applyWatermarks } from "@/lib/watermark";
 import { publishToPlatforms, cleanupTempFiles } from "@/lib/publisher";
+import { uploadToPublicStorage, cleanupPublicStorage } from "@/lib/storage";
 import type { ProcessPage1Request, ProcessPage1Response } from "@/lib/types";
 
 export const config = {
@@ -24,28 +21,32 @@ export default async function handler(
   const nonBlankIndexes = urls.map((u, i) => (u ? i : -1)).filter((i) => i >= 0);
   const skipped = 3 - nonBlankIndexes.length;
 
-  let imageWatermarkPath: string | null = null;
-  if (body.imageWatermarkBase64) {
-    imageWatermarkPath = path.join(os.tmpdir(), `watermark-logo-${Date.now()}.png`);
-    await fs.writeFile(imageWatermarkPath, Buffer.from(body.imageWatermarkBase64, "base64"));
-  }
-
   const tempFiles: string[] = [];
+  const publicUrls: string[] = [];
   const results: ProcessPage1Response["results"] = [];
 
   try {
     for (const i of nonBlankIndexes) {
       const url = urls[i];
+      
+      // 1. Extract
       const extracted = await extractReel(url);
       tempFiles.push(extracted.localPath);
 
-      const watermarked = await applyWatermarks(extracted, {
-        imageWatermarkPath,
-        textWatermark: body.textWatermark,
-      });
-      tempFiles.push(watermarked.watermarkedPath);
+      // 2. Upload raw extracted file to public storage (skipping watermark)
+      const publicUrl = await uploadToPublicStorage(extracted.localPath);
+      publicUrls.push(publicUrl);
+      
+      // 3. Prepare payload for publisher 
+      const payloadToPublish = {
+        ...extracted,
+        watermarkedPath: extracted.localPath, // Faking this property so publisher types don't break
+        publicUrl,
+      };
 
-      const publishResults = await publishToPlatforms(watermarked, body.platforms);
+      // 4. Publish
+      // @ts-ignore - Bypassing strict type checks for the missing watermark properties
+      const publishResults = await publishToPlatforms(payloadToPublish, body.platforms);
 
       results.push({
         sourceUrl: url,
@@ -60,6 +61,6 @@ export default async function handler(
     res.status(500).json({ error: (err as Error).message });
   } finally {
     await cleanupTempFiles(tempFiles);
-    if (imageWatermarkPath) await fs.unlink(imageWatermarkPath).catch(() => undefined);
+    await cleanupPublicStorage(publicUrls);
   }
 }

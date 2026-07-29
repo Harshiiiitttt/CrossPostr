@@ -1,13 +1,17 @@
 import { useState } from "react";
-import type { CuddlytailsReview } from "@/lib/types";
+import type { PetCareReview } from "@/lib/types";
 
 interface Page2Props {
   onNext: () => void;
   onBack: () => void;
 }
 
+function Stars({ rating }: { rating: number }) {
+  return <span>{"★".repeat(rating)}{"☆".repeat(Math.max(0, 5 - rating))}</span>;
+}
+
 export default function Page2({ onNext, onBack }: Page2Props) {
-  const [reviews, setReviews] = useState<CuddlytailsReview[] | null>(null);
+  const [reviews, setReviews] = useState<PetCareReview[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -38,8 +42,8 @@ export default function Page2({ onNext, onBack }: Page2Props) {
       <span className="badge">Step 2 of 3</span>
       <h1 className="page-title">Cuddlytails review generator</h1>
       <p className="page-sub">
-        Generates 4 humanized client reviews - Pet Sitter, Dog Walker, AI Vet, AI Pet Nutrition.
-        Skip this page if you don't need reviews right now.
+        Generates 3 realistic, narrative-style customer reviews. Skip this page if you don't
+        need reviews right now.
       </p>
 
       <div className="card">
@@ -52,10 +56,16 @@ export default function Page2({ onNext, onBack }: Page2Props) {
         {reviews && (
           <div>
             {reviews.map((r, i) => (
-              <div className="result-item" key={r.service}>
-                <strong>{r.service}</strong> - {r.wordCount} words
-                <div className="review-block">{r.text}</div>
-                <button onClick={() => copy(r.text, i)} style={{ marginTop: 8 }}>
+              <div className="result-item" key={i}>
+                <strong>{r.reviewerName}</strong>
+                <span style={{ marginLeft: 8, color: "var(--accent)" }}>
+                  <Stars rating={r.rating} />
+                </span>
+                <div style={{ color: "var(--muted)", fontSize: "0.8rem", margin: "4px 0" }}>
+                  Dog: {r.dogName} - Provider: {r.providerName}
+                </div>
+                <div className="review-block">{r.reviewText}</div>
+                <button onClick={() => copy(r.reviewText, i)} style={{ marginTop: 8 }}>
                   {copiedIndex === i ? "Copied" : "Copy"}
                 </button>
               </div>
