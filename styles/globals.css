@@ -332,6 +332,36 @@ button.primary {
   border-color: var(--accent);
   font-weight: 600;
 }
+/* Distinctive CTA treatment for the two "generate" actions on the SEO blog
+   page - a warm sunset gradient (amber into coral, both already in the
+   palette) with a lift + glow on hover, so the primary action on that page
+   reads as more premium without introducing an unrelated accent color. */
+button.btn-generate {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--danger) 100%);
+  color: var(--on-accent);
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 4px 18px -6px rgba(229, 164, 69, 0.5);
+}
+
+button.btn-generate:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px -6px rgba(226, 119, 107, 0.55);
+  filter: brightness(1.04);
+}
+
+button.btn-generate:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+button.btn-generate:disabled {
+  background: var(--panel-border);
+  box-shadow: none;
+  color: var(--muted);
+}
 
 button.primary:hover {
   filter: brightness(1.06);
@@ -406,7 +436,114 @@ a:focus-visible {
   padding: 3px 8px;
   margin-bottom: 10px;
 }
+/* ---------- Topic input row (Page 3) ---------- */
 
+.topic-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.topic-row input[type="text"] {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.topic-row .btn-generate {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+@media (max-width: 560px) {
+  .topic-row {
+    flex-direction: column;
+  }
+  .topic-row .btn-generate {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.input-hint-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--muted);
+  margin-top: 8px;
+  margin-bottom: 4px;
+}
+
+.char-counter {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Two-column blog + LinkedIn layout (Page 3) ---------- */
+
+.blog-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+@media (max-width: 860px) {
+  .blog-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.blog-panel {
+  background: var(--bg-deep);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.blog-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.badge.inline {
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.blog-panel-scroll {
+  max-height: 480px;
+  overflow-y: auto;
+  padding-right: 6px;
+  font-size: 0.89rem;
+  line-height: 1.6;
+}
+
+.blog-panel-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.blog-panel-scroll::-webkit-scrollbar-thumb {
+  background: var(--panel-border);
+  border-radius: 8px;
+}
+
+.blog-panel-actions {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.linkedin-panel {
+  background: var(--bg-deep);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 18px;
+}
 /* ---------- LinkedIn tab section ---------- */
 
 .linkedin-section {

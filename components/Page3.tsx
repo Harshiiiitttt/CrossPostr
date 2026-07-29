@@ -10,6 +10,13 @@ const TABS: Array<{ key: keyof LinkedInPosts; label: string }> = [
   { key: "cleanLabel", label: "Clean-Label" },
   { key: "microStory", label: "Micro-Story" },
 ];
+function SparkIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8L12 2z" />
+    </svg>
+  );
+}
 
 export default function Page3({ onBack }: Page3Props) {
   const [topic, setTopic] = useState("");
@@ -143,7 +150,8 @@ export default function Page3({ onBack }: Page3Props) {
           }}
         />
 
-        <button className="primary" onClick={generate} disabled={loading || !topic.trim()}>
+        <button className="btn-generate" onClick={generate} disabled={loading || !topic.trim()}>
+          <SparkIcon />
           {loading ? "Generating..." : "Generate blog"}
         </button>
 
@@ -209,11 +217,8 @@ export default function Page3({ onBack }: Page3Props) {
 
             <div className="linkedin-section">
               {!posts && (
-                <button
-                  className="primary"
-                  onClick={generateLinkedInPosts}
-                  disabled={postsLoading}
-                >
+                <button className="btn-generate" onClick={generateLinkedInPosts} disabled={postsLoading}>
+                  <SparkIcon />
                   {postsLoading ? "Generating..." : "Generate LinkedIn Posts"}
                 </button>
               )}
