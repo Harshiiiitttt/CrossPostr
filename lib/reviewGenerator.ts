@@ -86,60 +86,56 @@ function isTransientStatus(status: number): boolean {
   return status === 429 || status === 503;
 }
 
-async function callGemini(prompt: string): Promise<{ reviews: PetCareReview[] }> {
+async function callGemini(prompt: string): Promise<PetCareReview[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const maxRetries = 3;
+  const models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-3.5-flash"];
+  let lastErr = "";
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA,
-            maxOutputTokens: 2048,
-            temperature: 0.9,
-            thinkingConfig: {
-              thinkingBudget: 0,
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: RESPONSE_SCHEMA,
+              maxOutputTokens: 2048,
+              temperature: 0.9,
             },
-          },
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      const errBody = await res.text();
-      if (isTransientStatus(res.status) && attempt < maxRetries) {
-        const delayMs = 1000 * Math.pow(2, attempt);
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        continue;
-      }
-      throw new Error(
-        isTransientStatus(res.status)
-          ? "Gemini is currently overloaded (high demand) and didn't recover after retries. Try again in a minute."
-          : `Gemini API error: ${res.status} - ${errBody}`
+          }),
+        }
       );
+
+      if (!res.ok) {
+        lastErr = await res.text();
+        if (isTransientStatus(res.status)) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
+        break;
+      }
+
+      const data = await res.json();
+      const candidate = data.candidates?.[0];
+
+      if (candidate?.finishReason === "MAX_TOKENS") {
+        throw new Error("Gemini truncated the review response before finishing the JSON.");
+      }
+
+      const raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+      const parsed = JSON.parse(raw) as { reviews: PetCareReview[] };
+      return parsed.reviews;
     }
-
-    const data = await res.json();
-    const candidate = data.candidates?.[0];
-
-    if (candidate?.finishReason === "MAX_TOKENS") {
-      throw new Error("Gemini truncated the review response before finishing the JSON.");
-    }
-
-    const raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
-    return JSON.parse(raw) as { reviews: PetCareReview[] };
   }
 
-  throw new Error("Gemini request failed after retries.");
+  throw new Error(`Gemini API busy: ${lastErr || "Please try again in a moment."}`);
 }
 
 function countBrandMentions(text: string): number {
@@ -150,8 +146,7 @@ function countBrandMentions(text: string): number {
  *  trusting the prompt alone, since the model can drift (0 mentions or 2+). */
 async function generateValidatedReviews(): Promise<PetCareReview[]> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const result = await callGemini(buildPrompt());
-    const reviews = result.reviews;
+    const reviews = await callGemini(buildPrompt());
 
     const shapeOk = Array.isArray(reviews) && reviews.length === 3;
     const brandOk = shapeOk && reviews.every((r) => countBrandMentions(r.reviewText) === 1);

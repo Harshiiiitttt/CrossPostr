@@ -2,79 +2,81 @@ import type { SeoBlog } from "./types";
 
 const VET_CTA = "Get help from a CuddlyTails AI vet here.";
 
-const SYSTEM_PROMPT = `You are an expert SEO content writer for a pet-care brand called CuddlyTails.
+const SYSTEM_PROMPT = `You are an expert, empathetic SEO content writer for a pet-care brand called CuddlyTails.
+You write for everyday dog owners with little to no medical knowledge.
 Return ONLY valid JSON matching the requested schema. No markdown fences, no preamble, no HTML tags.`;
 
-const STRUCTURE_GUIDE = `Structural pattern to follow (adapt everything to the new topic - do not
-reuse any example wording below, it is illustrative only):
-- H1 title framed as a direct question or statement about the topic.
-- 1 intro paragraph establishing why this matters to a dog owner.
-- Exactly 6-7 H2 sections total, no more - pick only the most important angles for this topic
-  and skip minor ones. This is a hard cap on the top-level "sections" array: count your planned
-  headings before writing, and if you have more than 7, either cut the least important ones or
-  fold them into "subtopics" nested inside an existing section. Never add a phase-by-phase or
-  emergency-scenario breakdown as separate top-level H2s - those belong as bullets or subtopics
-  inside ONE section, not as their own headings.
-- One early H2 should explain the basics in 2 short paragraphs, no list.
-- One H2 should cover causes/types using H3 "subtopics" - one subtopic per distinct
-  cause/type, each exactly 2 short paragraphs (a definition sentence or two, then a clinical
-  detail like risk factors, whether it's painful, or whether it's an emergency). This section
-  carries most of the article's depth - if you need more length to hit the word target, add
-  1-2 more subtopics here or make subtopic paragraphs slightly richer, not the intro.
-- Every OTHER H2 covering signs/symptoms, step-by-step actions, treatment options, prevention
-  tips, or emergency red flags MUST follow this exact three-part rhythm and nothing else:
-  (1) one short setup sentence introducing the list, (2) 4-6 bullet points that are compact,
-  specific, and named (e.g. "Cataracts may require surgical removal" - not vague filler like
-  "consider treatment options"), (3) one short closing sentence saying why the list matters or
-  what to do next. Do not add extra paragraphs before or after this rhythm.
-- A final "when to seek immediate/emergency care" H2 follows the same three-part rhythm above.
-- Immediately after that section's closing sentence (before the conclusion), the mandatory
-  CTA line on its own.
-- A conclusion H2 with 2 paragraphs.`;
+const STRUCTURE_GUIDE = `Section Structure & Writing Style Guidelines:
+
+WRITING STYLE & TONE (CRITICAL):
+- Target Audience: Everyday dog owners who have little to no medical knowledge and may be worried about their pet.
+- Language: Simple, conversational English (approximately Grade 6–8 reading level).
+- Friendly, informative, and reassuring—never sound like a dense medical textbook or clinical manual.
+- Avoid complex veterinary jargon and unnecessarily long explanations.
+- Explain medical terms in plain language immediately whenever they are introduced.
+- Maintain medical accuracy while simplifying the language.
+- Avoid repeating the same information across different sections.
+
+EXAMPLES OF CONTRAST TO FOLLOW:
+- Instead of: "Canine pancreatitis is characterized by inflammation of the pancreas resulting in digestive enzyme dysregulation."
+  Write: "Pancreatitis happens when your dog's pancreas becomes swollen and irritated. This makes it difficult for your dog to digest food properly and can make them feel very sick."
+- Instead of: "Clinical manifestations include gastrointestinal disturbances."
+  Write: "Your dog may vomit, stop eating, seem tired, or have stomach pain."
+
+BLOG STRUCTURE (Exactly 6-7 H2 sections in top-level "sections" array):
+1. Introduction: Briefly explain what the condition is and why dog owners should care.
+2. What Is It?: Explain the condition in simple, everyday language without textbook-style definitions.
+3. How Does It Affect Your Dog?: Explain what the condition does inside the dog's body simply, how the dog feels, and how it impacts daily life.
+4. Signs to Watch For: List common symptoms owners will notice at home using clear, compact bullet points.
+5. Causes: Explain common causes and risk factors simply.
+6. Treatment & Prevention: Provide a brief overview of treatment options and practical prevention tips.
+7. When Should You See a Vet?: Explain when to seek veterinary care, encouraging timely treatment without creating unnecessary fear.
+Followed by:
+- Final Thoughts (Conclusion): A short, reassuring summary with practical advice.
+- 5 simple, SEO-friendly FAQs related to the topic.
+
+RHYTHM & SCHEMA RULES:
+- H1 Title: SEO-friendly (50-60 characters, ~6-9 words), catchy, natural question or statement a worried owner would search online.
+- Causes / What Is It section can use H3 "subtopics" to break down distinct causes or types in plain English.
+- Sections with lists (Signs, Treatment, Prevention, When to See a Vet) follow this three-part rhythm: (1) short setup sentence, (2) 4-6 specific bullet points in simple words, (3) short closing sentence.
+- The mandatory vet CTA string immediately follows before the conclusion.`;
 
 function buildPrompt(topic: string): string {
-  return `Write a highly structured, informative, SEO-friendly blog post about this topic: "${topic}".
+  return `Write a simple, reader-friendly, SEO-optimized blog post for everyday dog owners about: "${topic}".
 
 ${STRUCTURE_GUIDE}
 
-Title requirements:
-- Make it genuinely catchy - lead with the real concern or a direct question, use natural
-  urgency or curiosity where it fits the topic.
-- Avoid generic, overused phrasing like "A Comprehensive Guide," "Everything You Need to
-  Know," or "The Ultimate Guide."
-- Keep it SEO-friendly: 50-60 characters total (roughly 6-9 words), short enough that it
-  won't get truncated in search results. Do not pad it with a subtitle or colon-separated
-  second half just to sound fuller - shorter and punchier is correct here.
+Blog Length & Budget Requirements:
+- Generate a blog that is approximately 1,200 words long in total (across intro + all sections + conclusion). Aim specifically for 1,150–1,250 words.
+- Maintain high-quality, informative, and engaging content. Do not artificially increase the word count with repetitive information or unnecessary filler—every section should provide value to the reader.
+- Word budget guide:
+  - Intro: ~100-120 words.
+  - What Is It?: ~150-180 words.
+  - How Does It Affect Your Dog?: ~150-180 words.
+  - Signs to Watch For: ~150-180 words.
+  - Causes (subtopics): ~250-300 words.
+  - Treatment & Prevention: ~200-240 words.
+  - When Should You See a Vet?: ~120-150 words.
+  - Final Thoughts (Conclusion): ~100-120 words.
 
-Length requirements (hard limits, not suggestions):
-- Total length across intro + all sections + conclusion (excluding FAQs) must be between
-  1300 and 1400 words.
-- Word budget by section type - follow this precisely:
-  - Intro: ~80-100 words.
-  - Basics section (no list): ~150-180 words across its 2 paragraphs.
-  - Causes/types section (subtopics): this is where most of the length budget goes - aim for
-    ~400-500 words total here. Use enough subtopics, at 2 short paragraphs each, to reach that
-    naturally. Do not pad other sections instead of this one.
-  - Each list-rhythm section (signs, steps, treatment, prevention, emergency): ~120-150 words
-    total for its setup sentence + bullets + closing sentence combined. Do not add prose beyond
-    the three-part rhythm to hit length here - if you're short on words, add one more bullet
-    instead, up to the 6-bullet max.
-  - Conclusion: ~100-120 words across its 2 paragraphs.
-- If you are behind on the word target after writing every section per its rhythm, add depth to
-  the causes/types subtopics first. Never pad list-based sections with extra sentences.
+SEO Requirements:
+- Catchy, SEO-friendly title (50-60 characters, no generic "A Comprehensive Guide" or "Ultimate Guide").
+- Clear H2 and H3 headings matching the structure.
+- Natural keyword placement.
+- Featured-snippet-friendly explanations.
+- 5 FAQs included separately via FAQ prompt.
 
 Additional requirements:
-- Tone: informative, veterinary-grade but accessible, direct - never salesy.
 - No HTML tags anywhere. Plain text only.
 - The "vetCta" field must be exactly this string, verbatim, no changes: "${VET_CTA}"`;
 }
 
 function buildFaqPrompt(topic: string, title: string): string {
-  return `Write exactly 5 unique FAQs for a blog titled "${title}" about the topic "${topic}".
+  return `Write exactly 5 simple, SEO-friendly FAQs for a blog titled "${title}" about "${topic}".
 Requirements:
-- Each question should be a single line, phrased the way a dog owner would actually search or ask.
-- Each answer should be 1-2 sentences, concise and accurate.
-- No overlap between questions - cover distinct angles (e.g. cause, urgency, treatment, prevention, outlook).
+- Phrased in simple, everyday language as a worried dog owner would actually search or ask online.
+- Answers must be 1-2 clear, reassuring sentences in plain English (Grade 6-8 reading level).
+- Cover 5 distinct, non-overlapping questions (e.g., cause, symptoms, treatment, prevention, when to see a vet).
 Return JSON matching the schema exactly.`;
 }
 
@@ -158,62 +160,54 @@ async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: nu
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const maxRetries = 3;
+  const models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-3.5-flash"];
+  let lastErr = "";
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: schema,
-            maxOutputTokens,
-            temperature: 0.8,
-            thinkingConfig: {
-              thinkingBudget: 0,
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: schema,
+              maxOutputTokens,
+              temperature: 0.8,
             },
-          },
-        }),
-      }
-    );
-
-    if (!res.ok) {
-      const errBody = await res.text();
-      if (isTransientStatus(res.status) && attempt < maxRetries) {
-        const delayMs = 1000 * Math.pow(2, attempt); // 1s, 2s, 4s
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
-        continue;
-      }
-      throw new Error(
-        isTransientStatus(res.status)
-          ? "Gemini is currently overloaded (high demand) and didn't recover after retries. Try again in a minute."
-          : `Gemini API error: ${res.status} - ${errBody}`
+          }),
+        }
       );
+
+      if (!res.ok) {
+        lastErr = await res.text();
+        if (isTransientStatus(res.status)) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
+        break;
+      }
+
+      const data = await res.json();
+      const candidate = data.candidates?.[0];
+
+      if (candidate?.finishReason === "MAX_TOKENS") {
+        throw new Error(
+          "Gemini truncated the response before finishing the JSON. Try a narrower topic."
+        );
+      }
+
+      let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+      raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
+      return JSON.parse(raw) as T;
     }
-
-    const data = await res.json();
-    const candidate = data.candidates?.[0];
-
-    if (candidate?.finishReason === "MAX_TOKENS") {
-      throw new Error(
-        "Gemini truncated the response before finishing the JSON. Try a narrower topic, " +
-          "or raise maxOutputTokens further."
-      );
-    }
-
-    let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
-    raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
-
-    return JSON.parse(raw) as T;
   }
 
-  // Unreachable - the loop above always returns or throws - but keeps TS happy.
-  throw new Error("Gemini request failed after retries.");
+  throw new Error(`Gemini API busy: ${lastErr || "Please try again in a moment."}`);
 }
 
 async function generateFaqs(
@@ -259,19 +253,17 @@ async function generateBody(topic: string): Promise<Omit<SeoBlog, "approxWordCou
       attempt === 0
         ? buildPrompt(topic)
         : `${buildPrompt(topic)}\n\nYour previous attempt produced ${lastBody!.sections.length} ` +
-          `top-level sections and roughly ${bodyWordCount(lastBody!)} words, which breaks the ` +
-          `6-7 section cap, the 1300-1400 word limit, or left a paragraph cut off mid-sentence. ` +
-          `Fix this: merge any extra headings into subtopics or bullets inside an existing ` +
-          `section, trim length from the causes/types section first if you're over on words, ` +
-          `and make sure every paragraph is a complete, finished sentence. Do not simply ` +
-          `shorten every section equally.`;
+          `top-level sections and roughly ${bodyWordCount(lastBody!)} words. ` +
+          `Fix this: ensure exactly 6-7 H2 sections, target approximately 1,200 words total (aiming for 1,150–1,250 words) in simple Grade 6-8 English, ` +
+          `keep content informative and engaging without artificial filler or repetition, keep every paragraph complete, ` +
+          `explain any medical terms immediately in plain language, and avoid repeating information across sections.`;
 
     const attemptBody = await callGemini<Omit<SeoBlog, "approxWordCount" | "faqs">>(promptText, RESPONSE_SCHEMA, 16384);
     lastBody = attemptBody;
 
     const words = bodyWordCount(attemptBody);
     const sectionsOk = attemptBody.sections.length >= 6 && attemptBody.sections.length <= 7;
-    const wordsOk = words >= 1200 && words <= 1500; // small buffer around the 1300-1400 target
+    const wordsOk = words >= 1050 && words <= 1350; // buffer around ~1,200 words target (aiming for 1,150–1,250)
     const notTruncated = !hasSuspiciouslyShortFragment(attemptBody);
 
     if (sectionsOk && wordsOk && notTruncated) return attemptBody;

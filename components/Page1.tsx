@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ProgressBar from "@/components/ProgressBar";
+import PawLoader from "@/components/PawLoader";
 import type { Platform, ProcessPage1Response } from "@/lib/types";
 
 const ALL_PLATFORMS: Platform[] = ["Pinterest", "Instagram", "X", "YouTube"];
@@ -75,13 +76,36 @@ export default function Page1({ onNext }: Page1Props) {
 
   const percent = running ? ((stageIndex + 1) / STAGE_LABELS.length) * 100 : 0;
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith("image/")) {
+        setImageFile(file);
+      }
+    }
+  };
+
   return (
     <div>
       <span className="badge">Step 1 of 3</span>
       <h1 className="page-title">Extract, watermark &amp; publish</h1>
       <p className="page-sub">
         Works with Reels published to your own authorized Instagram account. Leave any field
-        blank to skip - nothing here is required.
+        blank to skip &mdash; nothing here is required.
       </p>
 
       <div className="card">
@@ -98,14 +122,53 @@ export default function Page1({ onNext }: Page1Props) {
       </div>
 
       <div className="card">
-        <label>Image watermark (top-left, 80% opacity)</label>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-        />
+        <label>Image watermark (top-left overlay)</label>
+        <div
+          className={`dropzone-container ${isDragging ? "dropzone--dragging" : ""} ${imageFile ? "dropzone--has-file" : ""}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          <input
+            type="file"
+            id="watermark-file-input"
+            className="dropzone-input"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+          />
 
-        <label>Text watermark (bottom-left, bold 14px Arial, 80% opacity)</label>
+          {!imageFile ? (
+            <label htmlFor="watermark-file-input" className="dropzone-label">
+              <span className="dropzone-icon">🖼️</span>
+              <span className="dropzone-title">Drag & drop your watermark logo here</span>
+              <span className="dropzone-subtitle">or click to browse PNG, SVG, or JPG logo files</span>
+            </label>
+          ) : (
+            <div className="dropzone-preview">
+              <img
+                src={URL.createObjectURL(imageFile)}
+                alt="Watermark preview"
+                className="dropzone-thumb"
+              />
+              <div className="dropzone-file-info">
+                <span className="dropzone-filename">{imageFile.name}</span>
+                <span className="dropzone-filesize">
+                  {(imageFile.size / 1024).toFixed(1)} KB
+                </span>
+              </div>
+              <button
+                type="button"
+                className="dropzone-remove-btn"
+                onClick={() => setImageFile(null)}
+                title="Remove watermark image"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </div>
+
+        <label style={{ marginTop: 18 }}>Text watermark (bottom-left, bold 14px Arial, 80% opacity)</label>
         <input
           type="text"
           placeholder="e.g. @cuddlytails"
@@ -138,8 +201,14 @@ export default function Page1({ onNext }: Page1Props) {
         </button>
 
         {running && (
-          <div style={{ marginTop: 14 }}>
-            <ProgressBar percent={percent} label={STAGE_LABELS[stageIndex]} />
+          <div className="ai-active-glow" style={{ marginTop: 20, borderRadius: 12, background: "var(--panel)" }}>
+            <PawLoader
+              label={`Processing Instagram Reels (${STAGE_LABELS[stageIndex]}...)`}
+              sublabel="Downloading video stream, layering watermarks, and publishing cross-platform"
+            />
+            <div style={{ padding: "0 24px 24px" }}>
+              <ProgressBar percent={percent} label={STAGE_LABELS[stageIndex]} />
+            </div>
           </div>
         )}
 
