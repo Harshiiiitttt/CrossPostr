@@ -156,11 +156,26 @@ function isTransientStatus(status: number): boolean {
   return status === 429 || status === 503;
 }
 
+function formatGeminiError(lastErr: string): string {
+  if (lastErr.includes("429") || lastErr.includes("RESOURCE_EXHAUSTED") || lastErr.includes("quota")) {
+    return "Gemini API rate limit reached (Quota Exceeded on Free Tier). Please wait 30 seconds before retrying, or update your GEMINI_API_KEY in .env.";
+  }
+  try {
+    const parsed = JSON.parse(lastErr);
+    if (parsed.error?.message) {
+      return `Gemini API Error: ${parsed.error.message}`;
+    }
+  } catch {
+    // ignore parse error
+  }
+  return `Gemini API busy: ${lastErr || "Please try again in a moment."}`;
+}
+
 async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: number): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-3.5-flash"];
+  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"];
   let lastErr = "";
 
   for (const model of models) {
@@ -186,7 +201,7 @@ async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: nu
       if (!res.ok) {
         lastErr = await res.text();
         if (isTransientStatus(res.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
           continue;
         }
         break;
@@ -207,7 +222,7 @@ async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: nu
     }
   }
 
-  throw new Error(`Gemini API busy: ${lastErr || "Please try again in a moment."}`);
+  throw new Error(formatGeminiError(lastErr));
 }
 
 async function generateFaqs(

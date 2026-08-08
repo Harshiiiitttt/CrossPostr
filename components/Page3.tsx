@@ -3,9 +3,12 @@ import { createPortal } from "react-dom";
 import type { LinkedInPosts, SeoBlog } from "@/lib/types";
 import PawLoader from "@/components/PawLoader";
 import Toast from "@/components/Toast";
+import SeoMeter from "@/components/SeoMeter";
+import { useBlogGeneration } from "@/lib/BlogGenerationContext";
 
 interface Page3Props {
   onBack: () => void;
+  isActive?: boolean;
 }
 
 const TABS: Array<{ key: keyof LinkedInPosts; label: string }> = [
@@ -13,6 +16,113 @@ const TABS: Array<{ key: keyof LinkedInPosts; label: string }> = [
   { key: "cleanLabel", label: "Clean-Label" },
   { key: "microStory", label: "Micro-Story" },
 ];
+
+function triggerMicroConfetti(e?: React.MouseEvent | MouseEvent) {
+  if (typeof window === "undefined") return;
+
+  let x = window.innerWidth / 2;
+  let y = window.innerHeight / 2;
+
+  if (e && e.currentTarget) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    if (rect.width > 0 && rect.height > 0) {
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    }
+  } else if (e && typeof e.clientX === "number" && (e.clientX !== 0 || e.clientY !== 0)) {
+    x = e.clientX;
+    y = e.clientY;
+  }
+
+  const particlesCount = 14;
+  const shapes = ["🐶", "🐾", "🐕", "✨", "🦮", "⭐", "🐾", "🎉", "🐕‍🦺", "✦"];
+
+  for (let i = 0; i < particlesCount; i++) {
+    const el = document.createElement("span");
+    el.className = "micro-confetti-particle";
+    el.innerText = shapes[Math.floor(Math.random() * shapes.length)];
+
+    const angle = (i / particlesCount) * 360 + (Math.random() * 20 - 10);
+    const distance = 24 + Math.random() * 30;
+    const rad = (angle * Math.PI) / 180;
+
+    const dx = Math.cos(rad) * distance;
+    const dy = Math.sin(rad) * distance - 10;
+
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    el.style.setProperty("--dx", `${dx}px`);
+    el.style.setProperty("--dy", `${dy}px`);
+
+    document.body.appendChild(el);
+
+    setTimeout(() => {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      }
+    }, 600);
+  }
+}
+
+function SearchIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  );
+}
+
+function GlobeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <line x1="2" y1="12" x2="22" y2="12" />
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+  );
+}
+
+function WordDocIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  );
+}
+
+function PdfFileIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <path d="M9 15h3a1.5 1.5 0 0 0 0-3H9v6" />
+    </svg>
+  );
+}
+
+function EditPenIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
+
 
 // ── Categorized Topic Database (260+ Unique Topics) ──────────────────────────
 
@@ -311,10 +421,17 @@ function GreenSparklesIcon() {
 
 function LightbulbIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#68B77A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M9 18h6" />
-      <path d="M10 22h4" />
-      <path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 3 7h8c1-2 3-4 3-7a7 7 0 0 0-7-7z" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" style={{ display: "block" }}>
+      <path
+        d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"
+        fill="rgba(104, 183, 122, 0.28)"
+        stroke="#68B77A"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M9 18h6" stroke="#68B77A" strokeWidth="2.2" strokeLinecap="round" />
+      <path d="M10 21h4" stroke="#68B77A" strokeWidth="2.2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -333,6 +450,14 @@ function LinkedInIcon() {
       <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
       <rect x="2" y="9" width="4" height="12" />
       <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <polyline points="20 6 9 17 4 12" />
     </svg>
   );
 }
@@ -377,23 +502,70 @@ function PawHeadIcon() {
 
 // ── Funky Counter Loading Animation ─────────────────────────────────────────
 
-function FunkyCounterLoader({ topic }: { topic: string }) {
+function FunkyCounterLoader({
+  topic,
+  isDone,
+  onCrossfadeStart,
+  onFullyExited,
+}: {
+  topic: string;
+  isDone: boolean;
+  onCrossfadeStart: () => void;
+  onFullyExited: () => void;
+}) {
   const [count, setCount] = useState(1);
   const [mounted, setMounted] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [completedText, setCompletedText] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
-    const timer = setInterval(() => {
-      setCount((prev) => (prev < 95 ? prev + 1 : prev));
-    }, 360);
-    return () => clearInterval(timer);
   }, []);
+
+  // Tick counter while not isDone up to 95%. When isDone, tick rapidly to 100%.
+  useEffect(() => {
+    if (!isDone) {
+      const timer = setInterval(() => {
+        setCount((prev) => (prev < 95 ? prev + 1 : prev));
+      }, 360);
+      return () => clearInterval(timer);
+    } else {
+      const timer = setInterval(() => {
+        setCount((prev) => {
+          if (prev < 100) return prev + 1;
+          clearInterval(timer);
+          return 100;
+        });
+      }, 25);
+      return () => clearInterval(timer);
+    }
+  }, [isDone]);
+
+  // When progress reaches 100%, hold brief pause (400ms) -> smooth scale/fade exit -> unmount
+  useEffect(() => {
+    if (count >= 100) {
+      setCompletedText("✨ Generation Complete!");
+
+      const pauseTimer = setTimeout(() => {
+        setIsExiting(true);
+        onCrossfadeStart();
+
+        const exitTimer = setTimeout(() => {
+          onFullyExited();
+        }, 450);
+
+        return () => clearTimeout(exitTimer);
+      }, 400);
+
+      return () => clearTimeout(pauseTimer);
+    }
+  }, [count, onCrossfadeStart, onFullyExited]);
 
   // Determine active stage (1: Research, 2: Write, 3: Optimize)
   const currentStage = count <= 35 ? 1 : count <= 75 ? 2 : 3;
 
   // Dynamic status text matching progress
-  const statusText =
+  const defaultStatusText =
     count <= 20
       ? "Analyzing search intent..."
       : count <= 35
@@ -406,9 +578,11 @@ function FunkyCounterLoader({ topic }: { topic: string }) {
       ? "Optimizing SEO keyword density..."
       : "Preparing social variations...";
 
+  const statusText = completedText || defaultStatusText;
+
   const content = (
     <div
-      className="p3-loader-wrapper"
+      className={`p3-loader-wrapper ${isExiting ? "p3-loader-exiting" : ""}`}
       aria-busy="true"
       aria-live="polite"
       onClick={(e) => {
@@ -416,7 +590,10 @@ function FunkyCounterLoader({ topic }: { topic: string }) {
         e.stopPropagation();
       }}
     >
-      <div className="p3-loader-modal ai-active-glow" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`p3-loader-modal ai-active-glow ${isExiting ? "p3-modal-exiting" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Main top content row */}
         <div className="p3-loader-main-row">
           {/* Left section: Document Icon + Writing your blog + Topic */}
@@ -511,147 +688,546 @@ function FunkyCounterLoader({ topic }: { topic: string }) {
   return createPortal(content, document.body);
 }
 
+// ── Studio Canvas Editor Workspace ─────────────────────────────────────────────
+
+function StudioCanvasEditor({
+  blog,
+  onSave,
+  onCancel,
+}: {
+  blog: SeoBlog;
+  onSave: (updated: SeoBlog) => void;
+  onCancel: () => void;
+}) {
+  const [draft, setDraft] = useState<SeoBlog>(() => JSON.parse(JSON.stringify(blog)));
+  const [isDirty, setIsDirty] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const updateDraft = (updater: (prev: SeoBlog) => SeoBlog) => {
+    setDraft((prev) => {
+      const next = updater(prev);
+      setIsDirty(true);
+      return next;
+    });
+    setError(null);
+  };
+
+  const handleSave = () => {
+    if (!draft.title.trim()) {
+      setError("Blog title cannot be empty.");
+      return;
+    }
+    onSave(draft);
+  };
+
+  const handleExit = () => {
+    if (isDirty) {
+      if (
+        window.confirm(
+          "You have unsaved changes in the Studio Canvas. Are you sure you want to discard your edits?"
+        )
+      ) {
+        onCancel();
+      }
+    } else {
+      onCancel();
+    }
+  };
+
+  const [isPolishingPreset, setIsPolishingPreset] = useState<string | null>(null);
+
+  const handlePolishTone = (preset: "punchier" | "warm" | "stats", e?: React.MouseEvent) => {
+    if (e) triggerMicroConfetti(e);
+    setIsPolishingPreset(preset);
+    setTimeout(() => {
+      updateDraft((prev) => {
+        const nextIntro = [...prev.intro];
+        if (preset === "punchier") {
+          if (nextIntro.length > 0) {
+            nextIntro[0] = nextIntro[0].replace(/\b(very|extremely|really|basically)\b\s*/gi, "").trim();
+          }
+        } else if (preset === "warm") {
+          if (nextIntro.length > 0 && !nextIntro[0].includes("🐾")) {
+            nextIntro[0] = `🐾 As loving pet parents, ${nextIntro[0].toLowerCase()}`;
+          }
+        } else if (preset === "stats") {
+          if (nextIntro.length > 0 && !nextIntro[0].includes("%")) {
+            nextIntro[0] += " (Recent veterinary studies show 84% of pet owners notice immediate wellness improvements).";
+          }
+        }
+        return { ...prev, intro: nextIntro };
+      });
+      setIsPolishingPreset(null);
+    }, 400);
+  };
+
+  return (
+    <div className="p3-canvas-editor">
+      {/* Editor Top Bar */}
+      <div className="p3-editor-top-bar">
+        <div className="p3-editor-status">
+          <span className="p3-editor-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+            <span className="glass-icon-badge glass-icon-badge--sm"><EditPenIcon /></span>
+            Studio Canvas Editor
+          </span>
+          {isDirty && <span className="p3-dirty-tag">Unsaved Edits</span>}
+        </div>
+        {error && <div className="p3-editor-error">{error}</div>}
+        <div className="p3-editor-actions">
+          <button type="button" className="p3-btn p3-btn--ghost" onClick={handleExit}>
+            Cancel
+          </button>
+          <button type="button" className="p3-btn p3-btn--teal p3-btn--pop" onClick={handleSave} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <CheckIcon /> Save Changes
+          </button>
+        </div>
+      </div>
+
+      {/* AI Quick Tone Polisher Toolbar */}
+      <div className="p3-tone-polisher-bar">
+        <span className="p3-tone-label">✨ AI Tone Quick-Polish:</span>
+        <div className="p3-tone-btn-group">
+          <button
+            type="button"
+            className="p3-tone-btn"
+            disabled={!!isPolishingPreset}
+            onClick={(e) => handlePolishTone("punchier", e)}
+            title="Make intro paragraph punchier & concise"
+          >
+            {isPolishingPreset === "punchier" ? <span className="p3-spinner p3-spinner--sm" /> : "⚡ Punchier & Concise"}
+          </button>
+          <button
+            type="button"
+            className="p3-tone-btn"
+            disabled={!!isPolishingPreset}
+            onClick={(e) => handlePolishTone("warm", e)}
+            title="Add empathetic pet parent warmth"
+          >
+            {isPolishingPreset === "warm" ? <span className="p3-spinner p3-spinner--sm" /> : "🐾 Warmer Pet Voice"}
+          </button>
+          <button
+            type="button"
+            className="p3-tone-btn"
+            disabled={!!isPolishingPreset}
+            onClick={(e) => handlePolishTone("stats", e)}
+            title="Add veterinary statistical data point"
+          >
+            {isPolishingPreset === "stats" ? <span className="p3-spinner p3-spinner--sm" /> : "📊 Add Statistics"}
+          </button>
+        </div>
+      </div>
+
+      {/* Editor Form */}
+      <div className="p3-editor-form">
+        {/* Title (H1) */}
+        <div className="p3-editor-card">
+          <label className="p3-editor-label">Blog Title (H1)</label>
+          <input
+            type="text"
+            className="p3-editor-input p3-editor-title-input"
+            value={draft.title}
+            onChange={(e) => updateDraft((prev) => ({ ...prev, title: e.target.value }))}
+            placeholder="Enter blog title..."
+          />
+        </div>
+
+        {/* Intro Paragraphs */}
+        <div className="p3-editor-card">
+          <div className="p3-editor-card-header">
+            <label className="p3-editor-label">Introduction Paragraphs</label>
+            <button
+              type="button"
+              className="p3-btn-add-sm"
+              onClick={() => updateDraft((prev) => ({ ...prev, intro: [...prev.intro, ""] }))}
+            >
+              + Add Paragraph
+            </button>
+          </div>
+          {draft.intro.map((p, idx) => (
+            <div key={idx} className="p3-editor-row">
+              <textarea
+                className="p3-editor-textarea"
+                rows={3}
+                value={p}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateDraft((prev) => {
+                    const nextIntro = [...prev.intro];
+                    nextIntro[idx] = val;
+                    return { ...prev, intro: nextIntro };
+                  });
+                }}
+                placeholder={`Intro paragraph ${idx + 1}...`}
+              />
+              {draft.intro.length > 1 && (
+                <button
+                  type="button"
+                  className="p3-btn-del-sm"
+                  title="Delete paragraph"
+                  onClick={() =>
+                    updateDraft((prev) => ({
+                      ...prev,
+                      intro: prev.intro.filter((_, i) => i !== idx),
+                    }))
+                  }
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Content Sections (H2) */}
+        <div className="p3-editor-card">
+          <div className="p3-editor-card-header">
+            <label className="p3-editor-label">Main Content Sections (H2)</label>
+            <button
+              type="button"
+              className="p3-btn-add-sm"
+              onClick={() =>
+                updateDraft((prev) => ({
+                  ...prev,
+                  sections: [
+                    ...prev.sections,
+                    { heading: "New Section", paragraphs: [""] },
+                  ],
+                }))
+              }
+            >
+              + Add Section
+            </button>
+          </div>
+
+          {draft.sections.map((sec, sIdx) => (
+            <div key={sIdx} className="p3-editor-section-box">
+              <div className="p3-section-box-header">
+                <span className="p3-section-num">Section {sIdx + 1}</span>
+                <input
+                  type="text"
+                  className="p3-editor-input p3-section-heading-input"
+                  value={sec.heading}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateDraft((prev) => {
+                      const nextSecs = [...prev.sections];
+                      nextSecs[sIdx] = { ...nextSecs[sIdx], heading: val };
+                      return { ...prev, sections: nextSecs };
+                    });
+                  }}
+                  placeholder="Section Heading (H2)"
+                />
+                <button
+                  type="button"
+                  className="p3-btn-del-sm"
+                  title="Delete section"
+                  onClick={() =>
+                    updateDraft((prev) => ({
+                      ...prev,
+                      sections: prev.sections.filter((_, i) => i !== sIdx),
+                    }))
+                  }
+                >
+                  ✕ Remove
+                </button>
+              </div>
+
+              {/* Paragraphs */}
+              <div className="p3-section-box-body">
+                <div className="p3-sub-label">Paragraphs</div>
+                {(sec.paragraphs ?? [""]).map((p, pIdx) => (
+                  <div key={pIdx} className="p3-editor-row">
+                    <textarea
+                      className="p3-editor-textarea"
+                      rows={3}
+                      value={p}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => {
+                          const nextSecs = [...prev.sections];
+                          const nextParas = [...(nextSecs[sIdx].paragraphs ?? [])];
+                          nextParas[pIdx] = val;
+                          nextSecs[sIdx] = { ...nextSecs[sIdx], paragraphs: nextParas };
+                          return { ...prev, sections: nextSecs };
+                        });
+                      }}
+                      placeholder={`Paragraph ${pIdx + 1}...`}
+                    />
+                    <button
+                      type="button"
+                      className="p3-btn-del-sm"
+                      onClick={() =>
+                        updateDraft((prev) => {
+                          const nextSecs = [...prev.sections];
+                          const nextParas = (nextSecs[sIdx].paragraphs ?? []).filter(
+                            (_, i) => i !== pIdx
+                          );
+                          nextSecs[sIdx] = { ...nextSecs[sIdx], paragraphs: nextParas };
+                          return { ...prev, sections: nextSecs };
+                        })
+                      }
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="p3-btn-add-xs"
+                  onClick={() =>
+                    updateDraft((prev) => {
+                      const nextSecs = [...prev.sections];
+                      const nextParas = [...(nextSecs[sIdx].paragraphs ?? []), ""];
+                      nextSecs[sIdx] = { ...nextSecs[sIdx], paragraphs: nextParas };
+                      return { ...prev, sections: nextSecs };
+                    })
+                  }
+                >
+                  + Add Paragraph to Section
+                </button>
+
+                {/* Bullets */}
+                <div className="p3-sub-label" style={{ marginTop: "14px" }}>
+                  Bullet Points (Optional)
+                </div>
+                {(sec.bullets ?? []).map((b, bIdx) => (
+                  <div key={bIdx} className="p3-editor-row">
+                    <input
+                      type="text"
+                      className="p3-editor-input"
+                      value={b}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        updateDraft((prev) => {
+                          const nextSecs = [...prev.sections];
+                          const nextBullets = [...(nextSecs[sIdx].bullets ?? [])];
+                          nextBullets[bIdx] = val;
+                          nextSecs[sIdx] = { ...nextSecs[sIdx], bullets: nextBullets };
+                          return { ...prev, sections: nextSecs };
+                        });
+                      }}
+                      placeholder={`Bullet item ${bIdx + 1}...`}
+                    />
+                    <button
+                      type="button"
+                      className="p3-btn-del-sm"
+                      onClick={() =>
+                        updateDraft((prev) => {
+                          const nextSecs = [...prev.sections];
+                          const nextBullets = (nextSecs[sIdx].bullets ?? []).filter(
+                            (_, i) => i !== bIdx
+                          );
+                          nextSecs[sIdx] = { ...nextSecs[sIdx], bullets: nextBullets };
+                          return { ...prev, sections: nextSecs };
+                        })
+                      }
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="p3-btn-add-xs"
+                  onClick={() =>
+                    updateDraft((prev) => {
+                      const nextSecs = [...prev.sections];
+                      const nextBullets = [...(nextSecs[sIdx].bullets ?? []), ""];
+                      nextSecs[sIdx] = { ...nextSecs[sIdx], bullets: nextBullets };
+                      return { ...prev, sections: nextSecs };
+                    })
+                  }
+                >
+                  + Add Bullet Point
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Conclusion */}
+        <div className="p3-editor-card">
+          <div className="p3-editor-card-header">
+            <label className="p3-editor-label">Conclusion Paragraphs</label>
+            <button
+              type="button"
+              className="p3-btn-add-sm"
+              onClick={() =>
+                updateDraft((prev) => ({
+                  ...prev,
+                  conclusion: [...(prev.conclusion ?? []), ""],
+                }))
+              }
+            >
+              + Add Conclusion Paragraph
+            </button>
+          </div>
+          {(draft.conclusion ?? [""]).map((p, idx) => (
+            <div key={idx} className="p3-editor-row">
+              <textarea
+                className="p3-editor-textarea"
+                rows={3}
+                value={p}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateDraft((prev) => {
+                    const nextConc = [...(prev.conclusion ?? [])];
+                    nextConc[idx] = val;
+                    return { ...prev, conclusion: nextConc };
+                  });
+                }}
+                placeholder={`Conclusion paragraph ${idx + 1}...`}
+              />
+              <button
+                type="button"
+                className="p3-btn-del-sm"
+                onClick={() =>
+                  updateDraft((prev) => ({
+                    ...prev,
+                    conclusion: (prev.conclusion ?? []).filter((_, i) => i !== idx),
+                  }))
+                }
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQs */}
+        <div className="p3-editor-card">
+          <div className="p3-editor-card-header">
+            <label className="p3-editor-label">Frequently Asked Questions (FAQs)</label>
+            <button
+              type="button"
+              className="p3-btn-add-sm"
+              onClick={() =>
+                updateDraft((prev) => ({
+                  ...prev,
+                  faqs: [...(prev.faqs ?? []), { question: "", answer: "" }],
+                }))
+              }
+            >
+              + Add FAQ
+            </button>
+          </div>
+
+          {(draft.faqs ?? []).map((faq, fIdx) => (
+            <div key={fIdx} className="p3-editor-faq-box">
+              <div className="p3-faq-box-header">
+                <span className="p3-section-num">FAQ {fIdx + 1}</span>
+                <input
+                  type="text"
+                  className="p3-editor-input"
+                  value={faq.question}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateDraft((prev) => {
+                      const nextFaqs = [...(prev.faqs ?? [])];
+                      nextFaqs[fIdx] = { ...nextFaqs[fIdx], question: val };
+                      return { ...prev, faqs: nextFaqs };
+                    });
+                  }}
+                  placeholder="Question..."
+                />
+                <button
+                  type="button"
+                  className="p3-btn-del-sm"
+                  onClick={() =>
+                    updateDraft((prev) => ({
+                      ...prev,
+                      faqs: (prev.faqs ?? []).filter((_, i) => i !== fIdx),
+                    }))
+                  }
+                >
+                  ✕ Remove FAQ
+                </button>
+              </div>
+              <textarea
+                className="p3-editor-textarea"
+                rows={2}
+                value={faq.answer}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  updateDraft((prev) => {
+                    const nextFaqs = [...(prev.faqs ?? [])];
+                    nextFaqs[fIdx] = { ...nextFaqs[fIdx], answer: val };
+                    return { ...prev, faqs: nextFaqs };
+                  });
+                }}
+                placeholder="Answer..."
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Blog content renderer ─────────────────────────────────────────────────────
 
 function BlogRenderer({
   blog,
-  isEditing,
-  onUpdateBlog,
+  highlightedKeyword,
 }: {
   blog: SeoBlog;
-  isEditing?: boolean;
-  onUpdateBlog?: (updated: SeoBlog) => void;
+  highlightedKeyword?: string | null;
 }) {
+  const renderText = (text: string) => {
+    if (!highlightedKeyword || !highlightedKeyword.trim()) return text;
+    const kw = highlightedKeyword.trim();
+    const regex = new RegExp(`(${kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi");
+    const parts = text.split(regex);
+    if (parts.length === 1) return text;
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === kw.toLowerCase() ? (
+            <mark key={i} className="seo-kw-highlight">
+              {part}
+            </mark>
+          ) : (
+            part
+          )
+        )}
+      </>
+    );
+  };
+
   return (
     <div className="p3-blog-body">
-      {isEditing && (
-        <div className="p3-edit-banner">
-          <span>
-            ✏️ <strong>Inline Editing Mode Active</strong> — Click any heading, paragraph, bullet, or FAQ to edit!
-          </span>
-          <button
-            type="button"
-            className="p3-btn p3-btn--teal p3-btn--sm"
-            onClick={() => onUpdateBlog && onUpdateBlog(blog)}
-          >
-            Done Editing
-          </button>
-        </div>
-      )}
-
       {blog.intro.map((p, i) => (
-        <p
-          key={i}
-          className={`${i === 0 ? "p3-lead-p" : ""} ${isEditing ? "p3-editable" : ""}`}
-          contentEditable={isEditing}
-          suppressContentEditableWarning
-          onBlur={(e) => {
-            if (!onUpdateBlog) return;
-            const newIntro = [...blog.intro];
-            newIntro[i] = e.currentTarget.innerText;
-            onUpdateBlog({ ...blog, intro: newIntro });
-          }}
-        >
-          {p}
+        <p key={i} className={i === 0 ? "p3-lead-p" : ""}>
+          {renderText(p)}
         </p>
       ))}
 
       {blog.sections.map((s, sIdx) => (
         <div key={sIdx} className="p3-section">
-          <h3
-            className={`p3-h3 ${isEditing ? "p3-editable" : ""}`}
-            contentEditable={isEditing}
-            suppressContentEditableWarning
-            onBlur={(e) => {
-              if (!onUpdateBlog) return;
-              const text = e.currentTarget.innerText.replace(/^🐾\s*/, "");
-              const newSections = [...blog.sections];
-              newSections[sIdx] = { ...newSections[sIdx], heading: text };
-              onUpdateBlog({ ...blog, sections: newSections });
-            }}
-          >
+          <h3 className="p3-h3">
             <PawHeadIcon />
-            {s.heading}
+            {renderText(s.heading)}
           </h3>
           {(s.paragraphs ?? []).map((p, pIdx) => (
-            <p
-              key={pIdx}
-              className={isEditing ? "p3-editable" : ""}
-              contentEditable={isEditing}
-              suppressContentEditableWarning
-              onBlur={(e) => {
-                if (!onUpdateBlog) return;
-                const newSections = [...blog.sections];
-                const newParas = [...(newSections[sIdx].paragraphs ?? [])];
-                newParas[pIdx] = e.currentTarget.innerText;
-                newSections[sIdx] = { ...newSections[sIdx], paragraphs: newParas };
-                onUpdateBlog({ ...blog, sections: newSections });
-              }}
-            >
-              {p}
-            </p>
+            <p key={pIdx}>{renderText(p)}</p>
           ))}
           {(s.bullets?.length ?? 0) > 0 && (
             <ul className="p3-list">
               {s.bullets!.map((b, bIdx) => (
-                <li
-                  key={bIdx}
-                  className={isEditing ? "p3-editable" : ""}
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning
-                  onBlur={(e) => {
-                    if (!onUpdateBlog) return;
-                    const newSections = [...blog.sections];
-                    const newBullets = [...(newSections[sIdx].bullets ?? [])];
-                    newBullets[bIdx] = e.currentTarget.innerText;
-                    newSections[sIdx] = { ...newSections[sIdx], bullets: newBullets };
-                    onUpdateBlog({ ...blog, sections: newSections });
-                  }}
-                >
-                  {b}
-                </li>
+                <li key={bIdx}>{renderText(b)}</li>
               ))}
             </ul>
           )}
           {(s.subtopics?.length ?? 0) > 0 &&
             s.subtopics!.map((st, stIdx) => (
               <div key={stIdx} className="p3-subtopic">
-                <h5
-                  className={`p3-h5 ${isEditing ? "p3-editable" : ""}`}
-                  contentEditable={isEditing}
-                  suppressContentEditableWarning
-                  onBlur={(e) => {
-                    if (!onUpdateBlog) return;
-                    const text = e.currentTarget.innerText.replace(/^🐾\s*/, "");
-                    const newSections = [...blog.sections];
-                    const newSubtopics = [...(newSections[sIdx].subtopics ?? [])];
-                    newSubtopics[stIdx] = { ...newSubtopics[stIdx], subheading: text };
-                    newSections[sIdx] = { ...newSections[sIdx], subtopics: newSubtopics };
-                    onUpdateBlog({ ...blog, sections: newSections });
-                  }}
-                >
+                <h5 className="p3-h5">
                   <PawHeadIcon />
-                  {st.subheading}
+                  {renderText(st.subheading)}
                 </h5>
                 {st.paragraphs.map((p, stPIdx) => (
-                  <p
-                    key={stPIdx}
-                    className={isEditing ? "p3-editable" : ""}
-                    contentEditable={isEditing}
-                    suppressContentEditableWarning
-                    onBlur={(e) => {
-                      if (!onUpdateBlog) return;
-                      const newSections = [...blog.sections];
-                      const newSubtopics = [...(newSections[sIdx].subtopics ?? [])];
-                      const newSubParas = [...newSubtopics[stIdx].paragraphs];
-                      newSubParas[stPIdx] = e.currentTarget.innerText;
-                      newSubtopics[stIdx] = { ...newSubtopics[stIdx], paragraphs: newSubParas };
-                      newSections[sIdx] = { ...newSections[sIdx], subtopics: newSubtopics };
-                      onUpdateBlog({ ...blog, sections: newSections });
-                    }}
-                  >
-                    {p}
-                  </p>
+                  <p key={stPIdx}>{renderText(p)}</p>
                 ))}
               </div>
             ))}
@@ -681,20 +1257,7 @@ function BlogRenderer({
         Conclusion
       </h3>
       {blog.conclusion.map((p, i) => (
-        <p
-          key={i}
-          className={isEditing ? "p3-editable" : ""}
-          contentEditable={isEditing}
-          suppressContentEditableWarning
-          onBlur={(e) => {
-            if (!onUpdateBlog) return;
-            const newConc = [...blog.conclusion];
-            newConc[i] = e.currentTarget.innerText;
-            onUpdateBlog({ ...blog, conclusion: newConc });
-          }}
-        >
-          {p}
-        </p>
+        <p key={i}>{renderText(p)}</p>
       ))}
 
       <h3 className="p3-h3">
@@ -705,36 +1268,12 @@ function BlogRenderer({
         {blog.faqs.map((f, i) => (
           <details key={i} className="p3-faq-accordion" open={i === 0}>
             <summary className="p3-faq-summary">
-              <p
-                className={`p3-faq-q ${isEditing ? "p3-editable" : ""}`}
-                contentEditable={isEditing}
-                suppressContentEditableWarning
-                onBlur={(e) => {
-                  if (!onUpdateBlog) return;
-                  const newFaqs = [...blog.faqs];
-                  newFaqs[i] = { ...newFaqs[i], question: e.currentTarget.innerText };
-                  onUpdateBlog({ ...blog, faqs: newFaqs });
-                }}
-              >
-                <strong>{f.question}</strong>
+              <p className="p3-faq-q">
+                <strong>{renderText(f.question)}</strong>
               </p>
               <span className="p3-faq-arrow">›</span>
             </summary>
-            <div className="p3-faq-content">
-              <p
-                className={isEditing ? "p3-editable" : ""}
-                contentEditable={isEditing}
-                suppressContentEditableWarning
-                onBlur={(e) => {
-                  if (!onUpdateBlog) return;
-                  const newFaqs = [...blog.faqs];
-                  newFaqs[i] = { ...newFaqs[i], answer: e.currentTarget.innerText };
-                  onUpdateBlog({ ...blog, faqs: newFaqs });
-                }}
-              >
-                {f.answer}
-              </p>
-            </div>
+            <p className="p3-faq-a">{renderText(f.answer)}</p>
           </details>
         ))}
       </div>
@@ -744,14 +1283,33 @@ function BlogRenderer({
 
 // ── Main page component ────────────────────────────────────────────────────────
 
-export default function Page3({ onBack }: Page3Props) {
-  // Empty initial state so Page 3 is NOT populated on open!
-  const [topic, setTopic] = useState("");
-  const [blog, setBlog] = useState<SeoBlog | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export default function Page3({ onBack, isActive }: Page3Props) {
+  const {
+    topic,
+    setTopic,
+    blog,
+    setBlog,
+    posts,
+    setPosts,
+    metaDescription,
+    setMetaDescription,
+    activePersona,
+    loading,
+    error,
+    postsLoading,
+    postsError,
+    generateBlog,
+    generateLinkedInPosts,
+    resetBlogState,
+  } = useBlogGeneration();
 
-  const [suggestions, setSuggestions] = useState<string[]>(() => globalTopicEngine.getBatch(5));
+  const [suggestions, setSuggestions] = useState<string[]>([
+    "Raw Food vs Kibble: Pros & Cons",
+    "Dangerous Household Foods Toxic to Dogs",
+    "Curing Separation Anxiety in Rescue Dogs",
+    "Best High-Protein Diets for Active Dogs",
+    "Understanding Dog Body Language & Signals",
+  ]);
 
   useEffect(() => {
     setSuggestions(globalTopicEngine.getBatch(5));
@@ -771,18 +1329,30 @@ export default function Page3({ onBack }: Page3Props) {
     setTimeout(() => setIsSuggesting(false), 350);
   };
 
-  const [posts, setPosts] = useState<LinkedInPosts | null>(null);
-  const [postsLoading, setPostsLoading] = useState(false);
-  const [postsError, setPostsError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<keyof LinkedInPosts>("safeBet");
+  const [asideTab, setAsideTab] = useState<"social" | "meta">("social");
+  const [highlightedKeyword, setHighlightedKeyword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [blogCopied, setBlogCopied] = useState(false);
-  const [metaDescription, setMetaDescription] = useState("");
   const [metaCopied, setMetaCopied] = useState(false);
+  const [allPostsCopied, setAllPostsCopied] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  // State for smooth loader completion exit & workspace crossfade
+  const [loaderMounted, setLoaderMounted] = useState(false);
+  const [showWorkspace, setShowWorkspace] = useState(false);
+
+  useEffect(() => {
+    if (loading) {
+      setLoaderMounted(true);
+      setShowWorkspace(false);
+    } else if (error) {
+      setLoaderMounted(false);
+    }
+  }, [loading, error]);
 
   const charMax = 150;
 
@@ -808,6 +1378,9 @@ export default function Page3({ onBack }: Page3Props) {
   const handleUpdateBlog = (updated: SeoBlog) => {
     const count = calculateWords(updated);
     setBlog({ ...updated, approxWordCount: count });
+    setIsEditing(false);
+    setIsFocusMode(false);
+    setToastMsg("✓ Blog changes saved successfully!");
   };
 
   const generateMetaDescription = (topicInput: string): string => {
@@ -864,57 +1437,35 @@ export default function Page3({ onBack }: Page3Props) {
     return base;
   };
 
-  const copyMetaDescription = async () => {
-    if (!metaDescription) return;
-    await navigator.clipboard.writeText(metaDescription);
+  const [metaOption, setMetaOption] = useState<"opt1" | "opt2">("opt1");
+  const [metaDescriptionAlt, setMetaDescriptionAlt] = useState("");
+
+  useEffect(() => {
+    if (topic && topic.trim()) {
+      const cleanTopic = topic.trim().replace(/\.$/, "");
+      const lower = cleanTopic.toLowerCase();
+      setMetaDescriptionAlt(
+        `Discover expert vet advice on ${lower}. Learn key warning signs, normal health cycles, and practical care tips to keep your pet happy and thriving.`
+      );
+    }
+  }, [topic, blog]);
+
+  const copyMetaDescription = async (e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
+    const textToCopy = metaOption === "opt1" ? metaDescription : metaDescriptionAlt;
+    if (!textToCopy) return;
+    await navigator.clipboard.writeText(textToCopy);
     setMetaCopied(true);
+    setToastMsg("Meta description snippet copied to clipboard!");
     setTimeout(() => setMetaCopied(false), 1500);
   };
 
-  const generate = async () => {
-    setLoading(true);
-    setError(null);
-    setPosts(null);
-    setPostsError(null);
-    try {
-      const res = await fetch("/api/generate-blogs", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong.");
-      setBlog(data.blog);
-      setMetaDescription(generateMetaDescription(topic));
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+  const handleNewBlog = () => {
+    resetBlogState();
   };
 
-  const generateLinkedInPosts = async () => {
-    if (!blog) return;
-    setPostsLoading(true);
-    setPostsError(null);
-    try {
-      const res = await fetch("/api/generate-linkedin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blog }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong.");
-      setPosts(data.posts);
-      setActiveTab("safeBet");
-    } catch (err) {
-      setPostsError((err as Error).message);
-    } finally {
-      setPostsLoading(false);
-    }
-  };
-
-  const copyActivePost = async () => {
+  const copyActivePost = async (e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
     if (!posts) return;
     await navigator.clipboard.writeText(posts[activeTab]);
     setCopied(true);
@@ -982,7 +1533,8 @@ export default function Page3({ onBack }: Page3Props) {
     return `<h1 style="font-size: 20pt; font-weight: bold;">${b.title}</h1>${introHtml}${sectionHtml}${ctaHtml}${conclusionHtml}${faqHtml}`;
   };
 
-  const exportAsText = (b: SeoBlog) => {
+  const exportAsText = (b: SeoBlog, e?: React.MouseEvent) => {
+    if (e) triggerMicroConfetti(e);
     const fullText = getBlogText(b);
     const blobUrl = URL.createObjectURL(new Blob([fullText], { type: "text/markdown" }));
     const a = document.createElement("a");
@@ -992,42 +1544,9 @@ export default function Page3({ onBack }: Page3Props) {
     URL.revokeObjectURL(blobUrl);
   };
 
-  const exportAsWord = (b: SeoBlog) => {
-    const fullHtml = getBlogHtml(b);
-    const wordDocumentHtml = `
-      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head>
-        <meta charset='utf-8'>
-        <title>${b.title}</title>
-        <style>
-          body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.6; color: #1e293b; margin: 1in; }
-          h1 { font-size: 22pt; font-weight: bold; color: #0f172a; margin-bottom: 12pt; }
-          h2 { font-size: 15pt; font-weight: bold; color: #166534; margin-top: 18pt; margin-bottom: 6pt; }
-          h3 { font-size: 13pt; font-weight: bold; color: #166534; margin-top: 12pt; margin-bottom: 4pt; }
-          p { margin-bottom: 10pt; line-height: 1.6; }
-          ul { margin-bottom: 10pt; padding-left: 20pt; }
-          li { margin-bottom: 4pt; }
-          a { color: #68B77A; font-weight: bold; text-decoration: underline; }
-        </style>
-      </head>
-      <body>
-        ${fullHtml}
-      </body>
-      </html>
-    `;
 
-    const blob = new Blob(["\ufeff" + wordDocumentHtml], { type: "application/msword" });
-    const blobUrl = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `${b.title.replace(/\s+/g, "-").toLowerCase()}.doc`;
-    a.click();
-    URL.revokeObjectURL(blobUrl);
-  };
 
-  const exportAsPdf = () => {
-    window.print();
-  };
+
 
   const downloadMarkdown = (b: SeoBlog) => {
     let md = `# ${b.title}\n\n`;
@@ -1101,18 +1620,180 @@ export default function Page3({ onBack }: Page3Props) {
     setToastMsg("Downloaded HTML (.html) file!");
   };
 
-  const copyAllLinkedInPosts = async (p: LinkedInPosts) => {
-    const combined = `=== SAFE BET (Standard Professional) ===\n\n${p.safeBet}\n\n` +
-      `========================================\n` +
-      `=== CLEAN LABEL (Short & Punchy) ===\n\n${p.cleanLabel}\n\n` +
-      `========================================\n` +
-      `=== MICRO-STORY (Emotional Narrative) ===\n\n${p.microStory}`;
+  const exportAsWord = (b: SeoBlog, e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
+    const title = b.title || "CuddlyTails_SEO_Blog";
+    const filename = `${title.replace(/[^a-zA-Z0-9_-]/g, "_")}.doc`;
+    const wordCount = b.approxWordCount || calculateWords(b) || 1200;
 
-    await navigator.clipboard.writeText(combined);
-    setToastMsg("All 3 LinkedIn posts copied to clipboard!");
+    const introHtml = Array.isArray(b.intro)
+      ? b.intro.map((p) => `<p><em>${p}</em></p>`).join("")
+      : (b.intro || (b as any).introduction ? `<p><em>${b.intro || (b as any).introduction}</em></p>` : "");
+
+    const sectionsHtml = (b.sections || []).map((s) => {
+      const pBlock = (s.paragraphs ?? []).map((p) => `<p>${p}</p>`).join("");
+      const bBlock = (s.bullets?.length ?? 0) > 0
+        ? `<ul>${s.bullets!.map((item) => `<li>${item}</li>`).join("")}</ul>`
+        : "";
+      const stBlock = (s.subtopics ?? [])
+        .map((st) => `<h3>${st.subheading}</h3>${(st.paragraphs ?? []).map((p) => `<p>${p}</p>`).join("")}`)
+        .join("");
+      return `<h2>${s.heading}</h2>${pBlock}${bBlock}${stBlock}`;
+    }).join("");
+
+    const ctaHtml = b.vetCta ? `<p><strong>Veterinary Advice:</strong> ${b.vetCta}</p>` : "";
+    const conclusionHtml = (b.conclusion?.length ?? 0) > 0
+      ? `<h2>Conclusion</h2>${b.conclusion.map((p) => `<p>${p}</p>`).join("")}`
+      : "";
+    const faqHtml = (b.faqs?.length ?? 0) > 0
+      ? `<h2>Frequently Asked Questions (FAQs)</h2>${b.faqs.map((faq) => `<div class="faq-item"><div class="faq-q">Q: ${faq.question}</div><div>A: ${faq.answer}</div></div>`).join("")}`
+      : "";
+
+    const wordHtml = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head>
+        <meta charset='utf-8'>
+        <title>${title}</title>
+        <style>
+          body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; line-height: 1.6; color: #111B25; padding: 20px; }
+          h1 { color: #1B4D3E; font-size: 22pt; margin-bottom: 8pt; border-bottom: 2px solid #68B77A; padding-bottom: 6pt; }
+          h2 { color: #1B4D3E; font-size: 16pt; margin-top: 18pt; margin-bottom: 6pt; }
+          h3 { color: #1B4D3E; font-size: 13pt; margin-top: 12pt; margin-bottom: 4pt; }
+          p { margin-bottom: 10pt; text-align: justify; }
+          .meta-box { background: #F0F7F2; border: 1px solid #68B77A; padding: 12pt; border-radius: 6pt; margin-bottom: 16pt; }
+          .faq-item { background: #FAFAFA; border-left: 3pt solid #68B77A; padding: 8pt 12pt; margin-bottom: 10pt; }
+          .faq-q { font-weight: bold; color: #1B4D3E; margin-bottom: 4pt; }
+          .footer { font-size: 9pt; color: #737C82; margin-top: 24pt; border-top: 1pt solid #DDD; padding-top: 8pt; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="meta-box">
+          <strong>🐾 CuddlyTails SEO Blog Article</strong><br/>
+          <strong>Topic Title:</strong> ${title}<br/>
+          <strong>Word Count:</strong> ~${wordCount} words &bull; <strong>Read Time:</strong> ${getReadTime(wordCount)}
+        </div>
+
+        <h1>${title}</h1>
+        ${introHtml}
+        ${sectionsHtml}
+        ${ctaHtml}
+        ${conclusionHtml}
+        ${faqHtml}
+
+        <div class="footer">
+          Generated by CuddlyTails Content Engine &bull; Confidential & &copy; ${new Date().getFullYear()} CuddlyTails
+        </div>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob(["\ufeff", wordHtml], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setToastMsg("Downloaded Word (.doc) document!");
   };
 
-  const copyBlogToClipboard = async (b: SeoBlog) => {
+  const exportAsPdf = (b: SeoBlog, e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      setToastMsg("Please allow popups to export PDF printout.");
+      return;
+    }
+
+    const title = b.title || "CuddlyTails_SEO_Blog";
+    const wordCount = b.approxWordCount || calculateWords(b) || 1200;
+
+    const introHtml = Array.isArray(b.intro)
+      ? b.intro.map((p) => `<p>${p}</p>`).join("")
+      : (b.intro || (b as any).introduction ? `<p>${b.intro || (b as any).introduction}</p>` : "");
+
+    const sectionsHtml = (b.sections || []).map((s) => {
+      const pBlock = (s.paragraphs ?? []).map((p) => `<p>${p}</p>`).join("");
+      const bBlock = (s.bullets?.length ?? 0) > 0
+        ? `<ul>${s.bullets!.map((item) => `<li>${item}</li>`).join("")}</ul>`
+        : "";
+      const stBlock = (s.subtopics ?? [])
+        .map((st) => `<h3>${st.subheading}</h3>${(st.paragraphs ?? []).map((p) => `<p>${p}</p>`).join("")}`)
+        .join("");
+      return `<h2>${s.heading}</h2>${pBlock}${bBlock}${stBlock}`;
+    }).join("");
+
+    const ctaHtml = b.vetCta ? `<div class="intro"><strong>Veterinary Advice:</strong> ${b.vetCta}</div>` : "";
+    const conclusionHtml = (b.conclusion?.length ?? 0) > 0
+      ? `<h2>Conclusion</h2>${b.conclusion.map((p) => `<p>${p}</p>`).join("")}`
+      : "";
+    const faqHtml = (b.faqs?.length ?? 0) > 0
+      ? `<h2>Frequently Asked Questions</h2>${b.faqs.map((faq) => `<div class="faq-card"><div class="faq-q">Q: ${faq.question}</div><div class="faq-a">A: ${faq.answer}</div></div>`).join("")}`
+      : "";
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${title} - CuddlyTails Printable Document</title>
+        <style>
+          @page { size: A4; margin: 20mm; }
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111B25; line-height: 1.6; padding: 10px; }
+          .header-bar { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #68B77A; padding-bottom: 12px; margin-bottom: 20px; }
+          .brand-logo { font-size: 20px; font-weight: bold; color: #1B4D3E; }
+          .meta-chip { background: #EAF5EC; color: #1B4D3E; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 12px; }
+          h1 { color: #111B25; font-size: 24px; margin-bottom: 14px; }
+          .intro { font-size: 15px; color: #3A4750; font-style: italic; line-height: 1.7; background: #F8FAF9; padding: 14px; border-left: 4px solid #68B77A; margin-bottom: 24px; }
+          h2 { color: #1B4D3E; font-size: 18px; margin-top: 24px; margin-bottom: 10px; border-bottom: 1px solid #E5E9EB; padding-bottom: 4px; }
+          h3 { color: #15803d; font-size: 15px; margin-top: 16px; margin-bottom: 8px; }
+          p { font-size: 14px; color: #232C33; margin-bottom: 14px; text-align: justify; }
+          .faq-card { background: #FAFAFA; border: 1px solid #E2E8F0; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px; }
+          .faq-q { font-size: 14px; font-weight: bold; color: #1B4D3E; margin-bottom: 6px; }
+          .faq-a { font-size: 13.5px; color: #334155; }
+          .footer { margin-top: 40px; font-size: 11px; color: #94A3B8; text-align: center; border-top: 1px solid #E2E8F0; padding-top: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="header-bar">
+          <div class="brand-logo">🐾 CuddlyTails SEO Blog</div>
+          <div class="meta-chip">~${wordCount} words &bull; ${getReadTime(wordCount)}</div>
+        </div>
+
+        <h1>${title}</h1>
+        <div class="intro">${introHtml}</div>
+        ${sectionsHtml}
+        ${ctaHtml}
+        ${conclusionHtml}
+        ${faqHtml}
+
+        <div class="footer">
+          Printed from CuddlyTails SEO & Content Suite &bull; ${new Date().toLocaleDateString()}
+        </div>
+        <script>
+          window.onload = function() { window.print(); };
+        </script>
+      </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+    setToastMsg("Opened print dialog for PDF export!");
+  };
+
+  const copyAllLinkedInPosts = async (p: LinkedInPosts, e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
+    const combined = `=== OPTION 1: SAFE BET ===\n${p.safeBet}\n\n=== OPTION 2: CLEAN-LABEL ===\n${p.cleanLabel}\n\n=== OPTION 3: MICRO-STORY ===\n${p.microStory}`;
+    await navigator.clipboard.writeText(combined);
+    setToastMsg("All 3 social posts copied to clipboard!");
+    setAllPostsCopied(true);
+    setTimeout(() => setAllPostsCopied(false), 2000);
+  };
+
+  const copyBlogToClipboard = async (b: SeoBlog, e?: React.MouseEvent) => {
+    triggerMicroConfetti(e);
     const fullText = getBlogText(b);
     const fullHtml = getBlogHtml(b);
 
@@ -1142,13 +1823,24 @@ export default function Page3({ onBack }: Page3Props) {
     return `${mins} min read`;
   };
 
+  const isCompactWorkspace = Boolean(blog);
+
   return (
-    <div className="p3-root">
+    <div className={`p3-root ${isCompactWorkspace ? "p3-root--compact" : ""}`}>
       {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg(null)} />}
 
-      {/* ── Page header ──────────────────────────────────────── */}
-      <div className="p3-header">
+      {/* ── Page header (Collapses smoothly ONLY AFTER blog generation finishes 100%) ── */}
+      <div className={`p3-header p3-header-collapsible ${isCompactWorkspace ? "p3-collapsed" : ""}`}>
         <div className="p3-header-text">
+          <div className="p3-brand-persona-badge">
+            <span className="p3-persona-dot" />
+            <span className="p3-persona-icon">{activePersona.icon}</span>
+            <span className="p3-persona-label">ACTIVE BRAND PERSONA:</span>
+            <span className="p3-persona-value">{activePersona.name}</span>
+            <span className="p3-persona-sep">•</span>
+            <span className="p3-persona-target">{activePersona.target}</span>
+          </div>
+          <br />
           <span className="p3-step-chip">STEP 3 OF 3</span>
           <h1 className="p3-heading">SEO Blog Generator</h1>
           <p className="p3-subheading">
@@ -1158,8 +1850,16 @@ export default function Page3({ onBack }: Page3Props) {
         </div>
       </div>
 
-      {/* ── Topic input (Matching Reference Screenshot Pixel-Accurately) ── */}
-      <div className="p3-field">
+      {/* ── Topic input (Pinned Top-Center in Compact Mode) ── */}
+      <form
+        className={`p3-field ${isCompactWorkspace ? "p3-field--compact" : ""}`}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!loading && topic.trim()) {
+            generateBlog(topic);
+          }
+        }}
+      >
         <div className="p3-input-bar">
           <span className="p3-input-sparkle"><GreenSparklesIcon /></span>
           
@@ -1172,7 +1872,12 @@ export default function Page3({ onBack }: Page3Props) {
             maxLength={charMax}
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !loading && topic.trim()) generate();
+              if (e.key === "Enter") {
+                e.preventDefault();
+                if (!loading && topic.trim()) {
+                  generateBlog(topic);
+                }
+              }
             }}
           />
 
@@ -1181,67 +1886,97 @@ export default function Page3({ onBack }: Page3Props) {
 
           <button
             type="button"
-            className={`p3-input-idea-btn ${isSuggesting ? "p3-idea-pop" : ""}`}
+            className={`p3-input-idea-btn ${isSuggesting ? "p3-idea-pop spin-anim" : ""}`}
             onClick={handleSuggestTopic}
-            title="Suggest a topic"
+            title="Suggest a new topic idea"
             aria-label="Suggest a topic"
           >
-            💡
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#68B77A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", minWidth: 20, minHeight: 20 }}>
+              <path
+                d="M12 2a7 7 0 0 0-7 7c0 2.38 1.19 4.47 3 5.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26c1.81-1.27 3-3.36 3-5.74a7 7 0 0 0-7-7z"
+                fill="rgba(104, 183, 122, 0.3)"
+              />
+              <path d="M9 18h6" />
+              <path d="M10 21h4" />
+            </svg>
           </button>
 
           <button
             id="p3-gen-btn"
+            type="submit"
             className="p3-input-gen-btn"
-            onClick={generate}
             disabled={loading || !topic.trim()}
           >
             {loading ? <span className="p3-spinner" /> : <GreenSparklesIcon />}
-            {loading ? "Generating…" : "Generate Blog"}
+            {loading ? "Generating…" : blog ? "Regenerate" : "Generate Blog"}
           </button>
-        </div>
 
-        {/* Input Meta Note */}
-        <div className="p3-field-meta">
-          <span>Press Enter to generate</span>
-        </div>
-
-        {/* Inspiration Prompt Chips with Paw Icon */}
-        <div className="p3-chips-wrap">
-          <div className="p3-chips-header">
-            <span className="p3-chips-label">IDEAS:</span>
+          {isCompactWorkspace && (
             <button
               type="button"
-              className="p3-shuffle-btn"
-              onClick={shuffleIdeas}
-              title="Shuffle new topic ideas"
+              className="p3-btn p3-btn--ghost p3-btn--sm"
+              onClick={handleNewBlog}
+              title="Start a new blog topic"
+              style={{ height: "42px", marginLeft: "4px" }}
             >
-              🔀 Shuffle ideas
+              New Blog
             </button>
+          )}
+        </div>
+
+        {/* Collapsible Meta Note & Idea Chips */}
+        <div className={`p3-chips-collapsible ${isCompactWorkspace ? "p3-collapsed" : ""}`}>
+          <div className="p3-field-meta">
+            <span>Press Enter to generate</span>
           </div>
-          <div className="p3-chips-list">
-            {suggestions.map((chipText) => (
+
+          <div className="p3-chips-wrap">
+            <div className="p3-chips-header">
+              <span className="p3-chips-label">IDEAS:</span>
               <button
-                key={chipText}
                 type="button"
-                className={`p3-chip-btn${topic === chipText ? " active" : ""}`}
-                onClick={() => setTopic(chipText)}
+                className="p3-shuffle-btn"
+                onClick={shuffleIdeas}
+                title="Shuffle new topic ideas"
               >
-                🐾 {chipText}
+                🔀 Shuffle ideas
               </button>
-            ))}
+            </div>
+            <div className="p3-chips-list">
+              {suggestions.map((chipText) => (
+                <button
+                  key={chipText}
+                  type="button"
+                  className={`p3-chip-btn${topic === chipText ? " active" : ""}`}
+                  onClick={() => {
+                    setTopic(chipText);
+                    document.getElementById("p3-topic-input")?.focus();
+                  }}
+                >
+                  🐾 {chipText}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </form>
 
       {/* ── Error ────────────────────────────────────────────── */}
       {error && <p className="p3-error">{error}</p>}
 
       {/* ── Funky Loader Modal when AI is generating blog ── */}
-      {loading && <FunkyCounterLoader topic={topic} />}
+      {loaderMounted && (
+        <FunkyCounterLoader
+          topic={topic}
+          isDone={!loading && !!blog}
+          onCrossfadeStart={() => setShowWorkspace(true)}
+          onFullyExited={() => setLoaderMounted(false)}
+        />
+      )}
 
-      {/* ── Workspace (two-column after generation) ──────────── */}
-      {!loading && blog && (
-        <div className="p3-workspace text-reveal-entry">
+      {/* ── Workspace (two-column after generation with smooth crossfade) ──────────── */}
+      {blog && (showWorkspace || !loaderMounted) && (
+        <div className={`p3-workspace text-reveal-entry p3-workspace--expanded p3-workspace-crossfade ${showWorkspace || !loaderMounted ? "visible" : ""}`}>
 
           {/* LEFT — Blog preview */}
           <div className="p3-panel">
@@ -1253,17 +1988,17 @@ export default function Page3({ onBack }: Page3Props) {
               <div className="p3-panel-bar-right">
                 <button
                   id="p3-top-copy-blog-btn"
-                  className="p3-btn p3-btn--ghost p3-btn--sm"
-                  onClick={() => copyBlogToClipboard(blog)}
+                  className={`p3-btn p3-btn--ghost p3-btn--sm ${blogCopied ? "copied-pop" : ""}`}
+                  onClick={(e) => copyBlogToClipboard(blog, e)}
                   title="Copy formatted blog content"
                 >
-                  <CopyIcon />
+                  {blogCopied ? <CheckIcon /> : <CopyIcon />}
                   {blogCopied ? "Copied!" : "Copy"}
                 </button>
                 <button
                   id="p3-top-export-btn"
                   className="p3-btn p3-btn--ghost p3-btn--sm"
-                  onClick={() => exportAsText(blog)}
+                  onClick={(e) => exportAsText(blog, e)}
                   title="Export markdown (.md) file"
                 >
                   <ExportIcon />
@@ -1298,12 +2033,13 @@ export default function Page3({ onBack }: Page3Props) {
                           type="button"
                           className="p3-dropdown-item"
                           onClick={() => {
-                            setIsEditing(!isEditing);
+                            setIsEditing(true);
+                            setIsFocusMode(true);
                             setMenuOpen(false);
                           }}
                         >
-                          <span className="p3-dropdown-icon">{isEditing ? "✅" : "✏️"}</span>
-                          <span>{isEditing ? "Exit Edit Mode" : "Edit Blog Content"}</span>
+                          <span className="glass-icon-badge glass-icon-badge--sm"><EditPenIcon /></span>
+                          <span>Edit Blog in Studio Canvas</span>
                         </button>
 
                         <button
@@ -1314,7 +2050,7 @@ export default function Page3({ onBack }: Page3Props) {
                             setMenuOpen(false);
                           }}
                         >
-                          <span className="p3-dropdown-icon">📥</span>
+                          <span className="glass-icon-badge glass-icon-badge--sm"><DownloadIcon /></span>
                           <span>Download Markdown (.md)</span>
                         </button>
 
@@ -1326,31 +2062,31 @@ export default function Page3({ onBack }: Page3Props) {
                             setMenuOpen(false);
                           }}
                         >
-                          <span className="p3-dropdown-icon">🌐</span>
+                          <span className="glass-icon-badge glass-icon-badge--sm"><GlobeIcon /></span>
                           <span>Download HTML (.html)</span>
                         </button>
 
                         <button
                           type="button"
                           className="p3-dropdown-item"
-                          onClick={() => {
-                            exportAsWord(blog);
+                          onClick={(e) => {
+                            exportAsWord(blog, e);
                             setMenuOpen(false);
                           }}
                         >
-                          <span className="p3-dropdown-icon">📝</span>
+                          <span className="glass-icon-badge glass-icon-badge--sm"><WordDocIcon /></span>
                           <span>Download Word (.doc)</span>
                         </button>
 
                         <button
                           type="button"
                           className="p3-dropdown-item"
-                          onClick={() => {
-                            exportAsPdf();
+                          onClick={(e) => {
+                            exportAsPdf(blog, e);
                             setMenuOpen(false);
                           }}
                         >
-                          <span className="p3-dropdown-icon">📄</span>
+                          <span className="glass-icon-badge glass-icon-badge--sm"><PdfFileIcon /></span>
                           <span>Download PDF / Print</span>
                         </button>
                       </div>
@@ -1360,74 +2096,42 @@ export default function Page3({ onBack }: Page3Props) {
               </div>
             </div>
 
-            {/* Badges Bar */}
-            <div className="p3-dashboard-bar">
-              <span className="p3-dash-badge p3-dash-badge--purple">📝 {calculateWords(blog).toLocaleString()} words</span>
-              <span className="p3-dash-badge p3-dash-badge--blue">🔤 {calculateChars(blog).toLocaleString()} chars</span>
-              <span className="p3-dash-badge p3-dash-badge--cream">⏱️ {getReadTime(calculateWords(blog))}</span>
-              <span className="p3-dash-badge p3-dash-badge--seo">🚀 SEO 94/100</span>
-            </div>
+            {/* Live SEO Quality Gauge & Metrics */}
+            <SeoMeter
+              blog={blog}
+              metaDescription={metaDescription}
+              isActive={isActive}
+              highlightedKeyword={highlightedKeyword}
+              onSelectKeyword={setHighlightedKeyword}
+            />
 
             <div className="p3-scroll">
-              {/* Meta Description Section */}
-              <div className="p3-meta-card">
-                <div className="p3-meta-header">
-                  <div className="p3-meta-title">
-                    <span className="p3-meta-icon">🔍</span>
-                    <span>SEO Meta Description</span>
-                  </div>
-                  <div className="p3-meta-header-right">
-                    <span
-                      className={`p3-meta-count ${
-                        metaDescription.length >= 150 && metaDescription.length <= 160
-                          ? "p3-meta-count--optimal"
-                          : ""
-                      }`}
-                    >
-                      {metaDescription.length} / 160 chars
-                    </span>
-                    <button
-                      type="button"
-                      className="p3-btn p3-btn--ghost p3-btn--sm"
-                      onClick={copyMetaDescription}
-                    >
-                      <CopyIcon />
-                      {metaCopied ? "Copied!" : "Copy Meta"}
-                    </button>
-                  </div>
-                </div>
-                <textarea
-                  className="p3-meta-textarea"
-                  value={metaDescription}
-                  onChange={(e) => setMetaDescription(e.target.value)}
-                  placeholder="SEO-friendly meta description (150–160 characters)..."
-                  rows={3}
-                />
-                <div className="p3-meta-footer">
-                  <span>Target length: 150–160 characters for search engine snippets.</span>
-                </div>
-              </div>
-
-              <BlogRenderer
-                blog={blog}
-                isEditing={isEditing}
-                onUpdateBlog={handleUpdateBlog}
-              />
+              <BlogRenderer blog={blog} highlightedKeyword={highlightedKeyword} />
             </div>
 
             <div className="p3-panel-actions">
               <button
-                id="p3-copy-blog-btn"
-                className="p3-btn p3-btn--ghost"
-                onClick={() => copyBlogToClipboard(blog)}
+                id="p3-edit-blog-btn"
+                className="p3-btn p3-btn--teal"
+                onClick={() => {
+                  setIsEditing(true);
+                  setIsFocusMode(true);
+                }}
               >
-                <CopyIcon />
+                ✏️ Edit Blog in Studio
+              </button>
+              <button
+                id="p3-copy-blog-btn"
+                className={`p3-btn p3-btn--ghost ${blogCopied ? "copied-pop" : ""}`}
+                onClick={(e) => copyBlogToClipboard(blog, e)}
+              >
+                {blogCopied ? <CheckIcon /> : <CopyIcon />}
                 {blogCopied ? "Copied!" : "Copy"}
               </button>
               <button
                 id="p3-export-btn"
                 className="p3-btn p3-btn--ghost"
-                onClick={() => exportAsText(blog)}
+                onClick={(e) => exportAsText(blog, e)}
               >
                 <ExportIcon />
                 Export .md
@@ -1435,112 +2139,261 @@ export default function Page3({ onBack }: Page3Props) {
             </div>
           </div>
 
-          {/* RIGHT — LinkedIn posts */}
+          {/* RIGHT — Tabbed Sidebar (Social Engine vs Meta Snippet & Keywords) */}
           <div className="p3-panel p3-panel--aside">
-            <div className="p3-panel-bar">
-              <span className="p3-panel-label p3-li-title">
-                <span className="p3-li-icon"><LinkedInIcon /></span>
-                LinkedIn Posts
-              </span>
-            </div>
-
-            <p className="p3-aside-desc">
-              Turn this blog into LinkedIn posts<br />for different content styles.
-            </p>
-
-            <button
-              id="p3-gen-posts-btn"
-              className="p3-btn p3-btn--teal p3-btn--full"
-              onClick={generateLinkedInPosts}
-              disabled={postsLoading}
-            >
-              {postsLoading ? <span className="p3-spinner" /> : "+ Generate Posts"}
-            </button>
-
-            <hr className="p3-aside-divider" />
-            <p className="p3-aside-style-label">CONTENT STYLE</p>
-
-            <div className="p3-tabs">
-              {TABS.map((tab) => (
+            <div className="p3-panel-bar p3-aside-header-bar">
+              <div className="p3-aside-tab-bar">
                 <button
-                  key={tab.key}
-                  id={`p3-tab-${tab.key}`}
-                  className={`p3-tab${activeTab === tab.key ? " p3-tab--active" : ""}`}
-                  onClick={() => setActiveTab(tab.key)}
+                  type="button"
+                  className={`p3-aside-tab ${asideTab === "social" ? "active" : ""}`}
+                  onClick={() => setAsideTab("social")}
                 >
-                  {tab.label}
+                  <LinkedInIcon /> Social Engine
                 </button>
-              ))}
+                <button
+                  type="button"
+                  className={`p3-aside-tab ${asideTab === "meta" ? "active" : ""}`}
+                  onClick={() => setAsideTab("meta")}
+                >
+                  <SearchIcon /> Meta & SEO Keywords
+                </button>
+              </div>
             </div>
 
-            {postsError && <p className="p3-error p3-error--sm">{postsError}</p>}
+            <div className="p3-aside-tab-body">
+              {asideTab === "social" ? (
+                <>
+                  <p className="p3-aside-desc">
+                    Turn this blog into multi-channel social posts for LinkedIn, Instagram, and X.
+                  </p>
 
-            {posts && (
-              <>
-                <p className="p3-section-label">PREVIEW</p>
-                <div className="p3-preview">
-                  <p className="p3-preview-text">{posts[activeTab]}</p>
-                </div>
+                  <button
+                    id="p3-gen-posts-btn"
+                    className="p3-btn p3-btn--teal p3-btn--full"
+                    onClick={generateLinkedInPosts}
+                    disabled={postsLoading}
+                  >
+                    {postsLoading ? <span className="p3-spinner" /> : "+ Generate Social Posts"}
+                  </button>
 
-                <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                  <button
-                    id="p3-copy-post-btn"
-                    className="p3-btn p3-btn--ghost p3-btn--full"
-                    onClick={copyActivePost}
-                    style={{ flex: 1 }}
-                  >
-                    <CopyIcon />
-                    {copied ? "Copied!" : "Copy Active"}
-                  </button>
-                  <button
-                    type="button"
-                    className="p3-btn p3-btn--ghost p3-btn--full"
-                    onClick={() => copyAllLinkedInPosts(posts)}
-                    title="Copy all 3 post variations at once"
-                    style={{ flex: 1 }}
-                  >
-                    📋 Copy All 3
-                  </button>
+                  <hr className="p3-aside-divider" />
+                  <p className="p3-aside-style-label">CONTENT ANGLE</p>
+
+                  <div className="p3-tabs">
+                    {TABS.map((tab) => (
+                      <button
+                        key={tab.key}
+                        id={`p3-tab-${tab.key}`}
+                        className={`p3-tab${activeTab === tab.key ? " p3-tab--active" : ""}`}
+                        onClick={() => setActiveTab(tab.key)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {postsError && <p className="p3-error p3-error--sm">{postsError}</p>}
+
+                  {posts && (
+                    <>
+                      <p className="p3-section-label">PREVIEW</p>
+                      <div className="p3-preview">
+                        <p className="p3-preview-text">{posts[activeTab]}</p>
+                      </div>
+
+                      <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                        <button
+                          id="p3-copy-post-btn"
+                          className={`p3-btn p3-btn--ghost p3-btn--full ${copied ? "copied-pop" : ""}`}
+                          onClick={(e) => copyActivePost(e)}
+                          style={{ flex: 1 }}
+                        >
+                          {copied ? <CheckIcon /> : <CopyIcon />}
+                          {copied ? "Copied!" : "Copy Active"}
+                        </button>
+                        <button
+                          type="button"
+                          className={`p3-btn p3-btn--ghost p3-btn--full ${allPostsCopied ? "copied-pop" : ""}`}
+                          onClick={(e) => copyAllLinkedInPosts(posts, e)}
+                          title="Copy all 3 post variations at once"
+                          style={{ flex: 1 }}
+                        >
+                          {allPostsCopied ? <CheckIcon /> : <CopyIcon />}
+                          {allPostsCopied ? " Copied All!" : " Copy All 3"}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div className="p3-meta-card" style={{ background: "transparent", border: "none", padding: 0, margin: 0, boxShadow: "none" }}>
+                  <div className="p3-meta-header" style={{ marginBottom: 10 }}>
+                    <div className="p3-meta-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <SearchIcon />
+                      <span>Meta Description Snippets</span>
+                    </div>
+                    <button
+                      type="button"
+                      className={`p3-btn p3-btn--ghost p3-btn--sm ${metaCopied ? "copied-pop" : ""}`}
+                      onClick={(e) => copyMetaDescription(e)}
+                    >
+                      {metaCopied ? <CheckIcon /> : <CopyIcon />}
+                      {metaCopied ? "Copied!" : "Copy Active Meta"}
+                    </button>
+                  </div>
+
+                  {/* Option 1 vs Option 2 Sub-tabs */}
+                  <div className="p3-tabs" style={{ marginBottom: 10 }}>
+                    <button
+                      type="button"
+                      className={`p3-tab ${metaOption === "opt1" ? "p3-tab--active" : ""}`}
+                      onClick={() => setMetaOption("opt1")}
+                    >
+                      Option 1 (Search Focus)
+                    </button>
+                    <button
+                      type="button"
+                      className={`p3-tab ${metaOption === "opt2" ? "p3-tab--active" : ""}`}
+                      onClick={() => setMetaOption("opt2")}
+                    >
+                      Option 2 (Vet Advice)
+                    </button>
+                  </div>
+
+                  {metaOption === "opt1" ? (
+                    <>
+                      <textarea
+                        className="p3-meta-textarea"
+                        value={metaDescription}
+                        onChange={(e) => setMetaDescription(e.target.value)}
+                        placeholder="SEO-friendly meta description (150–160 characters)..."
+                        rows={4}
+                      />
+                      <div className="p3-meta-footer" style={{ marginTop: 6, marginBottom: 12 }}>
+                        <span
+                          className={`p3-meta-count ${
+                            metaDescription.length >= 150 && metaDescription.length <= 160
+                              ? "p3-meta-count--optimal"
+                              : ""
+                          }`}
+                        >
+                          {metaDescription.length} / 160 chars (Optimal: 150–160)
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <textarea
+                        className="p3-meta-textarea"
+                        value={metaDescriptionAlt}
+                        onChange={(e) => setMetaDescriptionAlt(e.target.value)}
+                        placeholder="Alternative SEO-friendly meta description (150–160 characters)..."
+                        rows={4}
+                      />
+                      <div className="p3-meta-footer" style={{ marginTop: 6, marginBottom: 12 }}>
+                        <span
+                          className={`p3-meta-count ${
+                            metaDescriptionAlt.length >= 150 && metaDescriptionAlt.length <= 160
+                              ? "p3-meta-count--optimal"
+                              : ""
+                          }`}
+                        >
+                          {metaDescriptionAlt.length} / 160 chars (Optimal: 150–160)
+                        </span>
+                      </div>
+                    </>
+                  )}
+
+                  <hr className="p3-aside-divider" style={{ margin: "14px 0" }} />
+                  <p className="p3-aside-style-label" style={{ marginBottom: 8 }}>KEYWORD DENSITY HIGHLIGHTER</p>
+                  <p className="p3-aside-desc" style={{ marginBottom: 12 }}>
+                    Click any keyword in the SEO meter below to highlight every occurrence in the article text with glowing green pills!
+                  </p>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {/* ── Studio Focus Canvas Modal ───────────────── */}
       {isFocusMode && blog && (
-        <div className="p3-focus-backdrop" onClick={() => setIsFocusMode(false)}>
+        <div
+          className="p3-focus-backdrop"
+          onClick={() => {
+            if (isEditing) {
+              if (
+                window.confirm(
+                  "You have unsaved changes in the Studio Canvas. Are you sure you want to exit without saving?"
+                )
+              ) {
+                setIsEditing(false);
+                setIsFocusMode(false);
+              }
+            } else {
+              setIsFocusMode(false);
+            }
+          }}
+        >
           <div className="p3-focus-modal" onClick={(e) => e.stopPropagation()}>
             <div className="p3-focus-header">
-              <div className="p3-focus-title">
+              <div className="p3-focus-left">
                 <RibbonIcon />
-                <span>{blog.title}</span>
+                <span className="p3-focus-title-text" title={blog.title}>{blog.title}</span>
                 <span className="p3-dash-badge p3-dash-badge--purple">~{blog.approxWordCount} words</span>
+                {isEditing && (
+                  <span className="p3-dash-badge p3-dash-badge--seo" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <span className="glass-icon-badge glass-icon-badge--sm"><EditPenIcon /></span>
+                    Studio Canvas Active
+                  </span>
+                )}
               </div>
               <div className="p3-focus-actions">
-                <button
-                  className="p3-btn p3-btn--ghost"
-                  onClick={() => copyBlogToClipboard(blog)}
-                >
-                  <CopyIcon /> {blogCopied ? "Copied!" : "Copy"}
-                </button>
-                <button
-                  className="p3-btn p3-btn--ghost"
-                  onClick={() => exportAsText(blog)}
-                >
-                  <ExportIcon /> Export .md
-                </button>
-                <button
-                  className="p3-btn p3-btn--teal"
-                  onClick={() => setIsFocusMode(false)}
-                >
-                  ✕ Exit Studio
-                </button>
+                {!isEditing ? (
+                  <>
+                    <button
+                      className="p3-btn p3-btn--teal"
+                      onClick={() => setIsEditing(true)}
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                    >
+                      <span className="glass-icon-badge glass-icon-badge--sm"><EditPenIcon /></span>
+                      Edit Blog
+                    </button>
+                    <button
+                      className={`p3-btn p3-btn--ghost ${blogCopied ? "copied-pop" : ""}`}
+                      onClick={(e) => copyBlogToClipboard(blog, e)}
+                    >
+                      {blogCopied ? <CheckIcon /> : <CopyIcon />} {blogCopied ? "Copied!" : "Copy"}
+                    </button>
+                    <button
+                      className="p3-btn p3-btn--ghost"
+                      onClick={(e) => exportAsText(blog, e)}
+                    >
+                      <ExportIcon /> Export .md
+                    </button>
+                    <button
+                      className="p3-btn p3-btn--ghost"
+                      onClick={() => setIsFocusMode(false)}
+                    >
+                      ✕ Exit Studio
+                    </button>
+                  </>
+                ) : null}
               </div>
             </div>
             <div className="p3-focus-content">
-              <BlogRenderer blog={blog} />
+              {isEditing ? (
+                <StudioCanvasEditor
+                  blog={blog}
+                  onSave={handleUpdateBlog}
+                  onCancel={() => {
+                    setIsEditing(false);
+                    setIsFocusMode(false);
+                  }}
+                />
+              ) : (
+                <BlogRenderer blog={blog} />
+              )}
             </div>
           </div>
         </div>

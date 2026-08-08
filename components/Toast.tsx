@@ -18,8 +18,18 @@ export default function Toast({ message, onClose, duration = 2500 }: ToastProps)
     <div className="toast-container" role="alert">
       <div className="toast-card">
         <span className="toast-icon" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#68B77A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
+          <svg
+            className="toast-checkmark-svg"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#68B77A"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" className="toast-checkmark-path" />
           </svg>
         </span>
         <span className="toast-message">{message}</span>

@@ -11,7 +11,8 @@ export default async function handler(
   }
 
   try {
-    const reviews = await generateReviews();
+    const { serviceType, location, persona, reviewLength } = req.body ?? {};
+    const reviews = await generateReviews({ serviceType, location, persona, reviewLength });
     res.status(200).json({ reviews });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

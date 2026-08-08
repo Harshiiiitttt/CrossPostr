@@ -40,6 +40,7 @@ export interface ProcessPage1Request {
   textWatermark: string;
   platforms: Platform[];
   imageWatermarkBase64: string | null;
+  customCaption?: string;
 }
 
 export interface ProcessPage1Response {
@@ -105,6 +106,7 @@ export interface PetCareReview {
   reviewerName: string;
   providerName: string;
   dogName: string;
+  dogBreed?: string;
   reviewText: string;
   rating: number;
 }

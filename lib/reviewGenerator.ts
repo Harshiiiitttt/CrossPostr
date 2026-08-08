@@ -11,21 +11,41 @@ our Labrador, Max, for a weekend. He kept us updated with photos and messages, w
 much easier to enjoy our trip. Max looked happy the entire time and came home relaxed. We'll
 definitely be booking with Jake again!"`;
 
-function buildPrompt(): string {
+export interface ReviewGenOptions {
+  serviceType?: string;
+  location?: string;
+  persona?: string;
+  reviewLength?: "detailed" | "short";
+}
+
+function buildPrompt(options?: ReviewGenOptions): string {
+  const serviceType = options?.serviceType || "Pet Sitting / Dog Care";
+  const location = options?.location ? ` in ${options.location}` : "";
+  const persona = options?.persona || "Authentic & Grateful Pet Parent";
+  const reviewLength = options?.reviewLength || "detailed";
+
+  const lengthInstruction = reviewLength === "short"
+    ? "Length constraint: Short Testimonial format. Each review MUST be punchy and concise (1-2 sentences maximum), focusing on immediate relief and high satisfaction."
+    : "Length constraint: Detailed Story format. Tell a 3-4 sentence story about a specific situation with slice-of-life details (quirks, last-minute flight, photo updates).";
+
   return `Your task is to generate exactly THREE highly realistic pet-care reviews. Analyze the
 typical style of detailed, story-driven reviews on platforms like Rover.com and replicate that
 genuine, personal tone.
 
-Here is a baseline reference example of the tone you must match, but YOU MUST ADD SLIGHTLY MORE STORY/NARRATIVE DEPTH than this example:
+TARGET PARAMETERS:
+- Service Type: ${serviceType}${location}
+- Persona / Tone Angle: ${persona}
+- Format & Length: ${lengthInstruction}
+
+Here is a baseline reference example of the tone you must match:
 ${REFERENCE_EXAMPLE}
 
 CRUCIAL REQUIREMENTS FOR EVERY REVIEW:
-1. Narrative/Story: Tell a detailed, 3-4 sentence story about a specific situation. Add narrative depth by including a specific slice-of-life detail—such as the dog's unique quirk, a minor complication (like a last-minute flight change or a picky eater), or the owner's initial hesitation before booking. 
-2. Character Names: You must explicitly include a realistic name for the Dog and a realistic
-   name for the Service Provider (the sitter/walker).
+1. Narrative/Format: ${lengthInstruction}
+2. Character Names & Dog Breed: You must explicitly include a realistic name for the Dog, the Dog Breed (e.g. Golden Retriever, French Bulldog, German Shepherd, Rescue Mix, Labradoodle), and a realistic name for the Service Provider (the sitter/walker).
 3. The Brand Rule: You must mention the brand name "${BRAND}" EXACTLY ONCE in the text of each
    review. Do not mention it more than once per review so it sounds organic, not like an ad.
-4. Tone: Authentic, relieved, and grateful. Use natural phrasing and everyday language.
+4. Tone: Reflect the requested persona (${persona}). Authentic, relieved, and grateful. Use natural phrasing and everyday language.
 5. Rating: All three reviews are 5-star testimonials, so "rating" must be 5 for all three.
 6. Make the three reviews distinct from each other - different situations, different dogs,
    different providers - do not reuse the reference example's names or scenario.
@@ -38,6 +58,7 @@ or preamble text.
       "reviewerName": "string",
       "providerName": "string",
       "dogName": "string",
+      "dogBreed": "string",
       "reviewText": "string",
       "rating": 5
     },
@@ -45,6 +66,7 @@ or preamble text.
       "reviewerName": "string",
       "providerName": "string",
       "dogName": "string",
+      "dogBreed": "string",
       "reviewText": "string",
       "rating": 5
     },
@@ -52,6 +74,7 @@ or preamble text.
       "reviewerName": "string",
       "providerName": "string",
       "dogName": "string",
+      "dogBreed": "string",
       "reviewText": "string",
       "rating": 5
     }
@@ -72,10 +95,11 @@ const RESPONSE_SCHEMA = {
           reviewerName: { type: "STRING" },
           providerName: { type: "STRING" },
           dogName: { type: "STRING" },
+          dogBreed: { type: "STRING" },
           reviewText: { type: "STRING" },
           rating: { type: "INTEGER" },
         },
-        required: ["reviewerName", "providerName", "dogName", "reviewText", "rating"],
+        required: ["reviewerName", "providerName", "dogName", "dogBreed", "reviewText", "rating"],
       },
     },
   },
@@ -86,11 +110,26 @@ function isTransientStatus(status: number): boolean {
   return status === 429 || status === 503;
 }
 
+function formatGeminiError(lastErr: string): string {
+  if (lastErr.includes("429") || lastErr.includes("RESOURCE_EXHAUSTED") || lastErr.includes("quota")) {
+    return "Gemini API rate limit reached (Quota Exceeded on Free Tier). Please wait 30 seconds before retrying, or update your GEMINI_API_KEY in .env.";
+  }
+  try {
+    const parsed = JSON.parse(lastErr);
+    if (parsed.error?.message) {
+      return `Gemini API Error: ${parsed.error.message}`;
+    }
+  } catch {
+    // ignore
+  }
+  return `Gemini API busy: ${lastErr || "Please try again in a moment."}`;
+}
+
 async function callGemini(prompt: string): Promise<PetCareReview[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-flash-latest", "gemini-3.6-flash", "gemini-3.5-flash"];
+  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"];
   let lastErr = "";
 
   for (const model of models) {
@@ -116,7 +155,7 @@ async function callGemini(prompt: string): Promise<PetCareReview[]> {
       if (!res.ok) {
         lastErr = await res.text();
         if (isTransientStatus(res.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
           continue;
         }
         break;
@@ -135,7 +174,7 @@ async function callGemini(prompt: string): Promise<PetCareReview[]> {
     }
   }
 
-  throw new Error(`Gemini API busy: ${lastErr || "Please try again in a moment."}`);
+  throw new Error(formatGeminiError(lastErr));
 }
 
 function countBrandMentions(text: string): number {
@@ -144,9 +183,9 @@ function countBrandMentions(text: string): number {
 
 /** Every review must mention the brand exactly once - validate and retry rather than
  *  trusting the prompt alone, since the model can drift (0 mentions or 2+). */
-async function generateValidatedReviews(): Promise<PetCareReview[]> {
+async function generateValidatedReviews(options?: ReviewGenOptions): Promise<PetCareReview[]> {
   for (let attempt = 0; attempt < 2; attempt++) {
-    const reviews = await callGemini(buildPrompt());
+    const reviews = await callGemini(buildPrompt(options));
 
     const shapeOk = Array.isArray(reviews) && reviews.length === 3;
     const brandOk = shapeOk && reviews.every((r) => countBrandMentions(r.reviewText) === 1);
@@ -158,6 +197,6 @@ async function generateValidatedReviews(): Promise<PetCareReview[]> {
   );
 }
 
-export async function generateReviews(): Promise<PetCareReview[]> {
-  return generateValidatedReviews();
+export async function generateReviews(options?: ReviewGenOptions): Promise<PetCareReview[]> {
+  return generateValidatedReviews(options);
 }

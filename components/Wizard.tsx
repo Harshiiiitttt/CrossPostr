@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Page1 from "@/components/Page1";
 import Page2 from "@/components/Page2";
 import Page3 from "@/components/Page3";
@@ -61,10 +61,23 @@ function BackArrow() {
   );
 }
 
+function ArrowRightIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+      <polyline points="9,18 15,12 9,6" />
+    </svg>
+  );
+}
+
 // ── Transparent Background Sidebar Dog Image ────────────────────────────────
 function SidebarDogArt() {
   return (
     <div className="sidebar-dog-art" aria-hidden="true">
+      <div className="sidebar-dog-paws">
+        <span className="dog-paw-bubble p1"><PawIcon /></span>
+        <span className="dog-paw-bubble p2"><PawIcon /></span>
+        <span className="dog-paw-bubble p3"><PawIcon /></span>
+      </div>
       <img src="/sidebar-dog-transparent.png" alt="CuddlyTails dog illustration" className="sidebar-dog-img" />
     </div>
   );
@@ -72,13 +85,63 @@ function SidebarDogArt() {
 
 export default function Wizard() {
   const [step, setStep] = useState(1);
+  const [direction, setDirection] = useState<"next" | "back">("next");
 
-  const goNext = () => setStep((s) => Math.min(s + 1, TOTAL_STEPS));
-  const goBack = () => setStep((s) => Math.max(s - 1, 1));
+  const goNext = () => {
+    setDirection("next");
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  };
+  const goBack = () => {
+    setDirection("back");
+    setStep((s) => Math.max(s - 1, 1));
+  };
+  const goToStep = (targetStep: number) => {
+    if (targetStep === step) return;
+    setDirection(targetStep > step ? "next" : "back");
+    setStep(targetStep);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const isInput = target && (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      );
+
+      if (e.key === "Enter" && !e.shiftKey) {
+        if (!isInput && step < TOTAL_STEPS) {
+          e.preventDefault();
+          goNext();
+        }
+      } else if ((e.key === "Enter" && e.shiftKey) || (e.key === "ArrowLeft" && !isInput)) {
+        if (step > 1) {
+          e.preventDefault();
+          goBack();
+        }
+      } else if (e.key === "ArrowRight" && !isInput) {
+        if (step < TOTAL_STEPS) {
+          e.preventDefault();
+          goNext();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [step]);
 
   return (
     <div className="app-shell">
       <PawTrail />
+      {/* ── Ambient Aurora Background Mesh ────────────────── */}
+      <div className="aurora-container" aria-hidden="true">
+        <div className="aurora-blob blob-amber" />
+        <div className="aurora-blob blob-emerald" />
+        <div className="aurora-blob blob-purple" />
+      </div>
+
       {/* ── Fixed left sidebar ────────────────────────── */}
       <aside className="sidebar">
         <div className="sidebar-top">
@@ -97,7 +160,7 @@ export default function Wizard() {
                 <div
                   key={s.title}
                   className={`step-item ${state}`}
-                  onClick={() => setStep(n)}
+                  onClick={() => goToStep(n)}
                   role="button"
                   tabIndex={0}
                 >
@@ -128,23 +191,66 @@ export default function Wizard() {
 
         {/* Transparent Green Dog Image */}
         <SidebarDogArt />
-
-        {/* Back button pinned to bottom */}
-        {step > 1 && (
-          <button className="sidebar-back" onClick={goBack}>
-            <BackArrow />
-            Back to Home
-          </button>
-        )}
       </aside>
 
-      {/* ── Main content area with slide & fade step transitions ─────────────────────────── */}
+      {/* ── Main content area with fixed navigation bar & Keep-Alive steps ─────────────────────────── */}
       <main className="main-content">
-        <div key={step} className="step-content-anim">
-          {step === 1 && <Page1 onNext={goNext} />}
-          {step === 2 && <Page2 onNext={goNext} onBack={goBack} />}
-          {step === 3 && <Page3 onBack={goBack} />}
+        <div className="main-scroll-area">
+          <div className="step-content-anim">
+            <div className={`step-pane ${step === 1 ? `active step-slide-${direction}` : "inactive"}`}>
+              <Page1 onNext={goNext} />
+            </div>
+            <div className={`step-pane ${step === 2 ? `active step-slide-${direction}` : "inactive"}`}>
+              <Page2 onNext={goNext} onBack={goBack} />
+            </div>
+            <div className={`step-pane ${step === 3 ? `active step-slide-${direction}` : "inactive"}`}>
+              <Page3 onBack={goBack} isActive={step === 3} />
+            </div>
+          </div>
         </div>
+
+        {/* ── Dedicated Fixed Navigation Bar ─────────────────────────── */}
+        <footer className="wizard-nav-footer">
+          <div className="wizard-nav-container">
+            <div className="wizard-nav-left">
+              {step > 1 ? (
+                <button
+                  id="p2-back-btn"
+                  className="wizard-btn wizard-btn-back"
+                  onClick={goBack}
+                >
+                  <BackArrow />
+                  Back
+                </button>
+              ) : (
+                <div className="wizard-btn-placeholder" aria-hidden="true" />
+              )}
+            </div>
+
+            <div key={step} className="wizard-nav-step-indicator">
+              Step {step} of {TOTAL_STEPS}
+            </div>
+
+            <div className="wizard-nav-right">
+              {step < TOTAL_STEPS ? (
+                <button
+                  id={step === 2 ? "p2-next-btn" : "wizard-next-btn"}
+                  className="wizard-btn wizard-btn-next"
+                  onClick={goNext}
+                >
+                  Next <ArrowRightIcon />
+                </button>
+              ) : (
+                <button
+                  className="wizard-btn wizard-btn-next wizard-btn-done"
+                  disabled
+                >
+                  Completed
+                </button>
+              )}
+            </div>
+          </div>
+        </footer>
       </main>
     </div>
   );
