@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import type { SeoBlog, LinkedInPosts, PetCareReview } from "@/lib/types";
+import type { SeoBlog, LinkedInPosts, PetCareReview, BlogHistoryItem, ReviewHistoryItem } from "@/lib/types";
 
 const STORAGE_KEY = "cuddlytails_p3_blog_state";
 const REVIEWS_STORAGE_KEY = "cuddlytails_p2_reviews_state";
+const BLOG_HISTORY_KEY = "cuddlytails_blog_history";
+const REVIEW_HISTORY_KEY = "cuddlytails_review_history";
 
 export interface BrandPersona {
   id: string;
@@ -66,6 +68,16 @@ interface BlogGenerationContextType {
   generateBlog: (topicInput: string) => Promise<void>;
   generateLinkedInPosts: () => Promise<void>;
   resetBlogState: () => void;
+
+  // History state & methods
+  blogHistory: BlogHistoryItem[];
+  reviewHistory: ReviewHistoryItem[];
+  loadBlogFromHistory: (item: BlogHistoryItem) => void;
+  deleteBlogHistoryItem: (id: string) => void;
+  clearBlogHistory: () => void;
+  loadReviewsFromHistory: (item: ReviewHistoryItem) => void;
+  deleteReviewHistoryItem: (id: string) => void;
+  clearReviewHistory: () => void;
 }
 
 const BlogGenerationContext = createContext<BlogGenerationContextType | undefined>(undefined);
@@ -73,30 +85,42 @@ const BlogGenerationContext = createContext<BlogGenerationContextType | undefine
 const generateMetaDescriptionHelper = (topicInput: string): string => {
   const cleanTopic = topicInput.trim().replace(/\.$/, "");
   const mentionsDog = /dogs?/i.test(cleanTopic);
-  const topicPhrase = mentionsDog ? cleanTopic : `${cleanTopic} in dogs`;
+  const topicPhrase = mentionsDog ? cleanTopic : `${cleanTopic} for dogs`;
   const lowerTopic = topicPhrase.toLowerCase();
 
+  const isSafetyOrGear = /car|safety|harness|restraint|seatbelt|travel|crate|leash|collar|gear|carrier|seat/i.test(lowerTopic);
+
+  if (isSafetyOrGear) {
+    const safetyVariations = [
+      `Learn about ${lowerTopic}. Discover expert travel safety tips, proper harness fitting guidelines, crash-tested gear advice, and essential road trip care.`,
+      `Discover essential facts about ${lowerTopic}. Learn proper harness fitting, travel restraint benefits, crash-tested gear, and safety tips for your pet.`,
+      `Learn about ${lowerTopic}. Discover key benefits of pet seatbelts, harness fitting guides, road trip safety tips, and expert pet travel advice.`,
+    ];
+    for (const base of safetyVariations) {
+      if (base.length >= 140 && base.length <= 165) return base;
+    }
+    return safetyVariations[0];
+  }
+
   const variations = [
-    `Learn about ${lowerTopic}. Discover common symptoms, underlying causes, effective treatment options, and practical vet advice to keep your pet healthy.`,
-    `Learn about ${lowerTopic}. Discover key signs to watch for, main causes, practical treatment options, and essential vet care tips to protect your dog.`,
-    `Discover essential facts about ${lowerTopic}. Learn common symptoms, underlying causes, treatment options, and when to see your vet to protect your pet.`,
+    `Learn about ${lowerTopic}. Discover practical care tips, routine guidance, essential advice, and expert recommendations to keep your dog happy and healthy.`,
+    `Discover essential facts about ${lowerTopic}. Learn key daily care tips, practical owner guidance, and expert recommendations for your pet's well-being.`,
+    `Learn about ${lowerTopic}. Discover practical pet care advice, key daily tips, and essential guidance from pet experts to keep your companion thriving.`,
   ];
 
   for (const base of variations) {
-    if (base.length >= 150 && base.length <= 160) return base;
+    if (base.length >= 140 && base.length <= 165) return base;
     const trims = [
-      base.replace(" to keep your pet healthy.", " for your pet."),
-      base.replace(" to protect your dog.", "."),
-      base.replace(" to protect your pet.", "."),
+      base.replace(" to keep your dog happy and healthy.", " for your pet."),
+      base.replace(" for your pet's well-being.", "."),
+      base.replace(" to keep your companion thriving.", "."),
     ];
     for (const t of trims) {
-      if (t.length >= 150 && t.length <= 160) return t;
+      if (t.length >= 140 && t.length <= 165) return t;
     }
   }
 
-  const defaultBase = variations[0];
-  if (defaultBase.length > 160) return defaultBase.slice(0, 157) + "...";
-  return defaultBase;
+  return variations[0];
 };
 
 export function BlogGenerationProvider({ children }: { children: ReactNode }) {
@@ -116,7 +140,10 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
 
-  // Hydrate state on client mount
+  const [blogHistory, setBlogHistory] = useState<BlogHistoryItem[]>([]);
+  const [reviewHistory, setReviewHistory] = useState<ReviewHistoryItem[]>([]);
+
+  // Hydrate state & history on client mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -139,13 +166,19 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
           const parsedRev = JSON.parse(savedRev);
           if (Array.isArray(parsedRev.reviews)) setReviews(parsedRev.reviews);
         }
+
+        const savedBlogHist = localStorage.getItem(BLOG_HISTORY_KEY);
+        if (savedBlogHist) setBlogHistory(JSON.parse(savedBlogHist));
+
+        const savedRevHist = localStorage.getItem(REVIEW_HISTORY_KEY);
+        if (savedRevHist) setReviewHistory(JSON.parse(savedRevHist));
       } catch (e) {
         /* ignore */
       }
     }
   }, []);
 
-  // Save state to sessionStorage
+  // Save state to sessionStorage & localStorage
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -174,6 +207,53 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
     }
   }, [reviews, reviewsLoading]);
 
+  const saveBlogToHistory = (
+    newBlog: SeoBlog,
+    activeTopic: string,
+    newMeta: string,
+    persona: BrandPersona,
+    newPosts: LinkedInPosts | null = null
+  ) => {
+    const newItem: BlogHistoryItem = {
+      id: `blog_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      timestamp: Date.now(),
+      topic: activeTopic,
+      blog: newBlog,
+      posts: newPosts,
+      metaDescription: newMeta,
+      persona: { id: persona.id, name: persona.name, icon: persona.icon },
+    };
+
+    setBlogHistory((prev) => {
+      const updated = [newItem, ...prev.filter((item) => item.topic !== activeTopic)].slice(0, 20);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(BLOG_HISTORY_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const saveReviewToHistory = (
+    newReviews: PetCareReview[],
+    options?: { serviceType?: string; location?: string }
+  ) => {
+    const newItem: ReviewHistoryItem = {
+      id: `rev_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      timestamp: Date.now(),
+      serviceType: options?.serviceType || "Pet Care",
+      location: options?.location || "National",
+      reviews: newReviews,
+    };
+
+    setReviewHistory((prev) => {
+      const updated = [newItem, ...prev].slice(0, 20);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(REVIEW_HISTORY_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
   const generateReviews = async (options?: { serviceType?: string; location?: string; persona?: string; reviewLength?: "detailed" | "short" }) => {
     setReviewsLoading(true);
     setReviewsError(null);
@@ -189,6 +269,7 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
         throw new Error(data?.error || `Server error (${res.status}). Please try again.`);
       }
       setReviews(data.reviews);
+      saveReviewToHistory(data.reviews, options);
     } catch (err) {
       setReviewsError((err as Error).message);
     } finally {
@@ -224,6 +305,7 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
 
       setBlog(generatedBlog);
       setMetaDescription(generatedMeta);
+      saveBlogToHistory(generatedBlog, activeTopic, generatedMeta, activePersona, null);
 
       if (typeof window !== "undefined") {
         try {
@@ -269,6 +351,7 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
       }
 
       setPosts(data.posts);
+      saveBlogToHistory(blog, topic, metaDescription, activePersona, data.posts);
     } catch (err) {
       setPostsError((err as Error).message);
     } finally {
@@ -292,6 +375,53 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         /* ignore */
       }
+    }
+  };
+
+  const loadBlogFromHistory = (item: BlogHistoryItem) => {
+    setTopic(item.topic);
+    setBlog(item.blog);
+    setPosts(item.posts);
+    setMetaDescription(item.metaDescription);
+    const foundP = BRAND_PERSONAS.find((p) => p.id === item.persona.id);
+    if (foundP) setActivePersona(foundP);
+  };
+
+  const deleteBlogHistoryItem = (id: string) => {
+    setBlogHistory((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(BLOG_HISTORY_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const clearBlogHistory = () => {
+    setBlogHistory([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(BLOG_HISTORY_KEY);
+    }
+  };
+
+  const loadReviewsFromHistory = (item: ReviewHistoryItem) => {
+    setReviews(item.reviews);
+  };
+
+  const deleteReviewHistoryItem = (id: string) => {
+    setReviewHistory((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem(REVIEW_HISTORY_KEY, JSON.stringify(updated));
+      }
+      return updated;
+    });
+  };
+
+  const clearReviewHistory = () => {
+    setReviewHistory([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(REVIEW_HISTORY_KEY);
     }
   };
 
@@ -320,6 +450,14 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
         generateBlog,
         generateLinkedInPosts,
         resetBlogState,
+        blogHistory,
+        reviewHistory,
+        loadBlogFromHistory,
+        deleteBlogHistoryItem,
+        clearBlogHistory,
+        loadReviewsFromHistory,
+        deleteReviewHistoryItem,
+        clearReviewHistory,
       }}
     >
       {children}

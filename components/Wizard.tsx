@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import Page1 from "@/components/Page1";
 import Page2 from "@/components/Page2";
 import Page3 from "@/components/Page3";
 import PawTrail from "@/components/PawTrail";
+import HeroApiPage from "@/components/HeroApiPage";
+import ApiSettingsModal from "@/components/ApiSettingsModal";
 
 const TOTAL_STEPS = 3;
 
@@ -20,6 +23,15 @@ function PawIcon() {
       <ellipse cx="10.1" cy="5.4" rx="2" ry="2.6" />
       <ellipse cx="14.7" cy="5.4" rx="2" ry="2.6" />
       <ellipse cx="19" cy="8.8" rx="2.1" ry="2.7" />
+    </svg>
+  );
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
@@ -86,6 +98,16 @@ function SidebarDogArt() {
 export default function Wizard() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<"next" | "back">("next");
+  const [hasConnectedApi, setHasConnectedApi] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const isAuth = localStorage.getItem("cuddlytails_user_authenticated");
+    const saved = localStorage.getItem("cuddlytails_api_credentials");
+    if (isAuth === "true" || saved) {
+      setHasConnectedApi(true);
+    }
+  }, []);
 
   const goNext = () => {
     setDirection("next");
@@ -103,6 +125,7 @@ export default function Wizard() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!hasConnectedApi) return;
       const target = e.target as HTMLElement | null;
       const isInput = target && (
         target.tagName === "INPUT" ||
@@ -130,11 +153,31 @@ export default function Wizard() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [step]);
+  }, [step, hasConnectedApi]);
+
+  const handleSignOut = () => {
+    setStep(1);
+    setHasConnectedApi(false);
+  };
+
+  const handleConnected = () => {
+    setStep(1);
+    setHasConnectedApi(true);
+  };
+
+  if (!hasConnectedApi) {
+    return <HeroApiPage onConnected={handleConnected} />;
+  }
 
   return (
     <div className="app-shell">
       <PawTrail />
+      <ApiSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSignOut={handleSignOut}
+      />
+
       {/* ── Ambient Aurora Background Mesh ────────────────── */}
       <div className="aurora-container" aria-hidden="true">
         <div className="aurora-blob blob-amber" />
@@ -146,8 +189,8 @@ export default function Wizard() {
       <aside className="sidebar">
         <div className="sidebar-top">
           {/* Brand with Slackey font + Green Paw */}
-          <div className="brand-mark">
-            <span>CuddlyTails</span>
+          <div className="brand-mark" style={{ marginBottom: "24px" }}>
+            <span>Cross Postr</span>
             <span className="brand-paw"><PawIcon /></span>
           </div>
 
@@ -191,6 +234,32 @@ export default function Wizard() {
 
         {/* Transparent Green Dog Image */}
         <SidebarDogArt />
+
+        {/* Bottom Sidebar Settings Action (Below Dog Illustration) */}
+        <div style={{ padding: "16px 20px", marginTop: "auto" }}>
+          <button
+            type="button"
+            onClick={() => setIsSettingsOpen(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              width: "100%",
+              padding: "9px 14px",
+              borderRadius: "10px",
+              border: "1px solid var(--panel-border)",
+              background: "rgba(0,0,0,0.3)",
+              color: "var(--text-main)",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <SettingsIcon />
+            <span>Settings</span>
+          </button>
+        </div>
       </aside>
 
       {/* ── Main content area with fixed navigation bar & Keep-Alive steps ─────────────────────────── */}
@@ -214,14 +283,54 @@ export default function Wizard() {
           <div className="wizard-nav-container">
             <div className="wizard-nav-left">
               {step > 1 ? (
-                <button
+                <motion.button
                   id="p2-back-btn"
                   className="wizard-btn wizard-btn-back"
                   onClick={goBack}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  style={{ position: "relative", overflow: "hidden" }}
                 >
-                  <BackArrow />
-                  Back
-                </button>
+                  <motion.div
+                    variants={{
+                      rest: { y: "0%", opacity: 1 },
+                      hover: { y: "-120%", opacity: 0 },
+                    }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <BackArrow /> Back
+                  </motion.div>
+                  <motion.div
+                    variants={{
+                      rest: { y: "120%", opacity: 0 },
+                      hover: { y: "0%", opacity: 1 },
+                    }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <BackArrow /> Back
+                  </motion.div>
+                </motion.button>
               ) : (
                 <div className="wizard-btn-placeholder" aria-hidden="true" />
               )}
@@ -233,13 +342,54 @@ export default function Wizard() {
 
             <div className="wizard-nav-right">
               {step < TOTAL_STEPS ? (
-                <button
+                <motion.button
                   id={step === 2 ? "p2-next-btn" : "wizard-next-btn"}
                   className="wizard-btn wizard-btn-next"
                   onClick={goNext}
+                  initial="rest"
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  style={{ position: "relative", overflow: "hidden" }}
                 >
-                  Next <ArrowRightIcon />
-                </button>
+                  <motion.div
+                    variants={{
+                      rest: { y: "0%", opacity: 1 },
+                      hover: { y: "-120%", opacity: 0 },
+                    }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Next <ArrowRightIcon />
+                  </motion.div>
+                  <motion.div
+                    variants={{
+                      rest: { y: "120%", opacity: 0 },
+                      hover: { y: "0%", opacity: 1 },
+                    }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    Next <ArrowRightIcon />
+                  </motion.div>
+                </motion.button>
               ) : (
                 <button
                   className="wizard-btn wizard-btn-next wizard-btn-done"

@@ -257,6 +257,14 @@ export function buildXCaption(line1: string, username: string): string {
   return `${title}\n\n${creditLine}\n\n#dogsofX`;
 }
 
+export function buildYouTubeCaption(line1: string, hashtagsStr: string, username: string): string {
+  const title = line1 || "Unbelievable moment captured on video 🎬✨";
+  const creditLine = `📸: IG/${username || "creator"}`;
+  const baseTags = (hashtagsStr || "").split(/\s+/).filter((t) => t.startsWith("#"));
+  const ytTags = Array.from(new Set(["#shorts", "#YouTubeShorts", ...baseTags])).slice(0, 10).join(" ");
+  return `${title}\n\n${creditLine}\n\n${ytTags}`;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -270,6 +278,7 @@ export default async function handler(
     const meta = await generateContextCaptionDetails(originalCaption, ownerUsername, imageUrl);
     const pinterest = buildPinterestFields(meta.line1, meta.hashtags, ownerUsername || "creator");
     const xCaption = buildXCaption(meta.line1, ownerUsername || "creator");
+    const youtubeCaption = buildYouTubeCaption(meta.line1, meta.hashtags, ownerUsername || "creator");
 
     res.status(200).json({
       caption: meta.instagramCaption,
@@ -277,6 +286,7 @@ export default async function handler(
       pinterestTitle: pinterest.pinterestTitle,
       pinterestDescription: pinterest.pinterestDescription,
       xCaption: xCaption,
+      youtubeCaption: youtubeCaption,
     });
   } catch (err) {
     res.status(500).json({ error: (err as Error).message });

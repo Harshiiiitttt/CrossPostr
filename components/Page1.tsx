@@ -8,12 +8,64 @@ const ALL_PLATFORMS: Platform[] = ["Pinterest", "Instagram", "X", "YouTube"];
 const STAGE_LABELS = ["Downloading", "Watermarking", "Posting"];
 
 export type WatermarkPosition = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+export type WatermarkStyle = "glass" | "neon" | "dark" | "gold";
+export type WatermarkScale = "small" | "medium" | "large";
+export type CaptionTab = "Instagram" | "Pinterest" | "Twitter" | "YouTube";
 
 const POSITION_LABELS: Record<WatermarkPosition, string> = {
   "top-left": "Top-Left",
   "top-right": "Top-Right",
   "bottom-left": "Bottom-Left",
   "bottom-right": "Bottom-Right",
+};
+
+function ImageIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+  );
+}
+
+function TypeIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="4 7 4 4 20 4 20 7" />
+      <line x1="9" y1="20" x2="15" y2="20" />
+      <line x1="12" y1="4" x2="12" y2="20" />
+    </svg>
+  );
+}
+
+function FlameIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z" />
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  );
+}
+
+const STYLE_LABELS: Record<WatermarkStyle, { label: string; icon: React.ReactNode }> = {
+  glass: { label: "Glassmorphism", icon: <ZapIcon /> },
+  neon: { label: "Bold Neon", icon: <FlameIcon /> },
+  dark: { label: "Sleek Dark", icon: <MoonIcon /> },
+  gold: { label: "Gold Elegant", icon: <SparklesIcon /> },
+};
+
+const SCALE_LABELS: Record<WatermarkScale, string> = {
+  small: "Small (80%)",
+  medium: "Medium (100%)",
+  large: "Large (120%)",
 };
 
 interface Page1Props {
@@ -184,7 +236,7 @@ const PLATFORM_CONFIG: Record<Platform, { label: string; color: string; bg: stri
     icon: <PinterestIcon />,
   },
   X: {
-    label: "X (Twitter)",
+    label: "Twitter",
     color: "#1DA1F2",
     bg: "rgba(29, 161, 242, 0.15)",
     icon: <XIcon />,
@@ -208,9 +260,9 @@ export default function Page1({ onNext }: Page1Props) {
   const [textWatermark, setTextWatermark] = useState("");
   const [customCaption, setCustomCaption] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [watermarkPos, setWatermarkPos] = useState<WatermarkPosition>("top-left");
+  const [watermarkPos, setWatermarkPos] = useState<WatermarkPosition>("bottom-right");
   const [watermarkOpacity, setWatermarkOpacity] = useState<number>(80);
-  const [platforms, setPlatforms] = useState<Platform[]>(["Instagram", "Pinterest"]);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [showAdvancedWatermark, setShowAdvancedWatermark] = useState<boolean>(false);
   const [running, setRunning] = useState(false);
   const [stageIndex, setStageIndex] = useState(0);
@@ -218,8 +270,44 @@ export default function Page1({ onNext }: Page1Props) {
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  const [watermarkStyle, setWatermarkStyle] = useState<WatermarkStyle>("glass");
+  const [watermarkScale, setWatermarkScale] = useState<WatermarkScale>("small");
+  const [activeCaptionTab, setActiveCaptionTab] = useState<CaptionTab>("Instagram");
+  const [captionObj, setCaptionObj] = useState<{
+    instagramCaption: string;
+    pinterestTitle: string;
+    pinterestDescription: string;
+    xCaption: string;
+    youtubeCaption: string;
+  }>({
+    instagramCaption: "",
+    pinterestTitle: "",
+    pinterestDescription: "",
+    xCaption: "",
+    youtubeCaption: "",
+  });
+
+  const handleTabSwitch = (tab: CaptionTab, overrideData?: any) => {
+    setActiveCaptionTab(tab);
+    const data = overrideData || captionObj;
+    if (tab === "Instagram") {
+      setCustomCaption(data.instagramCaption || data.caption || "");
+    } else if (tab === "Pinterest") {
+      if (data.pinterestTitle || data.pinterestDescription) {
+        setCustomCaption(`Title:\n${data.pinterestTitle}\n\nDescription:\n${data.pinterestDescription}`);
+      } else if (data.instagramCaption) {
+        setCustomCaption(data.instagramCaption);
+      }
+    } else if (tab === "Twitter") {
+      setCustomCaption(data.xCaption || data.instagramCaption || "");
+    } else if (tab === "YouTube") {
+      setCustomCaption(data.youtubeCaption || data.instagramCaption || "");
+    }
+  };
+
   const [inspectedMeta, setInspectedMeta] = useState<{ reelId: string; ownerUsername: string; imageUrl?: string; rawCaption?: string; resolution: string } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -239,6 +327,7 @@ export default function Page1({ onNext }: Page1Props) {
   }, [reelUrl]);
 
   useEffect(() => {
+    setIsPlayingVideo(false);
     if (!reelUrl.trim() || !reelUrl.includes("instagram.com")) {
       setInspectedMeta(null);
       return;
@@ -268,8 +357,16 @@ export default function Page1({ onNext }: Page1Props) {
             })
               .then((cRes) => cRes.json())
               .then((cData) => {
-                if (isMounted && cData.caption) {
-                  setCustomCaption(cData.caption);
+                if (isMounted && cData) {
+                  const newObj = {
+                    instagramCaption: cData.instagramCaption || cData.caption || "",
+                    pinterestTitle: cData.pinterestTitle || "",
+                    pinterestDescription: cData.pinterestDescription || "",
+                    xCaption: cData.xCaption || "",
+                    youtubeCaption: cData.youtubeCaption || "",
+                  };
+                  setCaptionObj(newObj);
+                  handleTabSwitch(activeCaptionTab, newObj);
                 }
               })
               .catch(() => {})
@@ -391,10 +488,7 @@ export default function Page1({ onNext }: Page1Props) {
   return (
     <div>
       <span className="badge">Step 1 of 3</span>
-      <h1 className="page-title">Extract, Watermark &amp; Publish</h1>
-      <p className="page-sub">
-        Automate Instagram Reel downloading, custom logo branding, and cross-platform publishing.
-      </p>
+      <h1 className="page-title" style={{ marginBottom: "14px" }}>Extract, Watermark &amp; Publish</h1>
 
       {/* 60 / 40 Split Screen Layout */}
       <div style={{ display: "flex", gap: "28px", alignItems: "flex-start", flexWrap: "wrap" }}>
@@ -533,7 +627,7 @@ export default function Page1({ onNext }: Page1Props) {
             </AnimatePresence>
           </div>
 
-          {/* Card 2: Image & Text Watermark */}
+          {/* Card 2: Image & Text Watermark 2-Column Grid Layout */}
           <div className="card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
               <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#68B77A", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800 }}>
@@ -544,157 +638,222 @@ export default function Page1({ onNext }: Page1Props) {
               </label>
             </div>
 
-            {/* Dropzone for Logo */}
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "8px" }}>
-              Image Watermark Logo (Top-Left Overlay)
-            </label>
-            <div
-              className={`dropzone-container ${isDragging ? "dropzone--dragging" : ""} ${imageFile ? "dropzone--has-file" : ""}`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              style={{ borderRadius: "10px", padding: "14px" }}
-            >
-              <input
-                type="file"
-                id="watermark-file-input"
-                className="dropzone-input"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-              />
-
-              {!imageFile ? (
-                <label htmlFor="watermark-file-input" className="dropzone-label" style={{ gap: "4px" }}>
-                  <span className="glass-icon-badge" style={{ marginBottom: 4 }}>
-                    <UploadCloudIcon />
-                  </span>
-                  <span className="dropzone-title" style={{ fontSize: "0.8rem" }}>Drag & drop watermark logo</span>
-                  <span className="dropzone-subtitle" style={{ fontSize: "0.72rem" }}>PNG, SVG, or JPG logo files</span>
+            {/* 2-Column Grid Split */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", alignItems: "start" }}>
+              
+              {/* LEFT COLUMN: Logo Uploading Dropzone */}
+              <div style={{ background: "rgba(0,0,0,0.15)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "10px" }}>
+                  <ImageIcon /> Image Watermark Logo
                 </label>
-              ) : (
-                <div className="dropzone-preview">
-                  <img
-                    src={URL.createObjectURL(imageFile)}
-                    alt="Watermark preview"
-                    className="dropzone-thumb"
+                <div
+                  className={`dropzone-container ${isDragging ? "dropzone--dragging" : ""} ${imageFile ? "dropzone--has-file" : ""}`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  style={{ borderRadius: "10px", padding: "16px", minHeight: "150px", display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  <input
+                    type="file"
+                    id="watermark-file-input"
+                    className="dropzone-input"
+                    accept="image/*"
+                    onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
                   />
-                  <div className="dropzone-file-info">
-                    <span className="dropzone-filename">{imageFile.name}</span>
-                    <span className="dropzone-filesize">
-                      {(imageFile.size / 1024).toFixed(1)} KB
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="dropzone-remove-btn"
-                    onClick={() => setImageFile(null)}
-                    title="Remove watermark image"
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </div>
 
-            {/* Text Watermark Input */}
-            <label style={{ marginTop: 14, display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)", marginBottom: "8px" }}>
-              Text Watermark
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. @cuddlytails"
-              value={textWatermark}
-              onChange={(e) => setTextWatermark(e.target.value)}
-              style={{ borderRadius: "10px", margin: 0 }}
-            />
-
-            {/* Advanced Watermark Settings Toggle */}
-            <div style={{ marginTop: "14px" }}>
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setShowAdvancedWatermark((prev) => !prev)}
-                style={{
-                  padding: "6px 14px",
-                  borderRadius: "20px",
-                  border: showAdvancedWatermark ? "1.5px solid #68B77A" : "1px solid rgba(104, 183, 122, 0.35)",
-                  background: showAdvancedWatermark ? "rgba(104, 183, 122, 0.2)" : "rgba(104, 183, 122, 0.08)",
-                  color: "#68B77A",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  transition: "all 0.15s ease",
-                  boxShadow: "0 2px 8px rgba(104, 183, 122, 0.12)",
-                }}
-              >
-                <SlidersIcon /> {showAdvancedWatermark ? "Hide Corner Settings" : "Corner & Transparency Settings"}
-              </motion.button>
-
-              <AnimatePresence>
-                {showAdvancedWatermark && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0, marginTop: 0 }}
-                    animate={{ opacity: 1, height: "auto", marginTop: 10 }}
-                    exit={{ opacity: 0, height: 0, marginTop: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <div style={{ padding: "14px", background: "var(--surface)", borderRadius: "10px", border: "1px solid var(--panel-border)" }}>
-                      <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "8px", textTransform: "uppercase" }}>
-                        Text Watermark Position
-                      </label>
-                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }}>
-                        {(["top-left", "top-right", "bottom-left", "bottom-right"] as WatermarkPosition[]).map((pos) => (
-                          <motion.button
-                            key={pos}
-                            type="button"
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.96 }}
-                            onClick={() => setWatermarkPos(pos)}
-                            style={{
-                              height: "30px",
-                              padding: "0 10px",
-                              borderRadius: "6px",
-                              fontSize: "0.76rem",
-                              fontWeight: 600,
-                              border: watermarkPos === pos ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                              background: watermarkPos === pos ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
-                              color: watermarkPos === pos ? "#68B77A" : "var(--text-main)",
-                              cursor: "pointer",
-                              transition: "background 0.15s ease, border-color 0.15s ease",
-                            }}
-                          >
-                            {watermarkPos === pos && "✓ "}
-                            {POSITION_LABELS[pos]}
-                          </motion.button>
-                        ))}
-                      </div>
-
-                      {/* Transparency Slider */}
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                        <label style={{ margin: 0, fontSize: "0.74rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                          Watermark Transparency
-                        </label>
-                        <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#68B77A" }}>
-                          {watermarkOpacity}% Opacity
+                  {!imageFile ? (
+                    <label htmlFor="watermark-file-input" className="dropzone-label" style={{ gap: "6px", textAlign: "center" }}>
+                      <span className="glass-icon-badge" style={{ marginBottom: 4 }}>
+                        <UploadCloudIcon />
+                      </span>
+                      <span className="dropzone-title" style={{ fontSize: "0.82rem" }}>Drag & drop watermark logo</span>
+                      <span className="dropzone-subtitle" style={{ fontSize: "0.72rem" }}>PNG, SVG, or JPG logo files</span>
+                    </label>
+                  ) : (
+                    <div className="dropzone-preview" style={{ width: "100%" }}>
+                      <img
+                        src={URL.createObjectURL(imageFile)}
+                        alt="Watermark preview"
+                        className="dropzone-thumb"
+                      />
+                      <div className="dropzone-file-info">
+                        <span className="dropzone-filename">{imageFile.name}</span>
+                        <span className="dropzone-filesize">
+                          {(imageFile.size / 1024).toFixed(1)} KB
                         </span>
                       </div>
-                      <input
-                        type="range"
-                        min="20"
-                        max="100"
-                        value={watermarkOpacity}
-                        onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
-                        style={{ width: "100%", accentColor: "#68B77A", cursor: "pointer", margin: 0 }}
-                      />
+                      <button
+                        type="button"
+                        className="dropzone-remove-btn"
+                        onClick={() => setImageFile(null)}
+                        title="Remove watermark image"
+                      >
+                        ✕
+                      </button>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN: Text Watermark & Customization */}
+              <div style={{ background: "rgba(0,0,0,0.15)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "8px" }}>
+                  <TypeIcon /> Text Watermark &amp; Branding
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. @cuddlytails"
+                  value={textWatermark}
+                  onChange={(e) => setTextWatermark(e.target.value)}
+                  style={{ borderRadius: "10px", margin: "0 0 14px 0", width: "100%" }}
+                />
+
+                {/* Advanced Settings Toggle */}
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowAdvancedWatermark((prev) => !prev)}
+                  style={{
+                    width: "100%",
+                    padding: "7px 14px",
+                    borderRadius: "8px",
+                    border: showAdvancedWatermark ? "1.5px solid #68B77A" : "1px solid rgba(104, 183, 122, 0.35)",
+                    background: showAdvancedWatermark ? "rgba(104, 183, 122, 0.2)" : "rgba(104, 183, 122, 0.08)",
+                    color: "#68B77A",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <SlidersIcon /> {showAdvancedWatermark ? "Hide Advanced Settings" : "Advanced Settings"}
+                </motion.button>
+
+                <AnimatePresence>
+                  {showAdvancedWatermark && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: "auto", marginTop: 10 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      style={{ overflow: "hidden" }}
+                    >
+                      <div style={{ padding: "12px", background: "var(--surface)", borderRadius: "10px", border: "1px solid var(--panel-border)" }}>
+                        
+                        {/* Position Selector */}
+                        <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase" }}>
+                          Watermark Position
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
+                          {(["top-left", "top-right", "bottom-left", "bottom-right"] as WatermarkPosition[]).map((pos) => (
+                            <button
+                              key={pos}
+                              type="button"
+                              onClick={() => setWatermarkPos(pos)}
+                              style={{
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 600,
+                                border: watermarkPos === pos ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
+                                background: watermarkPos === pos ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
+                                color: watermarkPos === pos ? "#68B77A" : "var(--text-main)",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {watermarkPos === pos && "✓ "}
+                              {POSITION_LABELS[pos]}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Aesthetic Style Pills */}
+                        <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase" }}>
+                          Aesthetic Style
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
+                          {(["glass", "neon", "dark", "gold"] as WatermarkStyle[]).map((st) => (
+                            <button
+                              key={st}
+                              type="button"
+                              onClick={() => setWatermarkStyle(st)}
+                              style={{
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 600,
+                                border: watermarkStyle === st ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
+                                background: watermarkStyle === st ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
+                                color: watermarkStyle === st ? "#68B77A" : "var(--text-main)",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {STYLE_LABELS[st].icon}
+                              <span>{STYLE_LABELS[st].label}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Size Scale Selector */}
+                        <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: "6px", textTransform: "uppercase" }}>
+                          Watermark Size
+                        </label>
+                        <div style={{ display: "flex", gap: "4px", marginBottom: "12px" }}>
+                          {(["small", "medium", "large"] as WatermarkScale[]).map((sc) => (
+                            <button
+                              key={sc}
+                              type="button"
+                              onClick={() => setWatermarkScale(sc)}
+                              style={{
+                                flex: 1,
+                                padding: "4px 6px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 600,
+                                border: watermarkScale === sc ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
+                                background: watermarkScale === sc ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
+                                color: watermarkScale === sc ? "#68B77A" : "var(--text-main)",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {SCALE_LABELS[sc]}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Transparency Slider */}
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                          <label style={{ margin: 0, fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
+                            Transparency
+                          </label>
+                          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#68B77A" }}>
+                            {watermarkOpacity}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="20"
+                          max="100"
+                          value={watermarkOpacity}
+                          onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
+                          style={{ width: "100%", accentColor: "#68B77A", cursor: "pointer", margin: 0 }}
+                        />
+
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
             </div>
           </div>
 
@@ -753,35 +912,95 @@ export default function Page1({ onNext }: Page1Props) {
               })}
             </div>
 
-            {/* Action Button */}
+            {/* Action Button with Dynamic Green Glow & Smooth Roll-Up Hover Animation */}
             <motion.button
               type="button"
-              whileHover={(!running && reelUrl.trim()) ? { scale: 1.015 } : {}}
-              whileTap={(!running && reelUrl.trim()) ? { scale: 0.985 } : {}}
+              initial="rest"
+              whileHover={(!running && reelUrl.trim() && platforms.length > 0) ? "hover" : "rest"}
+              whileTap={(!running && reelUrl.trim() && platforms.length > 0) ? { scale: 0.98 } : undefined}
+              animate={(!running && platforms.length > 0) ? {
+                boxShadow: [
+                  "0 4px 14px rgba(104, 183, 122, 0.22), 0 0 6px rgba(104, 183, 122, 0.12)",
+                  "0 5px 22px rgba(104, 183, 122, 0.42), 0 0 14px rgba(104, 183, 122, 0.25)",
+                  "0 4px 14px rgba(104, 183, 122, 0.22), 0 0 6px rgba(104, 183, 122, 0.12)",
+                ]
+              } : {}}
+              transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
               onClick={runAutomation}
-              disabled={running || !reelUrl.trim()}
-              className={(!running && reelUrl.trim()) ? "shimmer-btn-bg" : ""}
+              disabled={running || !reelUrl.trim() || platforms.length === 0}
+              className={(!running && reelUrl.trim() && platforms.length > 0) ? "shimmer-btn-bg" : ""}
               style={{
                 width: "100%",
-                height: "44px",
-                borderRadius: "10px",
-                background: "linear-gradient(135deg, #68B77A 0%, #4D9A5E 100%)",
+                height: "46px",
+                borderRadius: "12px",
+                background: platforms.length > 0
+                  ? "linear-gradient(135deg, #68B77A 0%, #3D8B4D 100%)"
+                  : "rgba(104, 183, 122, 0.12)",
                 color: "#FFFFFF",
-                border: "none",
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                cursor: (running || !reelUrl.trim()) ? "not-allowed" : "pointer",
-                boxShadow: "0 4px 16px rgba(104, 183, 122, 0.35)",
+                border: platforms.length > 0
+                  ? "1px solid rgba(255, 255, 255, 0.3)"
+                  : "1px solid rgba(104, 183, 122, 0.2)",
+                fontSize: "0.92rem",
+                fontWeight: 800,
+                cursor: (running || !reelUrl.trim() || platforms.length === 0) ? "not-allowed" : "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "8px",
-                opacity: (running || !reelUrl.trim()) ? 0.6 : 1,
+                position: "relative",
+                overflow: "hidden",
+                opacity: (running || !reelUrl.trim() || platforms.length === 0) ? 0.5 : 1,
+                transition: "background 0.3s ease, color 0.3s ease, border 0.3s ease, opacity 0.3s ease",
               }}
             >
-              {running && <span className="p2-spinner" style={{ width: "16px", height: "16px", color: "#FFFFFF" }} />}
-              {running ? "Running Automation..." : "Run Automation"}
+              {running ? (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "8px" }}>
+                  <span className="p2-spinner" style={{ width: "16px", height: "16px", color: "#FFFFFF" }} /> Running Automation...
+                </span>
+              ) : (
+                <>
+                  <motion.div
+                    variants={{
+                      rest: { y: "0%", opacity: 1 },
+                      hover: { y: "-120%", opacity: 0 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {platforms.length === 0 ? "Select At Least 1 Target Platform" : "Run Automation"}
+                  </motion.div>
+                  <motion.div
+                    variants={{
+                      rest: { y: "120%", opacity: 0 },
+                      hover: { y: "0%", opacity: 1 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    {platforms.length === 0 ? "Select At Least 1 Target Platform" : "Run Automation"}
+                  </motion.div>
+                </>
+              )}
             </motion.button>
+
+
 
             {running && (
               <div className="ai-active-glow" style={{ marginTop: 20, borderRadius: 12, background: "var(--panel)" }}>
@@ -798,24 +1017,105 @@ export default function Page1({ onNext }: Page1Props) {
             {error && <div className="result-item error" style={{ marginTop: "16px" }}>{error}</div>}
 
             {response && (
-              <div style={{ marginTop: "16px" }}>
-                {response.skipped > 0 && (
-                  <div className="result-item">{response.skipped} slot(s) were left blank and skipped.</div>
-                )}
+              <motion.div
+                initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.4 }}
+                style={{ marginTop: "20px" }}
+              >
+                {/* Celebratory Banner */}
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(104, 183, 122, 0.18) 0%, rgba(16, 185, 129, 0.1) 100%)",
+                    border: "1px solid rgba(104, 183, 122, 0.35)",
+                    borderRadius: "16px",
+                    padding: "16px 20px",
+                    marginBottom: "16px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    boxShadow: "0 8px 24px rgba(104, 183, 122, 0.2)",
+                  }}
+                >
+                  <span style={{ fontSize: "1.4rem" }}>🎉</span>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#68B77A" }}>
+                      Automation Complete &amp; Content Cross-Posted!
+                    </h4>
+                    <span style={{ fontSize: "0.76rem", color: "var(--text-muted)", fontWeight: 500 }}>
+                      Your watermarked reel was successfully distributed across target social platforms.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Per-Platform Published Cards Grid */}
                 {response.results.map((r) => (
-                  <div className="result-item" key={r.sourceUrl}>
-                    <strong>@{r.ownerUsername}</strong> - {r.caption.slice(0, 60) || "(no caption)"}
-                    <ul>
-                      {r.publishResults.map((pr) => (
-                        <li key={pr.platform}>
-                          {pr.platform}: {pr.success ? `posted (${pr.postUrl})` : `failed - ${pr.error}`}
-                        </li>
-                      ))}
-                    </ul>
+                  <div key={r.sourceUrl} style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {r.publishResults.map((pr) => {
+                      const pConfig = PLATFORM_CONFIG[pr.platform as Platform] || { color: "#68B77A", bg: "rgba(104, 183, 122, 0.15)", icon: <PawIcon /> };
+                      return (
+                        <div
+                          key={pr.platform}
+                          style={{
+                            background: "rgba(15, 25, 35, 0.75)",
+                            backdropFilter: "blur(12px)",
+                            border: pr.success ? `1.5px solid ${pConfig.color}` : "1px solid rgba(239, 68, 68, 0.4)",
+                            borderRadius: "14px",
+                            padding: "14px 18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            boxShadow: pr.success ? `0 4px 16px ${pConfig.bg}` : "none",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                            <span style={{ color: pConfig.color, display: "flex" }}>{pConfig.icon}</span>
+                            <div>
+                              <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#FFF" }}>
+                                {pr.platform}
+                              </span>
+                              <span style={{ fontSize: "0.72rem", color: "var(--text-muted)", display: "block" }}>
+                                @{r.ownerUsername} • {r.caption.slice(0, 35) || "Reel Content"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            {pr.success ? (
+                              <a
+                                href={pr.postUrl || "#"}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  background: pConfig.bg,
+                                  color: pConfig.color,
+                                  border: `1px solid ${pConfig.color}44`,
+                                  padding: "5px 12px",
+                                  borderRadius: "10px",
+                                  fontSize: "0.74rem",
+                                  fontWeight: 800,
+                                  textDecoration: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                }}
+                              >
+                                View Post ↗
+                              </a>
+                            ) : (
+                              <span style={{ fontSize: "0.72rem", color: "#EF4444", fontWeight: 700 }}>
+                                Failed: {pr.error}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
-              </div>
+              </motion.div>
             )}
+
           </div>
         </div>
 
@@ -823,18 +1123,18 @@ export default function Page1({ onNext }: Page1Props) {
         <div style={{ flex: "0 0 350px", position: "sticky", top: "24px" }}>
           <div className="card" style={{ padding: "26px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <span style={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
-              Live Watermark Video Preview
+              Content Mockup
             </span>
             
-            {/* Large HD Phone Frame */}
+            {/* 9:16 Full Frame HD Phone Frame (100% Uncropped Aspect Ratio) */}
             <div
               style={{
                 position: "relative",
-                width: "260px",
-                height: "380px",
+                width: "240px",
+                height: "426px", // Exact 9:16 vertical aspect ratio (240 x 426)
                 borderRadius: "22px",
                 border: "3px solid var(--panel-border)",
-                background: "linear-gradient(180deg, #111E28 0%, #0A131B 100%)",
+                background: "#0A131B",
                 overflow: "hidden",
                 boxShadow: "0 14px 36px rgba(0, 0, 0, 0.55)",
                 display: "flex",
@@ -842,35 +1142,71 @@ export default function Page1({ onNext }: Page1Props) {
                 justifyContent: "space-between",
               }}
             >
+              {/* Actual Instagram Reel Cover Frame (100% Full Uncropped 9:16 View) */}
+              {inspectedMeta?.imageUrl ? (
+                <motion.img
+                  key={inspectedMeta.imageUrl}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  src={inspectedMeta.imageUrl}
+                  alt="Reel Video Preview"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    background: "#000",
+                    zIndex: 1,
+                  }}
+                />
+              ) : null}
+
+              {/* Inspecting Reel Video Fetching Loading Overlay */}
+              <AnimatePresence>
+                {isInspecting && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background: "rgba(10, 19, 27, 0.75)",
+                      backdropFilter: "blur(6px)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "10px",
+                      zIndex: 30,
+                    }}
+                  >
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                      style={{
+                        width: "32px",
+                        height: "32px",
+                        borderRadius: "50%",
+                        border: "3px solid rgba(104, 183, 122, 0.2)",
+                        borderTopColor: "#68B77A",
+                        boxShadow: "0 0 12px rgba(104, 183, 122, 0.4)",
+                      }}
+                    />
+                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#68B77A", letterSpacing: "0.02em" }}>
+                      Analyzing Video Stream...
+                    </span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Dynamic Light Sheen Overlay (Only active while running/fetching) */}
               {running && <div className="phone-screen-sheen" />}
 
-              {/* Top Bar with Brand & Animated Equalizer Bars */}
-              <div style={{ padding: "12px 14px", background: "linear-gradient(180deg, rgba(0,0,0,0.65) 0%, transparent 100%)", display: "flex", alignItems: "center", gap: "8px", zIndex: 10 }}>
-                <div style={{ width: "20px", height: "20px", borderRadius: "50%", background: "#68B77A", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF" }}>
-                  <PawIcon />
-                </div>
-                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#F1EEE7" }}>
-                  {inspectedMeta?.ownerUsername || "cuddlytails"}
-                </span>
-                
-                {/* Audio / Video Stream Bars (Animated only while running) */}
-                <div style={{ display: "inline-flex", gap: "3px", alignItems: "flex-end", height: "12px", marginLeft: "auto" }}>
-                  <span className={running ? "eq-bar eq-bar-1" : "eq-bar"} style={{ height: running ? undefined : "4px" }} />
-                  <span className={running ? "eq-bar eq-bar-2" : "eq-bar"} style={{ height: running ? undefined : "7px" }} />
-                  <span className={running ? "eq-bar eq-bar-3" : "eq-bar"} style={{ height: running ? undefined : "4px" }} />
-                </div>
-              </div>
-
-              {/* Play Center Button (Ripple animation only active while running/fetching) */}
-              <div className={running ? "phone-play-ripple" : ""} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "48px", height: "48px", borderRadius: "50%", background: "rgba(104, 183, 122, 0.25)", border: "1.5px solid rgba(104, 183, 122, 0.45)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 12, transition: "all 0.3s ease" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="#68B77A" style={{ marginLeft: "2px" }}>
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
-              </div>
-
-              {/* Image Logo Watermark Overlay */}
-              <div style={{ position: "absolute", top: "14px", left: "14px", zIndex: 20, opacity: watermarkOpacity / 100, pointerEvents: "none", transition: "opacity 0.2s ease" }}>
+              {/* Image Logo Watermark Overlay (Layered above video stream) */}
+              <div style={{ position: "absolute", top: "14px", left: "14px", zIndex: 40, opacity: watermarkOpacity / 100, pointerEvents: "none", transition: "opacity 0.2s ease" }}>
                 {imageFile ? (
                   <img
                     src={URL.createObjectURL(imageFile)}
@@ -884,35 +1220,112 @@ export default function Page1({ onNext }: Page1Props) {
                 )}
               </div>
 
-              {/* Text Watermark (Smooth Spring Gliding Corner Animation) */}
+              {/* Text Watermark (Smooth Spring Gliding Corner Animation, Layered above video stream) */}
               <motion.div
                 layout
                 animate={getPositionStyles(watermarkPos)}
                 transition={{ type: "spring", stiffness: 320, damping: 26 }}
                 style={{
                   position: "absolute",
-                  zIndex: 20,
+                  zIndex: 40,
                   opacity: watermarkOpacity / 100,
                   pointerEvents: "none",
                 }}
               >
-                <div style={{ background: "rgba(0,0,0,0.75)", padding: "4px 9px", borderRadius: "5px", fontSize: "0.76rem", fontWeight: 700, color: "#FFFFFF", backdropFilter: "blur(4px)", boxShadow: "0 2px 8px rgba(0,0,0,0.5)" }}>
+                <div
+                  style={{
+                    padding: "4px 9px",
+                    borderRadius: "5px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    transition: "all 0.2s ease",
+                    ...(() => {
+                      const scaleFactor = watermarkScale === "small" ? 0.8 : watermarkScale === "large" ? 1.2 : 1.0;
+                      switch (watermarkStyle) {
+                        case "neon":
+                          return {
+                            background: "rgba(104, 183, 122, 0.25)",
+                            backdropFilter: "blur(6px)",
+                            border: "1.5px solid #68B77A",
+                            color: "#68B77A",
+                            boxShadow: "0 0 12px rgba(104, 183, 122, 0.5)",
+                            transform: `scale(${scaleFactor})`,
+                          };
+                        case "dark":
+                          return {
+                            background: "#0F172A",
+                            border: "1px solid #334155",
+                            color: "#F8FAFC",
+                            transform: `scale(${scaleFactor})`,
+                          };
+                        case "gold":
+                          return {
+                            background: "linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%)",
+                            border: "1.5px solid #F59E0B",
+                            color: "#FBBF24",
+                            boxShadow: "0 0 12px rgba(245, 158, 11, 0.35)",
+                            transform: `scale(${scaleFactor})`,
+                          };
+                        case "glass":
+                        default:
+                          return {
+                            background: "rgba(0,0,0,0.75)",
+                            backdropFilter: "blur(6px)",
+                            border: "1px solid rgba(255,255,255,0.2)",
+                            color: "#FFFFFF",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                            transform: `scale(${scaleFactor})`,
+                          };
+                      }
+                    })()
+                  }}
+                >
                   {textWatermark.trim() || `@${inspectedMeta?.ownerUsername || "cuddlytails"}`}
                 </div>
               </motion.div>
 
-              <div style={{ padding: "12px 14px", background: "linear-gradient(0deg, rgba(0,0,0,0.8) 0%, transparent 100%)", zIndex: 10 }}>
-                <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(241, 238, 231, 0.9)", lineHeight: 1.3, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                  {customCaption.trim() || "Loved watching Max! #cuddlytails"}
-                </p>
-              </div>
+
             </div>
 
             {/* Custom Caption Input Below Phone Frame */}
             <div style={{ marginTop: "20px", width: "100%" }}>
+              {/* Multi-Platform Caption Tab Switcher */}
+              <div style={{ display: "flex", gap: "6px", marginBottom: "12px", background: "rgba(0,0,0,0.25)", padding: "4px", borderRadius: "10px", border: "1px solid var(--panel-border)" }}>
+                {[
+                  { id: "Instagram", label: "Instagram", icon: <InstagramIcon />, color: "#E1306C" },
+                  { id: "Pinterest", label: "Pinterest", icon: <PinterestIcon />, color: "#E60023" },
+                  { id: "Twitter", label: "Twitter", icon: <XIcon />, color: "#1DA1F2" },
+                  { id: "YouTube", label: "YT Shorts", icon: <YouTubeIcon />, color: "#FF0000" },
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    title={t.label}
+                    onClick={() => handleTabSwitch(t.id as CaptionTab)}
+                    style={{
+                      flex: 1,
+                      padding: "8px 10px",
+                      borderRadius: "7px",
+                      border: activeCaptionTab === t.id ? `1.5px solid ${t.color}` : "1px solid transparent",
+                      background: activeCaptionTab === t.id ? "var(--surface)" : "transparent",
+                      color: activeCaptionTab === t.id ? t.color : "var(--text-muted)",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {t.icon}
+                  </button>
+                ))}
+              </div>
+
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
                 <label style={{ margin: 0, fontSize: "0.8rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
-                  Publishing Caption &amp; Message
+                  Publishing Caption ({activeCaptionTab})
                 </label>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                   <motion.button
@@ -947,7 +1360,7 @@ export default function Page1({ onNext }: Page1Props) {
                 <textarea
                   rows={5}
                   disabled={isGeneratingCaption}
-                  placeholder="Leave blank for Gemini AI auto-captions per platform, or type a custom caption e.g. Loved watching Max! 🐾 Book trusted pet sitters at cuddlytails.com..."
+                  placeholder="Auto-generated by Gemini AI or customize per platform..."
                   value={customCaption}
                   onChange={(e) => setCustomCaption(e.target.value)}
                   style={{
@@ -970,6 +1383,8 @@ export default function Page1({ onNext }: Page1Props) {
                     transition: "filter 0.3s ease, opacity 0.3s ease",
                   }}
                 />
+
+
 
                 <AnimatePresence>
                   {isGeneratingCaption && (
@@ -1017,19 +1432,19 @@ export default function Page1({ onNext }: Page1Props) {
 
       </div>
 
+
       {/* Invalid Instagram Link Floating Center-Bottom Notification Card */}
       <AnimatePresence>
         {isInvalidInstagramUrl && (
           <motion.div
-            initial={{ opacity: 0, y: 25, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 25, scale: 0.95 }}
+            initial={{ opacity: 0, y: 25, x: "-50%", scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, x: "-50%", scale: 1 }}
+            exit={{ opacity: 0, y: 25, x: "-50%", scale: 0.95 }}
             transition={{ type: "spring", stiffness: 450, damping: 26 }}
             style={{
               position: "fixed",
-              bottom: "68px",
+              bottom: "28px",
               left: "50%",
-              transform: "translateX(-50%)",
               zIndex: 99999,
               display: "flex",
               alignItems: "center",
@@ -1043,9 +1458,10 @@ export default function Page1({ onNext }: Page1Props) {
               color: "#FFFFFF",
               maxWidth: "90vw",
               whiteSpace: "nowrap",
-              pointerEvents: "none"
+              pointerEvents: "none",
             }}
           >
+
             <div
               style={{
                 width: "28px",

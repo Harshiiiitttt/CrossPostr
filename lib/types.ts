@@ -110,3 +110,25 @@ export interface PetCareReview {
   reviewText: string;
   rating: number;
 }
+
+export interface BlogHistoryItem {
+  id: string;
+  timestamp: number;
+  topic: string;
+  blog: SeoBlog;
+  posts: LinkedInPosts | null;
+  metaDescription: string;
+  persona: {
+    id: string;
+    name: string;
+    icon: string;
+  };
+}
+
+export interface ReviewHistoryItem {
+  id: string;
+  timestamp: number;
+  serviceType: string;
+  location: string;
+  reviews: PetCareReview[];
+}

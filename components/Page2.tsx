@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
+import { motion } from "framer-motion";
 import type { PetCareReview } from "@/lib/types";
 import PawLoader from "@/components/PawLoader";
 import Toast from "@/components/Toast";
+import HistoryDrawer from "@/components/HistoryDrawer";
 import { useBlogGeneration } from "@/lib/BlogGenerationContext";
 
 interface Page2Props {
@@ -177,14 +179,34 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function HistoryIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </svg>
+  );
+}
+
+function ArrowUpIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="12" y1="19" x2="12" y2="5" />
+      <polyline points="5 12 12 5 19 12" />
+    </svg>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Page2({ onNext, onBack }: Page2Props) {
-  const { reviews, reviewsLoading, reviewsError, generateReviews } = useBlogGeneration();
+  const { reviews, reviewsLoading, reviewsError, generateReviews, reviewHistory } = useBlogGeneration();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [allCopied, setAllCopied] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showReviewsHeaderMenu, setShowReviewsHeaderMenu] = useState<boolean>(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const menuRefHeader = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -294,15 +316,39 @@ export default function Page2({ onNext, onBack }: Page2Props) {
   return (
     <div className="p2-root">
       {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg(null)} />}
+      <HistoryDrawer isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} initialMode="reviews" />
 
       {/* ── Header ──────────────────────────────────────── */}
-      <div className="p2-header">
-        <span className="p2-step-chip">STEP 2 OF 3</span>
-        <h1 className="p2-heading">Cuddlytails review generator</h1>
-        <p className="p2-subheading">
-          Generates 3 realistic, narrative-style customer reviews with custom service types, locations & persona angles.<br />
-          Skip this page if you don&apos;t need reviews right now.
-        </p>
+      <div className="p2-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
+        <div>
+          <span className="p2-step-chip">STEP 2 OF 3</span>
+          <h1 className="p2-heading">Cuddlytails review generator</h1>
+          <p className="p2-subheading">
+            Generates 3 realistic, narrative-style customer reviews with custom service types, locations & persona angles.<br />
+            Skip this page if you don&apos;t need reviews right now.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setIsHistoryOpen(true)}
+          style={{
+            background: "rgba(104, 183, 122, 0.12)",
+            border: "1px solid rgba(104, 183, 122, 0.3)",
+            color: "#68B77A",
+            padding: "8px 14px",
+            borderRadius: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            marginTop: "8px",
+          }}
+        >
+          <HistoryIcon /> History ({reviewHistory.length})
+        </button>
       </div>
 
       {/* ── Collapsed Parameters Summary Ribbon ──────────── */}
@@ -366,37 +412,80 @@ export default function Page2({ onNext, onBack }: Page2Props) {
               <SlidersIcon /> Edit options
             </button>
 
-            {/* Generate / Regenerate button as Green Circle UP Arrow */}
-            <button
+            {/* Generate / Regenerate button as Green Circle UP Arrow with smooth dual-layer roll-up animation */}
+            <motion.button
               id="p2-generate-btn-ribbon"
               type="button"
               onClick={handleGenerate}
               disabled={reviewsLoading}
               title={reviewsLoading ? "Generating..." : (reviews && reviews.length > 0 ? "Regenerate" : "Generate")}
+              initial="rest"
+              whileHover={reviewsLoading ? undefined : "hover"}
+              whileTap={reviewsLoading ? undefined : { scale: 0.90 }}
               style={{
                 width: "36px",
                 height: "36px",
                 borderRadius: "50%",
-                background: "#68B77A",
+                background: "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
                 color: "#FFFFFF",
                 border: "none",
+                position: "relative",
+                overflow: "hidden",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(104, 183, 122, 0.35)",
-                transition: "all 0.15s ease",
+                cursor: reviewsLoading ? "not-allowed" : "pointer",
+                boxShadow: "0 4px 14px rgba(104, 183, 122, 0.4)",
+                transition: "box-shadow 0.2s ease",
                 flexShrink: 0,
               }}
             >
               {reviewsLoading ? (
                 <span className="p2-spinner" style={{ width: "16px", height: "16px", color: "#FFFFFF" }} />
               ) : (
-                <span style={{ color: "#FFFFFF", fontSize: "1.2rem", fontWeight: 900, lineHeight: 1, display: "inline-block", transform: "translateY(-1px)" }}>
-                  ↑
-                </span>
+                <>
+                  {/* Default Arrow - Slides Up & Out on Hover */}
+                  <motion.div
+                    variants={{
+                      rest: { y: "0%", opacity: 1 },
+                      hover: { y: "-130%", opacity: 0 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <ArrowUpIcon />
+                  </motion.div>
+
+                  {/* Hover Arrow Clone - Smoothly Rolls Up from Bottom */}
+                  <motion.div
+                    variants={{
+                      rest: { y: "130%", opacity: 0 },
+                      hover: { y: "0%", opacity: 1 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <ArrowUpIcon />
+                  </motion.div>
+                </>
               )}
-            </button>
+            </motion.button>
           </div>
         </div>
       ) : (
@@ -664,16 +753,76 @@ export default function Page2({ onNext, onBack }: Page2Props) {
 
           {/* Action Row Inside Card when Expanded */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", paddingTop: "14px", borderTop: "1px solid var(--panel-border)" }}>
-            <button
+            <motion.button
               id="p2-generate-btn"
-              className="p2-btn-generate"
+              type="button"
               onClick={handleGenerate}
               disabled={reviewsLoading}
-              style={{ height: "40px" }}
+              title={reviewsLoading ? "Generating..." : (reviews && reviews.length > 0 ? "Regenerate Reviews" : "Generate Reviews")}
+              initial="rest"
+              whileHover={reviewsLoading ? undefined : "hover"}
+              whileTap={reviewsLoading ? undefined : { scale: 0.90 }}
+              style={{
+                width: "42px",
+                height: "42px",
+                borderRadius: "50%",
+                background: "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
+                color: "#FFFFFF",
+                border: "none",
+                position: "relative",
+                overflow: "hidden",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: reviewsLoading ? "not-allowed" : "pointer",
+                boxShadow: "0 4px 14px rgba(104, 183, 122, 0.4)",
+                transition: "box-shadow 0.2s ease",
+                flexShrink: 0,
+              }}
             >
-              {reviewsLoading && <span className="p2-spinner" />}
-              {reviewsLoading ? "Generating..." : (reviews && reviews.length > 0 ? "Regenerate" : "Generate")}
-            </button>
+              {reviewsLoading ? (
+                <span className="p2-spinner" style={{ width: "18px", height: "18px", color: "#FFFFFF" }} />
+              ) : (
+                <>
+                  <motion.div
+                    variants={{
+                      rest: { y: "0%", opacity: 1 },
+                      hover: { y: "-130%", opacity: 0 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <ArrowUpIcon />
+                  </motion.div>
+                  <motion.div
+                    variants={{
+                      rest: { y: "130%", opacity: 0 },
+                      hover: { y: "0%", opacity: 1 },
+                    }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "100%",
+                      height: "100%",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <ArrowUpIcon />
+                  </motion.div>
+                </>
+              )}
+            </motion.button>
           </div>
 
         </div>

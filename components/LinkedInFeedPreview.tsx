@@ -103,7 +103,7 @@ export default function LinkedInFeedPreview({
           className={`social-platform-btn ${platform === "twitter" ? "active" : ""}`}
           onClick={() => setPlatform("twitter")}
         >
-          <span className="social-icon-btn">🐦</span> X (Twitter)
+          <span className="social-icon-btn">🐦</span> Twitter
         </button>
       </div>
 

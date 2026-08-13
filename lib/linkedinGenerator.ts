@@ -115,7 +115,7 @@ async function callGemini(prompt: string): Promise<LinkedInPosts> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-flash-latest"];
+  const models = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
   let lastErr = "";
 
   for (const model of models) {

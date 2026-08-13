@@ -4,6 +4,7 @@ import type { LinkedInPosts, SeoBlog } from "@/lib/types";
 import PawLoader from "@/components/PawLoader";
 import Toast from "@/components/Toast";
 import SeoMeter from "@/components/SeoMeter";
+import HistoryDrawer from "@/components/HistoryDrawer";
 import { useBlogGeneration } from "@/lib/BlogGenerationContext";
 
 interface Page3Props {
@@ -34,23 +35,26 @@ function triggerMicroConfetti(e?: React.MouseEvent | MouseEvent) {
     y = e.clientY;
   }
 
-  const particlesCount = 14;
-  const shapes = ["🐶", "🐾", "🐕", "✨", "🦮", "⭐", "🐾", "🎉", "🐕‍🦺", "✦"];
+  const colors = ["#68B77A", "#9A82D7", "#D7C59A", "#88C999"];
+  const particleCount = 12;
 
-  for (let i = 0; i < particlesCount; i++) {
-    const el = document.createElement("span");
+  for (let i = 0; i < particleCount; i++) {
+    const el = document.createElement("div");
+    const color = colors[i % colors.length];
+    const size = Math.floor(Math.random() * 4) + 3;
+    const angle = (i / particleCount) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+    const distance = Math.floor(Math.random() * 22) + 16;
+    const dx = Math.cos(angle) * distance;
+    const dy = Math.sin(angle) * distance;
+
     el.className = "micro-confetti-particle";
-    el.innerText = shapes[Math.floor(Math.random() * shapes.length)];
-
-    const angle = (i / particlesCount) * 360 + (Math.random() * 20 - 10);
-    const distance = 24 + Math.random() * 30;
-    const rad = (angle * Math.PI) / 180;
-
-    const dx = Math.cos(rad) * distance;
-    const dy = Math.sin(rad) * distance - 10;
-
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
+    el.style.width = `${size}px`;
+    el.style.height = `${size}px`;
+    el.style.backgroundColor = color;
+    el.style.borderRadius = "50%";
+    el.style.boxShadow = `0 0 6px ${color}`;
     el.style.setProperty("--dx", `${dx}px`);
     el.style.setProperty("--dy", `${dy}px`);
 
@@ -60,7 +64,7 @@ function triggerMicroConfetti(e?: React.MouseEvent | MouseEvent) {
       if (el.parentNode) {
         el.parentNode.removeChild(el);
       }
-    }, 600);
+    }, 420);
   }
 }
 
@@ -1283,6 +1287,16 @@ function BlogRenderer({
 
 // ── Main page component ────────────────────────────────────────────────────────
 
+function HistoryIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </svg>
+  );
+}
+
 export default function Page3({ onBack, isActive }: Page3Props) {
   const {
     topic,
@@ -1301,7 +1315,10 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     generateBlog,
     generateLinkedInPosts,
     resetBlogState,
+    blogHistory,
   } = useBlogGeneration();
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const [suggestions, setSuggestions] = useState<string[]>([
     "Raw Food vs Kibble: Pros & Cons",
@@ -1455,9 +1472,9 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     const textToCopy = metaOption === "opt1" ? metaDescription : metaDescriptionAlt;
     if (!textToCopy) return;
     await navigator.clipboard.writeText(textToCopy);
-    setMetaCopied(true);
+    setCopied(true);
     setToastMsg("Meta description snippet copied to clipboard!");
-    setTimeout(() => setMetaCopied(false), 1500);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   const handleNewBlog = () => {
@@ -1473,6 +1490,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
   };
 
   const getBlogText = (b: SeoBlog) => {
+    const activeMeta = (metaOption === "opt1" ? metaDescription : metaDescriptionAlt) || metaDescription || metaDescriptionAlt || "";
     const sectionBlocks = b.sections
       .map((s) => {
         const paragraphBlock = (s.paragraphs ?? []).join("\n\n");
@@ -1487,6 +1505,8 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       .join("\n\n");
 
     const faqBlock = b.faqs.map((f) => `**${f.question}**\n\n${f.answer}`).join("\n\n");
+    const metaBlock = activeMeta ? `**Meta Description:** ${activeMeta}` : "";
+
     return [
       `# ${b.title}`,
       b.intro.join("\n\n"),
@@ -1496,10 +1516,14 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       b.conclusion.join("\n\n"),
       `### Frequently Asked Questions`,
       faqBlock,
-    ].join("\n\n");
+      metaBlock,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
   };
 
   const getBlogHtml = (b: SeoBlog) => {
+    const activeMeta = (metaOption === "opt1" ? metaDescription : metaDescriptionAlt) || metaDescription || metaDescriptionAlt || "";
     const introHtml = b.intro.map((p) => `<p style="font-size: 11pt;">${p}</p>`).join("");
 
     const sectionHtml = b.sections
@@ -1530,7 +1554,11 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       `<h2 style="font-size: 15pt; font-weight: bold;">Frequently Asked Questions</h2>` +
       b.faqs.map((f) => `<p style="font-size: 11pt;"><b>${f.question}</b></p><p style="font-size: 11pt;">${f.answer}</p>`).join("");
 
-    return `<h1 style="font-size: 20pt; font-weight: bold;">${b.title}</h1>${introHtml}${sectionHtml}${ctaHtml}${conclusionHtml}${faqHtml}`;
+    const metaHtml = activeMeta
+      ? `<p style="font-size: 11pt; margin-top: 16px;"><b>Meta Description:</b> ${activeMeta}</p>`
+      : "";
+
+    return `<h1 style="font-size: 20pt; font-weight: bold;">${b.title}</h1>${introHtml}${sectionHtml}${ctaHtml}${conclusionHtml}${faqHtml}${metaHtml}`;
   };
 
   const exportAsText = (b: SeoBlog, e?: React.MouseEvent) => {
@@ -1549,6 +1577,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
 
 
   const downloadMarkdown = (b: SeoBlog) => {
+    const activeMeta = (metaOption === "opt1" ? metaDescription : metaDescriptionAlt) || metaDescription || metaDescriptionAlt || "";
     let md = `# ${b.title}\n\n`;
     b.intro.forEach((p) => { md += `${p}\n\n`; });
     b.sections.forEach((s) => {
@@ -1575,6 +1604,9 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       b.faqs.forEach((faq) => {
         md += `### ${faq.question}\n${faq.answer}\n\n`;
       });
+    }
+    if (activeMeta) {
+      md += `**Meta Description:** ${activeMeta}\n\n`;
     }
 
     const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
@@ -1828,9 +1860,10 @@ export default function Page3({ onBack, isActive }: Page3Props) {
   return (
     <div className={`p3-root ${isCompactWorkspace ? "p3-root--compact" : ""}`}>
       {toastMsg && <Toast message={toastMsg} onClose={() => setToastMsg(null)} />}
+      <HistoryDrawer isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} initialMode="blogs" />
 
       {/* ── Page header (Collapses smoothly ONLY AFTER blog generation finishes 100%) ── */}
-      <div className={`p3-header p3-header-collapsible ${isCompactWorkspace ? "p3-collapsed" : ""}`}>
+      <div className={`p3-header p3-header-collapsible ${isCompactWorkspace ? "p3-collapsed" : ""}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div className="p3-header-text">
           <div className="p3-brand-persona-badge">
             <span className="p3-persona-dot" />
@@ -1848,6 +1881,28 @@ export default function Page3({ onBack, isActive }: Page3Props) {
             and 5 FAQs. Leave this blank to finish without generating a blog.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsHistoryOpen(true)}
+          style={{
+            background: "rgba(104, 183, 122, 0.12)",
+            border: "1px solid rgba(104, 183, 122, 0.3)",
+            color: "#68B77A",
+            padding: "8px 14px",
+            borderRadius: "10px",
+            fontSize: "0.85rem",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            marginTop: "12px",
+          }}
+        >
+          <HistoryIcon /> History ({blogHistory.length})
+        </button>
       </div>
 
       {/* ── Topic input (Pinned Top-Center in Compact Mode) ── */}
