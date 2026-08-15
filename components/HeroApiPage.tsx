@@ -414,7 +414,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "var(--heading-white)",
+                  color: "#0F172A",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",

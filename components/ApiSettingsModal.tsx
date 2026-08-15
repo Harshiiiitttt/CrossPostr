@@ -146,13 +146,13 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                 </button>
 
                 <a
-                  href="https://github.com/Harshiiiitttt"
+                  href="https://github.com/Harshiiiitttt/CrossPostr"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#FFFFFF",
+                    color: "#0F172A",
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
