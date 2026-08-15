@@ -275,17 +275,17 @@ export default function SeoMeter({
 
         {/* Breakdown Stats */}
         <div className="seo-stats-grid">
-          <div className="seo-stat-item">
+          <div className="seo-stat-item seo-stat-item--grade">
             <span className="seo-stat-label">Grade</span>
             <span className="seo-stat-value" style={{ color: seoMetrics.color }}>
               {seoMetrics.grade}
             </span>
           </div>
-          <div className="seo-stat-item">
+          <div className="seo-stat-item seo-stat-item--wordcount">
             <span className="seo-stat-label">Word Count</span>
-            <span className="seo-stat-value">{wordCount.toLocaleString()}</span>
+            <span className="seo-stat-value">{wordCount.toLocaleString()} words</span>
           </div>
-          <div className="seo-stat-item">
+          <div className="seo-stat-item seo-stat-item--meta">
             <span className="seo-stat-label">Meta Snippet</span>
             <span
               className="seo-stat-value"
@@ -299,7 +299,7 @@ export default function SeoMeter({
               {metaDescription.length}/160
             </span>
           </div>
-          <div className="seo-stat-item">
+          <div className="seo-stat-item seo-stat-item--headings">
             <span className="seo-stat-label">Headings</span>
             <span className="seo-stat-value">{1 + blog.sections.length} Sections</span>
           </div>

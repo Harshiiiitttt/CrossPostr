@@ -115,7 +115,7 @@ function HelpIcon() {
 
 function GitHubIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
       <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
     </svg>
   );
@@ -123,7 +123,7 @@ function GitHubIcon() {
 
 function MailIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
       <polyline points="22,6 12,13 2,6" />
     </svg>
@@ -133,12 +133,23 @@ function MailIcon() {
 interface TooltipProps {
   content: string;
   position?: "top" | "bottom";
+  align?: "center" | "left" | "right";
   children: React.ReactNode;
 }
 
-function Tooltip({ content, position = "bottom", children }: TooltipProps) {
+function Tooltip({ content, position = "bottom", align = "center", children }: TooltipProps) {
   const [hovered, setHovered] = useState(false);
   const isTop = position === "top";
+
+  const getAlignStyles = (): React.CSSProperties => {
+    if (align === "right") {
+      return { right: 0, left: "auto", transform: "none" };
+    }
+    if (align === "left") {
+      return { left: 0, right: "auto", transform: "none" };
+    }
+    return { left: "50%", transform: "translateX(-50%)" };
+  };
 
   return (
     <div
@@ -158,8 +169,7 @@ function Tooltip({ content, position = "bottom", children }: TooltipProps) {
               position: "absolute",
               top: isTop ? undefined : "calc(100% + 10px)",
               bottom: isTop ? "calc(100% + 10px)" : undefined,
-              left: "50%",
-              transform: "translateX(-50%)",
+              ...getAlignStyles(),
               background: "rgba(10, 18, 26, 0.96)",
               backdropFilter: "blur(14px)",
               WebkitBackdropFilter: "blur(14px)",
@@ -269,6 +279,10 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  }, []);
+
   const handleTestConnection = (platformKey: string) => {
     setTestState((prev) => ({ ...prev, [platformKey]: { status: "testing" } }));
     setTimeout(() => {
@@ -361,93 +375,54 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "8px",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "24px",
-              padding: "4px 10px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+              gap: "10px",
             }}
           >
-            <Tooltip content="Setup developer keys & OAuth guides">
-              <button
-                type="button"
-                onClick={() => setHelpModalPlatform("instagram")}
-                style={{
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  color: "#FFFFFF",
-                  padding: "5px 12px",
-                  borderRadius: "16px",
-                  fontSize: "0.76rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <HelpIcon /> Setup Guide
-              </button>
-            </Tooltip>
-
-            <Tooltip content="Send email or get in touch">
+            <Tooltip content="Send email or get in touch" align="right">
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
                 style={{
-                  background: "rgba(104, 183, 122, 0.14)",
-                  border: "1px solid rgba(104, 183, 122, 0.4)",
+                  background: "transparent",
+                  border: "none",
                   color: "#68B77A",
-                  padding: "5px 13px",
-                  borderRadius: "16px",
-                  fontSize: "0.76rem",
-                  fontWeight: 800,
+                  padding: "6px",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "5px",
-                  boxShadow: "0 0 14px rgba(104, 183, 122, 0.25), inset 0 0 8px rgba(104, 183, 122, 0.1)",
-                  transition: "all 0.2s ease",
+                  justifyContent: "center",
+                  transition: "transform 0.2s ease, opacity 0.2s ease",
+                  opacity: 0.85,
                 }}
+                title="Contact Me"
               >
-                <MailIcon /> Contact Me
+                <MailIcon />
               </button>
             </Tooltip>
 
-            <Tooltip content="View GitHub Profile @Harshiiiitttt">
+            <Tooltip content="View GitHub Profile @Harshiiiitttt" align="right">
               <a
                 href="https://github.com/Harshiiiitttt"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  background: "rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.22)",
+                  background: "transparent",
+                  border: "none",
                   color: "#FFFFFF",
-                  padding: "5px 13px",
-                  borderRadius: "16px",
-                  fontSize: "0.76rem",
-                  fontWeight: 800,
+                  padding: "6px",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "5px",
+                  justifyContent: "center",
                   textDecoration: "none",
-                  boxShadow: "0 0 14px rgba(255, 255, 255, 0.15), inset 0 0 8px rgba(255, 255, 255, 0.05)",
-                  transition: "all 0.2s ease",
+                  transition: "transform 0.2s ease, opacity 0.2s ease",
+                  opacity: 0.85,
                 }}
+                title="GitHub Profile"
               >
-                <GitHubIcon /> GitHub
+                <GitHubIcon />
               </a>
             </Tooltip>
-
-            <div style={{ width: "1px", height: "16px", background: "rgba(255, 255, 255, 0.12)", margin: "0 2px" }} />
-
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", fontWeight: 800, color: isAnyConnected ? "#68B77A" : "var(--text-muted)", padding: "0 4px" }}>
-              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: isAnyConnected ? "#68B77A" : "var(--text-muted)", boxShadow: isAnyConnected ? "0 0 8px #68B77A" : "none" }} />
-              {connectedCount}/4 Active
-            </div>
           </div>
         </div>
       </header>
@@ -527,74 +502,11 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           </div>
         </div>
 
-        {/* Minimalist Platform Filter Tabs & Auto-Fill Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "18px" }}>
-          
-          {/* Minimalist Filter Tabs */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <div style={{ display: "flex", gap: "4px", background: "rgba(0,0,0,0.3)", padding: "4px", borderRadius: "10px", border: "1px solid rgba(255,255,255,0.08)" }}>
-              {[
-                { id: "all", label: "All Platforms (4)" },
-                { id: "instagram", label: "Instagram", icon: <InstagramIcon />, color: "#E1306C" },
-                { id: "pinterest", label: "Pinterest", icon: <PinterestIcon />, color: "#E60023" },
-                { id: "twitter", label: "Twitter (X)", icon: <XIcon />, color: "#1DA1F2" },
-                { id: "youtube", label: "YT Shorts", icon: <YouTubeIcon />, color: "#FF0000" },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setActiveTab(t.id as any)}
-                  style={{
-                    padding: "5px 12px",
-                    borderRadius: "7px",
-                    border: "none",
-                    background: activeTab === t.id ? "rgba(104, 183, 122, 0.18)" : "transparent",
-                    color: activeTab === t.id ? "#68B77A" : "var(--text-muted)",
-                    fontSize: "0.76rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {t.icon && <span style={{ color: activeTab === t.id ? t.color : "currentColor", display: "flex" }}>{t.icon}</span>}
-                  {t.label}
-                </button>
-              ))}
-            </div>
 
-            {/* ⚡ Auto-Fill Demo Button placed right next to YT Shorts */}
-            <button
-              type="button"
-              onClick={handleAutoFillDemo}
-              title="Auto-fill demo API credentials for all platforms"
-              style={{
-                background: "rgba(104, 183, 122, 0.15)",
-                border: "1px solid rgba(104, 183, 122, 0.35)",
-                color: "#68B77A",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "0.76rem",
-                fontWeight: 800,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                transition: "all 0.15s ease",
-                boxShadow: "0 2px 12px rgba(104, 183, 122, 0.2)",
-              }}
-            >
-              <ZapIcon /> Auto-Fill Demo
-            </button>
-          </div>
-
-        </div>
 
 
         {/* Vibrant Platform API Cards Grid */}
-        <div style={{ display: "grid", gridTemplateColumns: activeTab === "all" ? "repeat(auto-fit, minmax(360px, 1fr))" : "1fr", gap: "18px", marginBottom: "28px", textAlign: "left" }}>
+        <div style={{ display: "grid", gridTemplateColumns: activeTab === "all" ? "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" : "1fr", gap: "18px", marginBottom: "28px", textAlign: "left" }}>
           
           {/* Instagram Card */}
           {(activeTab === "all" || activeTab === "instagram") && (
@@ -835,29 +747,6 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                       style={{ background: "rgba(255, 0, 0, 0.18)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#FF0000", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
-                    </button>
-                  </Tooltip>
-                  <Tooltip content="Auto-fill demo credentials for all 4 platforms">
-                    <button
-                      type="button"
-                      onClick={handleAutoFillDemo}
-                      style={{
-                        background: "rgba(104, 183, 122, 0.15)",
-                        border: "1px solid rgba(104, 183, 122, 0.35)",
-                        color: "#68B77A",
-                        padding: "4px 10px",
-                        borderRadius: "14px",
-                        fontSize: "0.72rem",
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        transition: "all 0.15s ease",
-                        marginLeft: "4px",
-                      }}
-                    >
-                      <ZapIcon /> Auto-Fill Demo
                     </button>
                   </Tooltip>
                 </div>

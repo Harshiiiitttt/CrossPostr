@@ -7,6 +7,8 @@ import PawTrail from "@/components/PawTrail";
 import HeroApiPage from "@/components/HeroApiPage";
 import ApiSettingsModal from "@/components/ApiSettingsModal";
 
+import HistoryDrawer from "@/components/HistoryDrawer";
+
 const TOTAL_STEPS = 3;
 
 const STEPS = [
@@ -29,16 +31,26 @@ function PawIcon() {
 
 function SettingsIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
 
+function HistoryIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+      <path d="M3 3v5h5" />
+      <path d="M12 7v5l4 2" />
+    </svg>
+  );
+}
+
 function Step1Icon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7,10 12,15 17,10" />
       <line x1="12" y1="15" x2="12" y2="3" />
@@ -48,7 +60,7 @@ function Step1Icon() {
 
 function Step2Icon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
     </svg>
   );
@@ -56,7 +68,7 @@ function Step2Icon() {
 
 function Step3Icon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
       <polyline points="14,2 14,8 20,8" />
       <line x1="16" y1="13" x2="8" y2="13" />
@@ -67,16 +79,18 @@ function Step3Icon() {
 
 function BackArrow() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      <polyline points="15,18 9,12 15,6" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
     </svg>
   );
 }
 
 function ArrowRightIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
-      <polyline points="9,18 15,12 9,6" />
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="5" y1="12" x2="19" y2="12" />
+      <polyline points="12 5 19 12 12 19" />
     </svg>
   );
 }
@@ -100,6 +114,8 @@ export default function Wizard() {
   const [direction, setDirection] = useState<"next" | "back">("next");
   const [hasConnectedApi, setHasConnectedApi] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     const isAuth = localStorage.getItem("cuddlytails_user_authenticated");
@@ -108,6 +124,14 @@ export default function Wizard() {
       setHasConnectedApi(true);
     }
   }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    const mainContent = document.querySelector(".app-main");
+    if (mainContent) {
+      mainContent.scrollTop = 0;
+    }
+  }, [step, hasConnectedApi]);
 
   const goNext = () => {
     setDirection("next");
@@ -177,6 +201,57 @@ export default function Wizard() {
         onClose={() => setIsSettingsOpen(false)}
         onSignOut={handleSignOut}
       />
+      <HistoryDrawer
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        initialMode={step === 2 ? "reviews" : "blogs"}
+      />
+
+      {/* ── Mobile Header Top Bar (<768px) ── */}
+      <header className="mobile-top-bar" aria-label="Mobile Navigation Bar">
+        {/* Extreme Left: Settings Button */}
+        <button
+          type="button"
+          className="mobile-settings-icon-only-btn"
+          onClick={() => setIsSettingsOpen(true)}
+          title="API Settings"
+        >
+          <SettingsIcon />
+        </button>
+
+        {/* Middle: 3 Step Navigation Buttons */}
+        <nav className="mobile-top-steps" aria-label="Step Navigation">
+          {STEPS.map((s, idx) => {
+            const n = idx + 1;
+            const isActive = step === n;
+            return (
+              <button
+                key={s.title}
+                type="button"
+                className={`mobile-step-btn ${isActive ? "active" : ""}`}
+                onClick={() => goToStep(n)}
+                title={s.title}
+              >
+                <span className="mobile-step-icon">
+                  {n === 1 && <Step1Icon />}
+                  {n === 2 && <Step2Icon />}
+                  {n === 3 && <Step3Icon />}
+                </span>
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Extreme Right: History Button */}
+        <button
+          type="button"
+          className="mobile-history-icon-only-btn"
+          onClick={() => setIsHistoryOpen(true)}
+          title="View History"
+        >
+          <HistoryIcon />
+        </button>
+      </header>
 
       {/* ── Ambient Aurora Background Mesh ────────────────── */}
       <div className="aurora-container" aria-hidden="true">
@@ -186,13 +261,70 @@ export default function Wizard() {
       </div>
 
       {/* ── Fixed left sidebar ────────────────────────── */}
-      <aside className="sidebar">
-        <div className="sidebar-top">
+      <aside className={`sidebar ${isCollapsed ? "sidebar-collapsed" : ""}`}>
+        {/* Top Controls: Sidebar Toggle (Left) + Nav Arrows (Center) + Settings (Right) */}
+        <div className="sidebar-top-controls">
+          <button
+            type="button"
+            className="sidebar-toggle-btn"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#68B77A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+          </button>
+
+          {!isCollapsed ? (
+            <div className="sidebar-nav-arrows">
+              <button
+                type="button"
+                className="sidebar-nav-arrow-btn"
+                onClick={goBack}
+                disabled={step === 1}
+                title="Previous Step (Back)"
+              >
+                <BackArrow />
+              </button>
+              <button
+                type="button"
+                className="sidebar-settings-btn"
+                onClick={() => setIsSettingsOpen(true)}
+                title="API Settings"
+              >
+                <SettingsIcon />
+              </button>
+              <button
+                type="button"
+                className="sidebar-nav-arrow-btn"
+                onClick={goNext}
+                disabled={step === TOTAL_STEPS}
+                title="Next Step"
+              >
+                <ArrowRightIcon />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="sidebar-settings-btn"
+              onClick={() => setIsSettingsOpen(true)}
+              title="API Settings"
+            >
+              <SettingsIcon />
+            </button>
+          )}
+        </div>
+
+        <div className="sidebar-top" style={{ marginTop: isCollapsed ? "36px" : "12px" }}>
           {/* Brand with Slackey font + Green Paw */}
-          <div className="brand-mark" style={{ marginBottom: "24px" }}>
-            <span>Cross Postr</span>
-            <span className="brand-paw"><PawIcon /></span>
-          </div>
+          {!isCollapsed && (
+            <div className="brand-mark" style={{ marginBottom: "14px" }}>
+              <span>Cross Postr</span>
+              <span className="brand-paw"><PawIcon /></span>
+            </div>
+          )}
 
           {/* Vertical step rail */}
           <nav className="step-rail" aria-label="Progress">
@@ -220,12 +352,14 @@ export default function Wizard() {
                   </div>
 
                   {/* Text */}
-                  <span className="step-text">
-                    <span className="step-title">{s.title}</span>
-                    {(state === "active" || state === "upcoming") && (
-                      <span className="step-subtitle">{s.subtitle}</span>
-                    )}
-                  </span>
+                  {!isCollapsed && (
+                    <span className="step-text">
+                      <span className="step-title">{s.title}</span>
+                      {(state === "active" || state === "upcoming") && (
+                        <span className="step-subtitle">{s.subtitle}</span>
+                      )}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -235,31 +369,6 @@ export default function Wizard() {
         {/* Transparent Green Dog Image */}
         <SidebarDogArt />
 
-        {/* Bottom Sidebar Settings Action (Below Dog Illustration) */}
-        <div style={{ padding: "16px 20px", marginTop: "auto" }}>
-          <button
-            type="button"
-            onClick={() => setIsSettingsOpen(true)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              width: "100%",
-              padding: "9px 14px",
-              borderRadius: "10px",
-              border: "1px solid var(--panel-border)",
-              background: "rgba(0,0,0,0.3)",
-              color: "var(--text-main)",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <SettingsIcon />
-            <span>Settings</span>
-          </button>
-        </div>
       </aside>
 
       {/* ── Main content area with fixed navigation bar & Keep-Alive steps ─────────────────────────── */}

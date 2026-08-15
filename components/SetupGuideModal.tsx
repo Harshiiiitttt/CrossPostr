@@ -346,7 +346,7 @@ export default function SetupGuideModal({
           style={{ position: "absolute", inset: 0 }}
         />
 
-        {/* Modal Container */}
+        {/* Modal Container with Fixed Uniform Height */}
         <motion.div
           initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -357,6 +357,10 @@ export default function SetupGuideModal({
             zIndex: 160,
             maxWidth: "640px",
             width: "100%",
+            height: "560px",
+            maxHeight: "90vh",
+            display: "flex",
+            flexDirection: "column",
             background: "#0D1620",
             border: `1.5px solid ${guide.brandColor}55`,
             borderRadius: "22px",
@@ -392,12 +396,9 @@ export default function SetupGuideModal({
                   {guide.iconSvg}
                 </span>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: "1.18rem", fontWeight: 800, color: "#FFFFFF", letterSpacing: "0.01em" }}>
-                    {guide.name} Setup Guide
+                  <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#FFFFFF", letterSpacing: "0.01em" }}>
+                    {guide.name} API Setup Guide
                   </h2>
-                  <span style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.7)", fontWeight: 500 }}>
-                    Step-by-step developer credentials guide
-                  </span>
                 </div>
               </div>
 
@@ -433,42 +434,34 @@ export default function SetupGuideModal({
               </motion.button>
             </div>
 
-            {/* Platform Selection Tabs (Instagram → Pinterest → X → YouTube) */}
-            <div style={{ display: "flex", gap: "6px", background: "rgba(0,0,0,0.35)", padding: "4px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.08)" }}>
+            {/* Platform Selection Tabs (Logo Only - Max Distant Space-Between Layout) */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 36px", background: "rgba(0,0,0,0.35)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.08)" }}>
               {(["instagram", "pinterest", "twitter", "youtube"] as PlatformId[]).map((pKey) => {
                 const item = PLATFORM_GUIDES[pKey];
                 const isActive = pKey === activePlatformId;
-                const displayLabels: Record<PlatformId, string> = {
-                  instagram: "Instagram",
-                  pinterest: "Pinterest",
-                  twitter: "X",
-                  youtube: "YouTube",
-                };
                 return (
                   <button
                     key={pKey}
                     type="button"
                     onClick={() => handleSwitchPlatform(pKey)}
+                    title={item.name}
+                    aria-label={item.name}
                     style={{
-                      flex: 1,
-                      padding: "8px 10px",
+                      width: "36px",
+                      height: "36px",
                       borderRadius: "8px",
                       border: "none",
                       background: isActive ? item.brandColor : "transparent",
                       color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.65)",
-                      fontSize: "0.8rem",
-                      fontWeight: isActive ? 800 : 600,
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      gap: "6px",
                       transition: "all 0.2s ease",
                       boxShadow: isActive ? `0 2px 10px ${item.brandColor}55` : "none",
                     }}
                   >
                     <span style={{ display: "flex", opacity: isActive ? 1 : 0.7 }}>{item.iconSvg}</span>
-                    <span>{displayLabels[pKey]}</span>
                   </button>
                 );
               })}
@@ -517,8 +510,8 @@ export default function SetupGuideModal({
             </div>
           </div>
 
-          {/* Active Step Content Card */}
-          <div style={{ padding: "20px 24px", minHeight: "260px" }}>
+          {/* Active Step Content Card (Fixed Flex Height) */}
+          <div style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${activePlatformId}-${activeStepIndex}`}
@@ -527,27 +520,12 @@ export default function SetupGuideModal({
                 exit={{ opacity: 0, x: -12 }}
                 transition={{ duration: 0.2 }}
               >
-                {/* Step Headline & Icon */}
-                <div style={{ marginBottom: "14px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <span
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 900,
-                        padding: "2px 8px",
-                        borderRadius: "12px",
-                        background: "rgba(255,255,255,0.08)",
-                        color: guide.brandColor,
-                        border: `1px solid ${guide.brandColor}44`,
-                      }}
-                    >
-                      Step {activeStepIndex + 1}
-                    </span>
-                    <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#FFFFFF" }}>
-                      {currentStep.title}
-                    </h3>
-                  </div>
-                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#68B77A", fontWeight: 700 }}>
+                {/* Step Headline & Subtitle */}
+                <div style={{ marginBottom: "12px" }}>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
+                    {currentStep.title}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: "0.84rem", color: "#68B77A", fontWeight: 700 }}>
                     {currentStep.subtitle}
                   </p>
                 </div>
@@ -658,66 +636,43 @@ export default function SetupGuideModal({
             </AnimatePresence>
           </div>
 
-          {/* Modal Footer Controls */}
+          {/* Bottom Navigation Stepper Controls */}
           <div
             style={{
-              padding: "14px 24px",
-              background: "rgba(0, 0, 0, 0.3)",
+              padding: "16px 24px",
+              background: "rgba(0, 0, 0, 0.25)",
               borderTop: "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
+              justifyContent: "flex-end",
+              marginTop: "auto",
+              flexShrink: 0,
             }}
           >
-            {/* Auto Fill Demo Key Button (Optional) */}
-            {onAutoFillDemoKey ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onAutoFillDemoKey(activePlatformId);
-                  onClose();
-                }}
-                style={{
-                  padding: "7px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(104, 183, 122, 0.3)",
-                  background: "rgba(104, 183, 122, 0.12)",
-                  color: "#68B77A",
-                  fontSize: "0.76rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                }}
-              >
-                <ZapIcon /> Auto-Fill Demo Key
-              </button>
-            ) : (
-              <div />
-            )}
 
-            {/* Previous / Next Stepper Buttons */}
+            {/* Stepper Buttons (Icons Only for Back / Next) */}
             <div style={{ display: "flex", gap: "8px" }}>
               {!isFirstStep && (
                 <button
                   type="button"
                   onClick={() => setActiveStepIndex((prev) => Math.max(0, prev - 1))}
+                  title="Previous Step"
+                  aria-label="Previous Step"
                   style={{
-                    padding: "8px 14px",
+                    width: "36px",
+                    height: "36px",
+                    padding: 0,
                     borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
                     background: "transparent",
-                    color: "rgba(255, 255, 255, 0.8)",
-                    fontSize: "0.8rem",
-                    fontWeight: 700,
+                    color: "rgba(255, 255, 255, 0.85)",
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "4px",
+                    justifyContent: "center",
                   }}
                 >
-                  <ChevronLeftIcon /> Back
+                  <ChevronLeftIcon />
                 </button>
               )}
 
@@ -725,43 +680,47 @@ export default function SetupGuideModal({
                 <button
                   type="button"
                   onClick={onClose}
+                  title="Done & Close Guide"
+                  aria-label="Done & Close Guide"
                   style={{
-                    padding: "8px 20px",
+                    width: "36px",
+                    height: "36px",
+                    padding: 0,
                     borderRadius: "9px",
                     border: "none",
                     background: guide.brandColor,
                     color: "#FFFFFF",
-                    fontSize: "0.82rem",
-                    fontWeight: 800,
                     cursor: "pointer",
                     boxShadow: `0 4px 14px ${guide.brandColor}55`,
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
+                    justifyContent: "center",
                   }}
                 >
-                  <CheckMarkIcon /> Done &amp; Close Guide
+                  <CheckMarkIcon />
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setActiveStepIndex((prev) => Math.min(guide.steps.length - 1, prev + 1))}
+                  title="Next Step"
+                  aria-label="Next Step"
                   style={{
-                    padding: "8px 18px",
+                    width: "36px",
+                    height: "36px",
+                    padding: 0,
                     borderRadius: "9px",
                     border: "none",
                     background: guide.brandColor,
                     color: "#FFFFFF",
-                    fontSize: "0.82rem",
-                    fontWeight: 800,
                     cursor: "pointer",
                     boxShadow: `0 4px 14px ${guide.brandColor}44`,
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "6px",
+                    justifyContent: "center",
                   }}
                 >
-                  Next Step <ChevronRightIcon />
+                  <ChevronRightIcon />
                 </button>
               )}
             </div>

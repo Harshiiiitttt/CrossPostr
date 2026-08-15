@@ -6,9 +6,9 @@ interface ContactModalProps {
   onClose: () => void;
 }
 
-function MailIcon() {
+function MailIcon({ color = "#68B77A", size = 18 }: { color?: string; size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", flexShrink: 0 }}>
       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
       <polyline points="22,6 12,13 2,6" />
     </svg>
@@ -60,10 +60,11 @@ function SendIcon() {
 interface TooltipProps {
   content: string;
   position?: "top" | "bottom";
+  align?: "left" | "center" | "right";
   children: React.ReactNode;
 }
 
-function Tooltip({ content, position = "bottom", children }: TooltipProps) {
+function Tooltip({ content, position = "bottom", align = "center", children }: TooltipProps) {
   const [hovered, setHovered] = useState(false);
   const isTop = position === "top";
 
@@ -85,8 +86,9 @@ function Tooltip({ content, position = "bottom", children }: TooltipProps) {
               position: "absolute",
               top: isTop ? undefined : "calc(100% + 10px)",
               bottom: isTop ? "calc(100% + 10px)" : undefined,
-              left: "50%",
-              transform: "translateX(-50%)",
+              left: align === "left" ? "0px" : align === "right" ? "auto" : "50%",
+              right: align === "right" ? "0px" : "auto",
+              transform: align === "center" ? "translateX(-50%)" : undefined,
               background: "rgba(10, 18, 26, 0.96)",
               backdropFilter: "blur(14px)",
               WebkitBackdropFilter: "blur(14px)",
@@ -99,7 +101,7 @@ function Tooltip({ content, position = "bottom", children }: TooltipProps) {
               whiteSpace: "nowrap",
               pointerEvents: "none",
               boxShadow: "0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(104, 183, 122, 0.25)",
-              zIndex: 999,
+              zIndex: 9999,
             }}
           >
             {content}
