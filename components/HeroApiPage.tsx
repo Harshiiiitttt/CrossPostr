@@ -243,15 +243,15 @@ function MagneticCard({ children, brandColor, isConnected }: MagneticCardProps) 
         overflow: "hidden",
         border: isConnected ? `1.5px solid ${brandColor}` : `1px solid ${brandColor}40`,
         boxShadow: transformStyle.isHovered
-          ? `0 20px 40px ${brandColor}33, 0 0 25px ${brandColor}22`
+          ? `0 20px 40px ${brandColor}22, 0 0 25px ${brandColor}15`
           : isConnected
-          ? `0 10px 30px ${brandColor}33`
-          : "0 4px 18px rgba(0,0,0,0.3)",
+          ? `0 10px 30px ${brandColor}22`
+          : "0 4px 18px rgba(15, 23, 42, 0.06)",
         background: transformStyle.isHovered
-          ? `radial-gradient(circle at ${transformStyle.spotlightX}% ${transformStyle.spotlightY}%, ${brandColor}25 0%, rgba(15,25,35,0.92) 70%)`
+          ? `radial-gradient(circle at ${transformStyle.spotlightX}% ${transformStyle.spotlightY}%, ${brandColor}15 0%, #FFFFFF 70%)`
           : isConnected
-          ? `linear-gradient(135deg, ${brandColor}22 0%, rgba(15,25,35,0.85) 100%)`
-          : `linear-gradient(135deg, ${brandColor}0F 0%, rgba(15,25,35,0.75) 100%)`,
+          ? `linear-gradient(135deg, ${brandColor}12 0%, #FFFFFF 100%)`
+          : `linear-gradient(135deg, ${brandColor}08 0%, #FFFFFF 100%)`,
         backdropFilter: "blur(14px)",
         WebkitBackdropFilter: "blur(14px)",
         padding: "20px",
@@ -483,23 +483,23 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           </motion.h1>
 
           {/* Sleek Minimalist Connection Status Bar */}
-          <div style={{ width: "100%", maxWidth: "480px", background: "rgba(15, 25, 35, 0.7)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "14px", padding: "12px 18px" }}>
+          <div style={{ width: "100%", maxWidth: "480px", background: "var(--panel)", border: "1px solid var(--panel-border)", borderRadius: "14px", padding: "12px 18px", boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", fontSize: "0.76rem" }}>
-              <span style={{ fontWeight: 700, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontWeight: 700, color: "var(--secondary-text)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <LockIcon /> AES-256 Client Enclave Active
               </span>
-              <span style={{ fontWeight: 800, color: connectedCount > 0 ? "#68B77A" : "var(--text-muted)", display: "flex", alignItems: "center", gap: "6px" }}>
-                {connectedCount > 0 && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#68B77A", boxShadow: "0 0 8px #68B77A" }} />}
+              <span style={{ fontWeight: 800, color: connectedCount > 0 ? "#2D8A4E" : "var(--secondary-text)", display: "flex", alignItems: "center", gap: "6px" }}>
+                {connectedCount > 0 && <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2D8A4E", boxShadow: "0 0 8px #2D8A4E" }} />}
                 {connectedCount} of 4 Connected ({progressPercent}%)
               </span>
             </div>
             {/* Progress Track */}
-            <div style={{ width: "100%", height: "6px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", overflow: "hidden" }}>
+            <div style={{ width: "100%", height: "6px", background: "var(--chip-bg)", borderRadius: "3px", overflow: "hidden" }}>
               <div
                 style={{
                   width: `${progressPercent}%`,
                   height: "100%",
-                  background: "linear-gradient(90deg, #68B77A 0%, #10B981 100%)",
+                  background: "linear-gradient(90deg, #2D8A4E 0%, #10B981 100%)",
                   borderRadius: "3px",
                   transition: "width 0.4s ease",
                 }}
@@ -507,9 +507,6 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
             </div>
           </div>
         </div>
-
-
-
 
         {/* Vibrant Platform API Cards Grid */}
         <div style={{ display: "grid", gridTemplateColumns: activeTab === "all" ? "repeat(auto-fit, minmax(min(100%, 300px), 1fr))" : "1fr", gap: "18px", marginBottom: "28px", textAlign: "left" }}>
@@ -520,18 +517,18 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#E1306C" }}>
                   <InstagramIcon />
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "#F1EEE7" }}>Instagram Graph API (OAuth 2.0)</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--heading-white)" }}>Instagram Graph API (OAuth 2.0)</span>
                   <Tooltip content="Setup guide for Instagram OAuth">
                     <button
                       type="button"
                       onClick={() => setHelpModalPlatform("instagram")}
-                      style={{ background: "rgba(225, 48, 108, 0.18)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#E1306C", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
+                      style={{ background: "rgba(225, 48, 108, 0.15)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#E1306C", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
                     </button>
                   </Tooltip>
                 </div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.instagramToken?.trim() ? "rgba(225, 48, 108, 0.22)" : "rgba(255,255,255,0.06)", color: creds.instagramToken?.trim() ? "#FF528F" : "var(--text-muted)", border: creds.instagramToken?.trim() ? "1px solid rgba(225,48,108,0.4)" : "1px solid rgba(255,255,255,0.08)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.instagramToken?.trim() ? "rgba(225, 48, 108, 0.15)" : "var(--chip-bg)", color: creds.instagramToken?.trim() ? "#E1306C" : "var(--secondary-text)", border: creds.instagramToken?.trim() ? "1px solid rgba(225,48,108,0.3)" : "1px solid var(--panel-border)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {creds.instagramToken?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
@@ -545,12 +542,12 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   onChange={(e) => setCreds({ ...creds, instagramToken: e.target.value })}
                   style={{
                     width: "100%",
-                    background: "rgba(0,0,0,0.45)",
-                    border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid rgba(225,48,108,0.3)",
-                    boxShadow: focusedInput === "instagram" ? "0 0 14px rgba(225, 48, 108, 0.45)" : "none",
+                    background: "var(--input-bg)",
+                    border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid var(--panel-border)",
+                    boxShadow: focusedInput === "instagram" ? "0 0 14px rgba(225, 48, 108, 0.25)" : "none",
                     borderRadius: "9px",
                     padding: "10px 38px 10px 12px",
-                    color: "#FFF",
+                    color: "var(--heading-white)",
                     fontSize: "0.82rem",
                     outline: "none",
                     transition: "all 0.2s ease",
