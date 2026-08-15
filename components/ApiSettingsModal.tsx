@@ -108,12 +108,12 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
   return (
     <AnimatePresence>
       {isOpen && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0, 0, 0, 0.75)", backdropFilter: "blur(8px)", padding: "20px" }}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(15, 23, 42, 0.45)", backdropFilter: "blur(12px)", padding: "20px" }}>
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            style={{ width: "100%", maxWidth: "520px", background: "#0F1A24", border: "1.5px solid var(--panel-border)", borderRadius: "18px", padding: "24px", color: "#F1EEE7", boxShadow: "0 20px 50px rgba(0,0,0,0.6)" }}
+            style={{ width: "100%", maxWidth: "520px", background: "var(--panel)", border: "1.5px solid var(--panel-border)", borderRadius: "18px", padding: "24px", color: "var(--heading-white)", boxShadow: "0 20px 50px rgba(15, 23, 42, 0.12)" }}
           >
             {/* Modal Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
@@ -191,7 +191,7 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                     placeholder="ig_access_token_..."
                     value={creds.instagramToken || ""}
                     onChange={(e) => setCreds({ ...creds, instagramToken: e.target.value })}
-                    style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "#FFF", fontSize: "0.8rem", outline: "none" }}
+                    style={{ width: "100%", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
                   />
                   {creds.instagramToken && (
                     <button
@@ -245,7 +245,7 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                     placeholder="pin_live_token_..."
                     value={creds.pinterestToken || ""}
                     onChange={(e) => setCreds({ ...creds, pinterestToken: e.target.value })}
-                    style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "#FFF", fontSize: "0.8rem", outline: "none" }}
+                    style={{ width: "100%", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
                   />
                   {creds.pinterestToken && (
                     <button
@@ -255,14 +255,14 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                       style={{
                         position: "absolute",
                         right: "8px",
-                        background: "rgba(255, 255, 255, 0.14)",
-                        border: "none",
+                        background: "var(--chip-bg)",
+                        border: "1px solid var(--panel-border)",
                         borderRadius: "50%",
                         width: "18px",
                         minWidth: "18px",
                         height: "18px",
                         minHeight: "18px",
-                        color: "rgba(255, 255, 255, 0.7)",
+                        color: "var(--secondary-text)",
                         fontSize: "0.65rem",
                         fontWeight: 800,
                         cursor: "pointer",
@@ -299,7 +299,7 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                     placeholder="twitter_bearer_token_..."
                     value={creds.xApiKey || ""}
                     onChange={(e) => setCreds({ ...creds, xApiKey: e.target.value })}
-                    style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "#FFF", fontSize: "0.8rem", outline: "none" }}
+                    style={{ width: "100%", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
                   />
                   {creds.xApiKey && (
                     <button
@@ -309,14 +309,14 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                       style={{
                         position: "absolute",
                         right: "8px",
-                        background: "rgba(255, 255, 255, 0.14)",
-                        border: "none",
+                        background: "var(--chip-bg)",
+                        border: "1px solid var(--panel-border)",
                         borderRadius: "50%",
                         width: "18px",
                         minWidth: "18px",
                         height: "18px",
                         minHeight: "18px",
-                        color: "rgba(255, 255, 255, 0.7)",
+                        color: "var(--secondary-text)",
                         fontSize: "0.65rem",
                         fontWeight: 800,
                         cursor: "pointer",
@@ -353,7 +353,7 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                     placeholder="yt_shorts_oauth_key_..."
                     value={creds.youtubeApiKey || ""}
                     onChange={(e) => setCreds({ ...creds, youtubeApiKey: e.target.value })}
-                    style={{ width: "100%", background: "rgba(0,0,0,0.3)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "#FFF", fontSize: "0.8rem", outline: "none" }}
+                    style={{ width: "100%", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
                   />
                   {creds.youtubeApiKey && (
                     <button

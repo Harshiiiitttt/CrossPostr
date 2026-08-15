@@ -339,7 +339,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
   const progressPercent = Math.round((connectedCount / 4) * 100);
 
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 50% 0%, #12212F 0%, #091018 100%)", color: "#F1EEE7", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", overflow: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", color: "var(--body-text)", display: "flex", flexDirection: "column", alignItems: "center", position: "relative", overflow: "hidden" }}>
       
       {/* 🌟 Glassmorphic Top Navigation Header */}
       <header
@@ -348,15 +348,15 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           position: "sticky",
           top: 0,
           zIndex: 90,
-          background: "rgba(9, 16, 24, 0.85)",
+          background: "rgba(255, 255, 255, 0.88)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          borderBottom: "1px solid var(--panel-border)",
           padding: "12px 28px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+          boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
         }}
       >
         {/* Brand Logo & Title */}
@@ -364,7 +364,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           <span style={{ width: "32px", height: "32px", borderRadius: "10px", background: "rgba(104, 183, 122, 0.18)", border: "1px solid rgba(104, 183, 122, 0.4)", color: "#68B77A", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <PawIcon />
           </span>
-          <span style={{ fontSize: "1.1rem", fontWeight: 900, fontFamily: "Slackey, cursive, sans-serif", color: "#FFFFFF", letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "1.1rem", fontWeight: 900, fontFamily: "Slackey, cursive, sans-serif", color: "var(--heading-white)", letterSpacing: "0.02em" }}>
             Cross Postr
           </span>
         </div>
@@ -373,52 +373,58 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
         <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <div
             style={{
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: "10px",
+              gap: "6px",
+              background: "rgba(255, 255, 255, 0.8)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid var(--panel-border)",
+              borderRadius: "14px",
+              padding: "4px 6px",
+              boxShadow: "0 2px 10px rgba(15, 23, 42, 0.05)",
             }}
           >
-            <Tooltip content="Send email or get in touch" align="right">
+            <Tooltip content="Send Feedback / Email Me" align="right">
               <button
                 type="button"
                 onClick={() => setIsContactOpen(true)}
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#68B77A",
-                  padding: "6px",
+                  color: "#2D8A4E",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  transition: "transform 0.2s ease, opacity 0.2s ease",
-                  opacity: 0.85,
+                  padding: "6px 8px",
+                  borderRadius: "8px",
+                  transition: "background 0.2s ease, transform 0.2s ease",
                 }}
-                title="Contact Me"
+                aria-label="Contact Me"
               >
                 <MailIcon />
               </button>
             </Tooltip>
 
-            <Tooltip content="View GitHub Profile @Harshiiiitttt" align="right">
+            <Tooltip content="GitHub Repository" align="right">
               <a
-                href="https://github.com/Harshiiiitttt"
+                href="https://github.com/Harshiiiitttt/CrossPostr"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#FFFFFF",
-                  padding: "6px",
+                  color: "var(--heading-white)",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  padding: "6px 8px",
+                  borderRadius: "8px",
+                  transition: "background 0.2s ease, transform 0.2s ease",
                   textDecoration: "none",
-                  transition: "transform 0.2s ease, opacity 0.2s ease",
-                  opacity: 0.85,
                 }}
-                title="GitHub Profile"
+                aria-label="GitHub Profile"
               >
                 <GitHubIcon />
               </a>
@@ -427,15 +433,15 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
         </div>
       </header>
 
-      {/* Subtle Background Glow */}
-      <div style={{ position: "absolute", top: "-10%", left: "30%", width: "500px", height: "500px", background: "radial-gradient(circle, rgba(104, 183, 122, 0.12) 0%, transparent 70%)", filter: "blur(80px)", pointerEvents: "none" }} />
+      {/* 🔮 Contact Modal Integration */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
 
-      <div style={{ maxWidth: "840px", width: "100%", zIndex: 10, textAlign: "center", padding: "40px 20px 60px 20px" }}>
+      {/* Hero Section Container */}
+      <div style={{ width: "100%", maxWidth: "1200px", padding: "40px 24px 60px", textAlign: "center", position: "relative", zIndex: 10 }}>
         
-        {/* Minimalist Brand Header */}
-        <div style={{ marginBottom: "28px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-
-          {/* Animated Heading Text */}
+        {/* Hero Title & Status */}
+        <div style={{ marginBottom: "36px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -446,7 +452,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
               lineHeight: 1.25,
               margin: "0 0 16px 0",
               fontFamily: "Slackey, cursive, sans-serif",
-              color: "#FFFFFF",
+              color: "var(--heading-white)",
               letterSpacing: "0.01em",
               cursor: "default",
             }}
@@ -467,8 +473,8 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                 style={{
                   display: "inline-block",
                   marginRight: "0.28em",
-                  color: i === 1 ? "#68B77A" : "#FFFFFF",
-                  textShadow: "0 4px 18px rgba(0,0,0,0.8), 0 0 25px rgba(104, 183, 122, 0.25)",
+                  color: i === 1 ? "#2D8A4E" : "var(--heading-white)",
+                  textShadow: "0 2px 10px rgba(15, 23, 42, 0.08)",
                 }}
               >
                 {word}

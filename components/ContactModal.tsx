@@ -151,12 +151,12 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               position: "relative",
               width: "100%",
               maxWidth: "460px",
-              background: "linear-gradient(145deg, rgba(20, 32, 45, 0.95) 0%, rgba(12, 20, 30, 0.98) 100%)",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
+              background: "var(--panel)",
+              border: "1px solid var(--panel-border)",
               borderRadius: "20px",
               padding: "26px",
-              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(104, 183, 122, 0.15)",
-              color: "#F1EEE7",
+              boxShadow: "0 20px 50px rgba(15, 23, 42, 0.12), 0 0 30px rgba(45, 138, 78, 0.08)",
+              color: "var(--heading-white)",
               zIndex: 10,
             }}
           >

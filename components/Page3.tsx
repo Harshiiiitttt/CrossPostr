@@ -1910,10 +1910,8 @@ export default function Page3({ onBack, isActive }: Page3Props) {
         className={`p3-field ${isCompactWorkspace ? "p3-field--compact" : ""}`}
         onSubmit={(e) => {
           e.preventDefault();
-          const targetTopic = topic.trim() || "Joint care for large breed dogs";
-          if (!loading) {
-            if (!topic.trim()) setTopic(targetTopic);
-            generateBlog(targetTopic);
+          if (!loading && topic.trim()) {
+            generateBlog(topic.trim());
           }
         }}
       >
@@ -1932,7 +1930,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
               if (e.key === "Enter") {
                 e.preventDefault();
                 if (!loading && topic.trim()) {
-                  generateBlog(topic);
+                  generateBlog(topic.trim());
                 }
               }
             }}
@@ -1961,28 +1959,28 @@ export default function Page3({ onBack, isActive }: Page3Props) {
           <motion.button
             id="p3-gen-btn"
             type="submit"
-            disabled={loading}
-            title={loading ? "Generating Blog..." : blog ? "Regenerate Blog" : "Generate Blog"}
+            disabled={loading || !topic.trim()}
+            title={loading ? "Generating Blog..." : !topic.trim() ? "Type a topic to generate" : blog ? "Regenerate Blog" : "Generate Blog"}
             initial="rest"
-            whileHover={loading ? undefined : "hover"}
-            whileTap={loading ? undefined : { scale: 0.90 }}
+            whileHover={(loading || !topic.trim()) ? undefined : "hover"}
+            whileTap={(loading || !topic.trim()) ? undefined : { scale: 0.90 }}
             style={{
               width: "38px",
               height: "38px",
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
-              color: "#FFFFFF",
+              background: (loading || !topic.trim()) ? "rgba(104, 183, 122, 0.25)" : "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
+              color: (loading || !topic.trim()) ? "rgba(255, 255, 255, 0.4)" : "#FFFFFF",
               border: "none",
               position: "relative",
               overflow: "hidden",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: "0 3px 12px rgba(104, 183, 122, 0.45)",
-              transition: "box-shadow 0.2s ease",
+              cursor: (loading || !topic.trim()) ? "not-allowed" : "pointer",
+              boxShadow: (loading || !topic.trim()) ? "none" : "0 3px 12px rgba(104, 183, 122, 0.45)",
+              transition: "all 0.2s ease",
               flexShrink: 0,
-              opacity: 1,
+              opacity: (loading || !topic.trim()) ? 0.45 : 1,
               padding: 0,
             }}
           >

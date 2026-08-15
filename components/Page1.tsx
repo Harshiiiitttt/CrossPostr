@@ -933,22 +933,24 @@ export default function Page1({ onNext }: Page1Props) {
                 width: "100%",
                 height: "46px",
                 borderRadius: "12px",
-                background: platforms.length > 0
-                  ? "linear-gradient(135deg, #68B77A 0%, #3D8B4D 100%)"
-                  : "rgba(104, 183, 122, 0.12)",
-                color: "#FFFFFF",
-                border: platforms.length > 0
-                  ? "1px solid rgba(255, 255, 255, 0.3)"
-                  : "1px solid rgba(104, 183, 122, 0.2)",
+                background: (running || !reelUrl.trim() || platforms.length === 0)
+                  ? "var(--chip-bg, #F1F5F9)"
+                  : "linear-gradient(135deg, #2D8A4E 0%, #1E5B33 100%)",
+                color: (running || !reelUrl.trim() || platforms.length === 0)
+                  ? "var(--secondary-text, #64748B)"
+                  : "#FFFFFF",
+                border: (running || !reelUrl.trim() || platforms.length === 0)
+                  ? "1px solid var(--panel-border, #E2E8F0)"
+                  : "1px solid rgba(255, 255, 255, 0.3)",
                 fontSize: "0.92rem",
-                fontWeight: 800,
+                fontWeight: 700,
                 cursor: (running || !reelUrl.trim() || platforms.length === 0) ? "not-allowed" : "pointer",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
                 position: "relative",
                 overflow: "hidden",
-                opacity: (running || !reelUrl.trim() || platforms.length === 0) ? 0.5 : 1,
+                opacity: (running || !reelUrl.trim() || platforms.length === 0) ? 0.75 : 1,
                 transition: "background 0.3s ease, color 0.3s ease, border 0.3s ease, opacity 0.3s ease",
               }}
             >

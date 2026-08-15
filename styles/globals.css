@@ -1,43 +1,50 @@
 :root {
-  /* New Exact Green & Dark Slate Palette */
-  --bg: #06101A;
-  --bg-deep: #07111B;
-  --panel: #0C151E;
-  --panel-elevated: #111B25;
-  --input-bg: #09131C;
-  --chip-bg: #121B25;
-  --panel-border: #28343D;
+  /* Emerald Clean Light Theme Palette */
+  --bg: #F8FAFC;
+  --bg-deep: #F1F5F9;
+  --panel: #FFFFFF;
+  --panel-elevated: #F8FAFC;
+  --input-bg: #FFFFFF;
+  --chip-bg: #F1F5F9;
+  --panel-border: #E2E8F0;
   
-  --primary-green: #68B77A;
-  --dark-green: #315F43;
-  --olive-green: #7E9B62;
+  --primary-green: #2D8A4E;
+  --dark-green: #1E5B33;
+  --olive-green: #4E7A38;
   
-  --heading-white: #F1EEE7;
-  --body-text: #D6D8D7;
-  --secondary-text: #9CA4A9;
-  --muted: #737C82;
+  --heading-white: #0F172A;
+  --body-text: #334155;
+  --secondary-text: #64748B;
+  --muted: #94A3B8;
   
-  --purple-seo: #9A82D7;
-  --linkedin-blue: #1685BD;
-  --warm-handwriting: #D7C59A;
+  --purple-seo: #6D28D9;
+  --linkedin-blue: #0A66C2;
+  --warm-handwriting: #92400E;
 
-  --teal: #68B77A;
-  --teal-hover: #5aa66b;
-  --teal-deep: #315F43;
-  --text: #F1EEE7;
-  --accent: #68B77A;
-  --accent-soft: rgba(104, 183, 122, 0.12);
-  --on-accent: #06101A;
+  --teal: #2D8A4E;
+  --teal-hover: #236C3D;
+  --teal-deep: #153E23;
+  --text: #0F172A;
+  --accent: #2D8A4E;
+  --accent-soft: rgba(45, 138, 78, 0.1);
+  --on-accent: #FFFFFF;
 
   --radius: 12px;
   --radius-sm: 8px;
 
   --font-brand: "Slackey", cursive;
   --font-handwriting: "Caveat", cursive;
-  --font-display: "Fraunces", "Iowan Old Style", serif;
-  --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
-  --font-ui: "Plus Jakarta Sans", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6,
+.p1-heading, .p2-heading, .p3-heading,
+.p1-title, .p2-title, .p3-title,
+.hero-title, .modal-title, .drawer-title {
+  font-family: var(--font-display) !important;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -179,12 +186,10 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background: var(--bg);
-  background-image: radial-gradient(
-      680px 420px at 12% -6%,
-      rgba(229, 164, 69, 0.1),
-      transparent 60%
-    ),
-    radial-gradient(600px 360px at 100% 0%, rgba(143, 168, 136, 0.06), transparent 55%);
+  background-image: 
+    radial-gradient(850px 520px at 12% -10%, rgba(45, 138, 78, 0.09), transparent 60%),
+    radial-gradient(750px 480px at 88% 0%, rgba(99, 102, 241, 0.07), transparent 55%),
+    radial-gradient(650px 420px at 50% 95%, rgba(45, 138, 78, 0.05), transparent 50%);
   background-attachment: fixed;
   min-height: 100vh;
   cursor: url('/cursor-default.png') 1 1, auto;
@@ -1379,15 +1384,13 @@ a:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(12, 21, 30, 0.92) !important;
-  border: 1px solid rgba(104, 183, 122, 0.4) !important;
+  background: var(--panel) !important;
+  border: 1px solid var(--panel-border) !important;
   border-radius: 14px;
   padding: 8px 10px 8px 16px;
   height: 56px;
   box-sizing: border-box;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px rgba(104, 183, 122, 0.18) !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 0 16px rgba(45, 138, 78, 0.08) !important;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -1677,14 +1680,24 @@ a:focus-visible {
 
 /* ── Panel (shared by both columns) ─────────────────── */
 .p3-panel {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.05), 0 4px 12px -2px rgba(15, 23, 42, 0.02) !important;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   /* Blog panel: stretch to fill available height so action bar sticks */
   min-height: 0;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+}
+
+.p3-panel:hover {
+  transform: translateY(-2px);
+  border-color: rgba(45, 138, 78, 0.35) !important;
+  box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 0 20px rgba(45, 138, 78, 0.1) !important;
 }
 
 /* Blog panel specifically takes full remaining height */
