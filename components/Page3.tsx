@@ -2109,10 +2109,9 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                   id="p3-top-copy-blog-btn"
                   className={`p3-btn p3-btn--ghost p3-btn--sm ${blogCopied ? "copied-pop" : ""}`}
                   onClick={(e) => copyBlogToClipboard(blog, e)}
-                  title="Copy formatted blog content"
+                  title={blogCopied ? "Copied to clipboard!" : "Copy formatted blog content"}
                 >
                   {blogCopied ? <CheckIcon /> : <CopyIcon />}
-                  <span className="p3-btn-label">{blogCopied ? "Copied!" : "Copy"}</span>
                 </button>
                 <button
                   id="p3-top-export-btn"
@@ -2121,15 +2120,13 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                   title="Export markdown (.md) file"
                 >
                   <ExportIcon />
-                  <span className="p3-btn-label">Export .md</span>
                 </button>
                 <button
                   className="p3-focus-toggle-btn"
                   onClick={() => setIsFocusMode(true)}
-                  title="Expand to Full Studio Canvas"
+                  title="Open in Studio Canvas"
                 >
                   <ExpandIcon />
-                  <span className="p3-btn-label">Open in Studio Canvas</span>
                 </button>
                 
                 <div className="p3-menu-wrapper">
@@ -2254,9 +2251,6 @@ export default function Page3({ onBack, isActive }: Page3Props) {
             <div className="p3-aside-tab-body">
               {asideTab === "social" ? (
                 <>
-                  <p className="p3-aside-desc">
-                    Turn this blog into multi-channel social posts for LinkedIn, Instagram, and X.
-                  </p>
 
                   <button
                     id="p3-gen-posts-btn"
@@ -2302,28 +2296,6 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                       </div>
                       <div className="p3-preview">
                         <p className="p3-preview-text">{posts[activeTab]}</p>
-                      </div>
-
-                      <div className="p3-copy-posts-row" style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
-                        <button
-                          id="p3-copy-post-btn"
-                          className={`p3-btn p3-btn--ghost p3-btn--full ${copied ? "copied-pop" : ""}`}
-                          onClick={(e) => copyActivePost(e)}
-                          style={{ flex: 1 }}
-                        >
-                          {copied ? <CheckIcon /> : <CopyIcon />}
-                          {copied ? "Copied!" : "Copy Active"}
-                        </button>
-                        <button
-                          type="button"
-                          className={`p3-btn p3-btn--ghost p3-btn--full ${allPostsCopied ? "copied-pop" : ""}`}
-                          onClick={(e) => copyAllLinkedInPosts(posts, e)}
-                          title="Copy all 3 post variations at once"
-                          style={{ flex: 1 }}
-                        >
-                          {allPostsCopied ? <CheckIcon /> : <CopyIcon />}
-                          {allPostsCopied ? " Copied All!" : " Copy All 3"}
-                        </button>
                       </div>
                     </>
                   )}
@@ -2482,30 +2454,31 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                     <button
                       className="p3-btn p3-btn--teal"
                       onClick={() => setIsEditing(true)}
-                      style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}
+                      title="Edit Blog"
                     >
                       <EditPenIcon />
-                      <span className="p3-btn-label">Edit Blog</span>
                     </button>
                     <button
                       className={`p3-btn p3-btn--ghost ${blogCopied ? "copied-pop" : ""}`}
                       onClick={(e) => copyBlogToClipboard(blog, e)}
+                      title={blogCopied ? "Copied to clipboard!" : "Copy formatted blog content"}
                     >
                       {blogCopied ? <CheckIcon /> : <CopyIcon />}
-                      <span className="p3-btn-label">{blogCopied ? "Copied!" : "Copy"}</span>
                     </button>
                     <button
                       className="p3-btn p3-btn--ghost"
                       onClick={(e) => exportAsText(blog, e)}
+                      title="Export markdown (.md) file"
                     >
                       <ExportIcon />
-                      <span className="p3-btn-label">Export .md</span>
                     </button>
                     <button
                       className="p3-btn p3-btn--ghost"
                       onClick={() => setIsFocusMode(false)}
+                      title="Exit Studio Canvas"
                     >
-                      ✕ <span className="p3-btn-label">Exit Studio</span>
+                      ✕
                     </button>
                   </>
                 ) : null}

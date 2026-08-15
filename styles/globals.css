@@ -1669,7 +1669,7 @@ a:focus-visible {
   align-items: stretch;   /* blog panel grows full height → action bar sticks */
 }
 
-@media (max-width: 840px) {
+@media (max-width: 768px) {
   .p3-workspace {
     grid-template-columns: 1fr;
   }
@@ -2801,8 +2801,9 @@ a:focus-visible {
 .p3-focus-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(7, 17, 27, 0.42);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   z-index: 100;
   display: flex;
   align-items: flex-start;
@@ -2884,19 +2885,26 @@ a:focus-visible {
 
 .p3-focus-actions button,
 .p3-focus-actions .p3-btn {
-  height: 34px !important;
-  padding: 0 14px !important;
-  font-size: 0.78rem !important;
+  width: 37px !important;
+  height: 37px !important;
+  padding: 0 !important;
+  font-size: 0.95rem !important;
   font-weight: 600 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 6px !important;
+  gap: 0 !important;
   line-height: 1 !important;
-  border-radius: 7px !important;
+  border-radius: 8px !important;
   box-sizing: border-box !important;
   margin: 0 !important;
   vertical-align: middle !important;
+}
+
+.p3-focus-actions button svg,
+.p3-focus-actions .p3-btn svg {
+  width: 17px !important;
+  height: 17px !important;
 }
 
 .p3-focus-actions .glass-icon-badge,
@@ -5945,11 +5953,6 @@ mark.seo-kw-highlight {
 
 /* ── Tablet & Small Laptops (max-width: 1024px) ──────── */
 @media (max-width: 1024px) {
-  .p3-workspace {
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
-  }
-  
   .p2-reviews-grid {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
   }
@@ -5962,6 +5965,29 @@ mark.seo-kw-highlight {
 
   .p3-header button {
     margin-top: 0 !important;
+  }
+}
+
+/* ── iPad & Tablet aspect ratios horizontal scroll workspace fix ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .main-content,
+  .main-scroll-area {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .p3-root {
+    min-width: fit-content;
+    overflow-x: visible !important;
+  }
+
+  .p3-workspace {
+    display: grid !important;
+    grid-template-columns: 1.5fr 1fr !important;
+    min-width: 960px !important;
+    gap: 14px !important;
+    padding-right: 24px !important;
+    overflow-x: visible !important;
   }
 }
 
