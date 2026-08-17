@@ -262,6 +262,9 @@ export default function Page1({ onNext }: Page1Props) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [watermarkPos, setWatermarkPos] = useState<WatermarkPosition>("bottom-right");
   const [watermarkOpacity, setWatermarkOpacity] = useState<number>(80);
+  const [aspectRatio, setAspectRatio] = useState<"9:16" | "1:1" | "16:9">("9:16");
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true);
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [showAdvancedWatermark, setShowAdvancedWatermark] = useState<boolean>(false);
   const [running, setRunning] = useState(false);
@@ -487,7 +490,14 @@ export default function Page1({ onNext }: Page1Props) {
 
   return (
     <div>
-      <span className="badge">Step 1 of 3</span>
+      <div className="p3-step-chip-wrapper">
+        <span className="p3-step-chip">
+          <span className="p3-step-chip-dot" />
+          <span className="p3-step-chip-text">STEP 1 OF 3</span>
+          <span className="p3-step-chip-divider">•</span>
+          <span className="p3-step-chip-tag">REELS &amp; PUBLISHING</span>
+        </span>
+      </div>
       <h1 className="page-title" style={{ marginBottom: "14px" }}>Extract, Watermark &amp; Publish</h1>
 
       {/* 60 / 40 Split Screen Layout */}
@@ -498,12 +508,12 @@ export default function Page1({ onNext }: Page1Props) {
           
           {/* Card 1: Source Reel URL */}
           <div className="card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#68B77A", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #E1306C 0%, #C13584 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(225, 48, 108, 0.3)" }}>
                   1
                 </span>
-                <label style={{ margin: 0, fontSize: "0.84rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#BE185D", background: "#FDF2F8", border: "1px solid #FBCFE8", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
                   Instagram Reel Source URL
                 </label>
               </div>
@@ -516,19 +526,19 @@ export default function Page1({ onNext }: Page1Props) {
                 onClick={loadDemoUrl}
                 className="demo-btn-shimmer"
                 style={{
-                  padding: "4px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid rgba(104, 183, 122, 0.4)",
-                  background: "rgba(104, 183, 122, 0.14)",
-                  color: "#68B77A",
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
+                  padding: "5px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid #A7F3D0",
+                  background: "#ECFDF5",
+                  color: "#047857",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
                   transition: "all 0.15s ease",
-                  boxShadow: "0 2px 8px rgba(104, 183, 122, 0.15)",
+                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.15)",
                 }}
               >
                 <ZapIcon /> Load Demo Reel
@@ -629,11 +639,11 @@ export default function Page1({ onNext }: Page1Props) {
 
           {/* Card 2: Image & Text Watermark 2-Column Grid Layout */}
           <div className="card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-              <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#68B77A", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+              <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)" }}>
                 2
               </span>
-              <label style={{ margin: 0, fontSize: "0.84rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+              <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#0369A1", background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
                 Watermark Branding &amp; Overlay
               </label>
             </div>
@@ -642,8 +652,8 @@ export default function Page1({ onNext }: Page1Props) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "20px", alignItems: "start" }}>
               
               {/* LEFT COLUMN: Logo Uploading Dropzone */}
-              <div style={{ background: "rgba(0,0,0,0.15)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "10px" }}>
+              <div style={{ background: "var(--bg-deep)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--heading-white)", marginBottom: "10px" }}>
                   <ImageIcon /> Image Watermark Logo
                 </label>
                 <div
@@ -666,8 +676,8 @@ export default function Page1({ onNext }: Page1Props) {
                       <span className="glass-icon-badge" style={{ marginBottom: 4 }}>
                         <UploadCloudIcon />
                       </span>
-                      <span className="dropzone-title" style={{ fontSize: "0.82rem" }}>Drag & drop watermark logo</span>
-                      <span className="dropzone-subtitle" style={{ fontSize: "0.72rem" }}>PNG, SVG, or JPG logo files</span>
+                      <span className="dropzone-title" style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--heading-white)" }}>Drag &amp; drop watermark logo</span>
+                      <span className="dropzone-subtitle" style={{ fontSize: "0.72rem", color: "var(--secondary-text)" }}>PNG, SVG, or JPG logo files</span>
                     </label>
                   ) : (
                     <div className="dropzone-preview" style={{ width: "100%" }}>
@@ -696,8 +706,8 @@ export default function Page1({ onNext }: Page1Props) {
               </div>
 
               {/* RIGHT COLUMN: Text Watermark & Customization */}
-              <div style={{ background: "rgba(0,0,0,0.15)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
-                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "8px" }}>
+              <div style={{ background: "var(--bg-deep)", padding: "16px", borderRadius: "12px", border: "1px solid var(--panel-border)" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 700, color: "var(--heading-white)", marginBottom: "8px" }}>
                   <TypeIcon /> Text Watermark &amp; Branding
                 </label>
                 <input
@@ -705,7 +715,7 @@ export default function Page1({ onNext }: Page1Props) {
                   placeholder="e.g. @cuddlytails"
                   value={textWatermark}
                   onChange={(e) => setTextWatermark(e.target.value)}
-                  style={{ borderRadius: "10px", margin: "0 0 14px 0", width: "100%" }}
+                  style={{ borderRadius: "10px", margin: "0 0 14px 0", width: "100%", background: "var(--input-bg)", color: "var(--heading-white)", border: "1px solid var(--panel-border)" }}
                 />
 
                 {/* Advanced Settings Toggle */}
@@ -716,11 +726,11 @@ export default function Page1({ onNext }: Page1Props) {
                   onClick={() => setShowAdvancedWatermark((prev) => !prev)}
                   style={{
                     width: "100%",
-                    padding: "7px 14px",
+                    padding: "8px 14px",
                     borderRadius: "8px",
-                    border: showAdvancedWatermark ? "1.5px solid #68B77A" : "1px solid rgba(104, 183, 122, 0.35)",
-                    background: showAdvancedWatermark ? "rgba(104, 183, 122, 0.2)" : "rgba(104, 183, 122, 0.08)",
-                    color: "#68B77A",
+                    border: showAdvancedWatermark ? "1.5px solid var(--primary-green)" : "1px solid var(--panel-border)",
+                    background: showAdvancedWatermark ? "rgba(45, 138, 78, 0.12)" : "var(--panel)",
+                    color: "var(--primary-green)",
                     fontSize: "0.78rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -860,17 +870,17 @@ export default function Page1({ onNext }: Page1Props) {
           {/* Card 3: Target Platforms & Execute */}
           <div className="card" style={{ padding: "20px 24px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ width: "22px", height: "22px", borderRadius: "50%", background: "#68B77A", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #059669 0%, #047857 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
                   3
                 </span>
-                <label style={{ margin: 0, fontSize: "0.84rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)" }}>
+                <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#15803D", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
                   Select Target Platforms
                 </label>
               </div>
 
               {/* Platform Counter Badge */}
-              <span style={{ fontSize: "0.75rem", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: "rgba(104, 183, 122, 0.15)", color: "#68B77A", border: "1px solid rgba(104, 183, 122, 0.3)" }}>
+              <span style={{ fontSize: "0.75rem", fontWeight: 700, padding: "3px 10px", borderRadius: "12px", background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0" }}>
                 {platforms.length} of {ALL_PLATFORMS.length} Selected
               </span>
             </div>
@@ -920,9 +930,9 @@ export default function Page1({ onNext }: Page1Props) {
               whileTap={(!running && reelUrl.trim() && platforms.length > 0) ? { scale: 0.98 } : undefined}
               animate={(!running && platforms.length > 0) ? {
                 boxShadow: [
-                  "0 4px 14px rgba(104, 183, 122, 0.22), 0 0 6px rgba(104, 183, 122, 0.12)",
-                  "0 5px 22px rgba(104, 183, 122, 0.42), 0 0 14px rgba(104, 183, 122, 0.25)",
-                  "0 4px 14px rgba(104, 183, 122, 0.22), 0 0 6px rgba(104, 183, 122, 0.12)",
+                  "0 4px 14px rgba(5, 150, 105, 0.22), 0 0 6px rgba(2, 132, 199, 0.12)",
+                  "0 5px 22px rgba(5, 150, 105, 0.42), 0 0 14px rgba(2, 132, 199, 0.25)",
+                  "0 4px 14px rgba(5, 150, 105, 0.22), 0 0 6px rgba(2, 132, 199, 0.12)",
                 ]
               } : {}}
               transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
@@ -935,7 +945,7 @@ export default function Page1({ onNext }: Page1Props) {
                 borderRadius: "12px",
                 background: (running || !reelUrl.trim() || platforms.length === 0)
                   ? "var(--chip-bg, #F1F5F9)"
-                  : "linear-gradient(135deg, #2D8A4E 0%, #1E5B33 100%)",
+                  : "linear-gradient(135deg, #059669 0%, #0284C7 100%)",
                 color: (running || !reelUrl.trim() || platforms.length === 0)
                   ? "var(--secondary-text, #64748B)"
                   : "#FFFFFF",
@@ -1005,14 +1015,52 @@ export default function Page1({ onNext }: Page1Props) {
 
 
             {running && (
-              <div className="ai-active-glow" style={{ marginTop: 20, borderRadius: 12, background: "var(--panel)" }}>
-                <PawLoader
-                  label={`Processing Instagram Reels (${STAGE_LABELS[stageIndex]}...)`}
-                  sublabel="Downloading video stream, layering watermarks, and publishing cross-platform"
-                />
-                <div style={{ padding: "0 24px 24px" }}>
-                  <ProgressBar percent={percent} label={STAGE_LABELS[stageIndex]} />
+              <div className="ai-active-glow" style={{ marginTop: 20, padding: "20px", borderRadius: 16, background: "#FFFFFF", border: "1.5px solid #E2E8F0", boxShadow: "0 10px 30px rgba(15,23,42,0.08)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#059669", boxShadow: "0 0 10px #059669" }} />
+                    <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#0F172A" }}>
+                      Automated Content Extraction &amp; Watermarking
+                    </span>
+                  </div>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#059669", background: "#ECFDF5", border: "1px solid #A7F3D0", borderRadius: "6px", padding: "2px 8px" }}>
+                    {percent}%
+                  </span>
                 </div>
+
+                {/* 3-Step Multi-Stage Indicator */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px", marginBottom: 14 }}>
+                  {[
+                    { step: 1, title: "1. Downloading Reel" },
+                    { step: 2, title: "2. Layering Watermark" },
+                    { step: 3, title: "3. Publishing Posts" },
+                  ].map((st, i) => {
+                    const isActive = stageIndex === i;
+                    const isDone = stageIndex > i;
+                    return (
+                      <div
+                        key={st.step}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "10px",
+                          background: isActive ? "#ECFDF5" : isDone ? "#F0F9FF" : "#F8FAFC",
+                          border: isActive ? "1.5px solid #A7F3D0" : isDone ? "1.5px solid #BAE6FD" : "1px solid #E2E8F0",
+                          color: isActive ? "#047857" : isDone ? "#0369A1" : "#64748B",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          transition: "all 0.25s ease",
+                        }}
+                      >
+                        <span>{isDone ? "✓" : isActive ? "⚡" : i + 1}</span>
+                        <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{st.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <ProgressBar percent={percent} label={STAGE_LABELS[stageIndex]} />
               </div>
             )}
 
@@ -1123,28 +1171,56 @@ export default function Page1({ onNext }: Page1Props) {
 
         {/* Right Column: 40% Sticky Live Video Phone Mockup */}
         <div style={{ flex: "0 0 350px", position: "sticky", top: "24px" }}>
-          <div className="card" style={{ padding: "26px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "16px" }}>
-              Content Mockup
-            </span>
+          <div className="card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "14px" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#0F172A" }}>
+                Live Canvas Preview
+              </span>
+
+              {/* Aspect Ratio Selector Pills */}
+              <div style={{ display: "flex", gap: "4px", background: "#F1F5F9", padding: "3px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                {(["9:16", "1:1", "16:9"] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setAspectRatio(r)}
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: aspectRatio === r ? "#0284C7" : "transparent",
+                      color: aspectRatio === r ? "#FFFFFF" : "#64748B",
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      transition: "all 0.15s ease",
+                      boxShadow: aspectRatio === r ? "0 2px 6px rgba(2, 132, 199, 0.3)" : "none",
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            {/* 9:16 Full Frame HD Phone Frame (100% Uncropped Aspect Ratio) */}
+            {/* Dynamic Aspect Ratio Phone Frame (Interactive Drag & Snap Canvas) */}
             <div
               style={{
                 position: "relative",
-                width: "240px",
-                height: "426px", // Exact 9:16 vertical aspect ratio (240 x 426)
+                width: aspectRatio === "1:1" ? "260px" : aspectRatio === "16:9" ? "300px" : "240px",
+                height: aspectRatio === "1:1" ? "260px" : aspectRatio === "16:9" ? "168px" : "426px",
                 borderRadius: "22px",
-                border: "3px solid var(--panel-border)",
+                border: "3px solid #CBD5E1",
                 background: "#0A131B",
                 overflow: "hidden",
-                boxShadow: "0 14px 36px rgba(0, 0, 0, 0.55)",
+                boxShadow: "0 16px 40px rgba(15, 23, 42, 0.25)",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
+                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {/* Actual Instagram Reel Cover Frame (100% Full Uncropped 9:16 View) */}
+              {/* Actual Instagram Reel Cover Frame (100% Full Uncropped View) */}
               {inspectedMeta?.imageUrl ? (
                 <motion.img
                   key={inspectedMeta.imageUrl}
@@ -1161,6 +1237,7 @@ export default function Page1({ onNext }: Page1Props) {
                     objectFit: "contain",
                     background: "#000",
                     zIndex: 1,
+                    opacity: isPlaying ? 1 : 0.85,
                   }}
                 />
               ) : null}
@@ -1207,8 +1284,75 @@ export default function Page1({ onNext }: Page1Props) {
               {/* Dynamic Light Sheen Overlay (Only active while running/fetching) */}
               {running && <div className="phone-screen-sheen" />}
 
-              {/* Image Logo Watermark Overlay (Layered above video stream) */}
-              <div style={{ position: "absolute", top: "14px", left: "14px", zIndex: 40, opacity: watermarkOpacity / 100, pointerEvents: "none", transition: "opacity 0.2s ease" }}>
+              {/* Media Controls Overlay (Play/Pause & Mute/Unmute) */}
+              <div style={{ position: "absolute", bottom: "10px", left: "10px", zIndex: 50, display: "flex", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  style={{
+                    width: "30px",
+                    minWidth: "30px",
+                    maxWidth: "30px",
+                    height: "30px",
+                    minHeight: "30px",
+                    maxHeight: "30px",
+                    aspectRatio: "1 / 1",
+                    borderRadius: "50%",
+                    padding: 0,
+                    lineHeight: 0,
+                    background: "rgba(15, 23, 42, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    color: "#FFFFFF",
+                    fontSize: "0.7rem",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                    flexShrink: 0,
+                  }}
+                  title={isPlaying ? "Pause Preview" : "Play Preview"}
+                >
+                  {isPlaying ? "❚❚" : "▶"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMuted(!isMuted)}
+                  style={{
+                    width: "30px",
+                    minWidth: "30px",
+                    maxWidth: "30px",
+                    height: "30px",
+                    minHeight: "30px",
+                    maxHeight: "30px",
+                    aspectRatio: "1 / 1",
+                    borderRadius: "50%",
+                    padding: 0,
+                    lineHeight: 0,
+                    background: "rgba(15, 23, 42, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.3)",
+                    color: "#FFFFFF",
+                    fontSize: "0.7rem",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+                    flexShrink: 0,
+                  }}
+                  title={isMuted ? "Unmute Audio" : "Mute Audio"}
+                >
+                  {isMuted ? "🔇" : "🔊"}
+                </button>
+              </div>
+
+              {/* Image Logo Watermark Overlay (Draggable Layered above video stream) */}
+              <motion.div
+                drag
+                dragConstraints={{ left: 0, right: 150, top: 0, bottom: 250 }}
+                whileDrag={{ scale: 1.1 }}
+                style={{ position: "absolute", top: "14px", left: "14px", zIndex: 40, opacity: watermarkOpacity / 100, cursor: "grab" }}
+              >
                 {imageFile ? (
                   <img
                     src={URL.createObjectURL(imageFile)}
@@ -1220,10 +1364,13 @@ export default function Page1({ onNext }: Page1Props) {
                     LOGO
                   </div>
                 )}
-              </div>
+              </motion.div>
 
-              {/* Text Watermark (Smooth Spring Gliding Corner Animation, Layered above video stream) */}
+              {/* Text Watermark (Draggable & Gliding Corner Animation) */}
               <motion.div
+                drag
+                dragConstraints={{ left: -100, right: 100, top: -150, bottom: 150 }}
+                whileDrag={{ scale: 1.08 }}
                 layout
                 animate={getPositionStyles(watermarkPos)}
                 transition={{ type: "spring", stiffness: 320, damping: 26 }}
@@ -1231,7 +1378,7 @@ export default function Page1({ onNext }: Page1Props) {
                   position: "absolute",
                   zIndex: 40,
                   opacity: watermarkOpacity / 100,
-                  pointerEvents: "none",
+                  cursor: "grab",
                 }}
               >
                 <div
@@ -1292,37 +1439,46 @@ export default function Page1({ onNext }: Page1Props) {
             {/* Custom Caption Input Below Phone Frame */}
             <div style={{ marginTop: "20px", width: "100%" }}>
               {/* Multi-Platform Caption Tab Switcher */}
-              <div style={{ display: "flex", gap: "6px", marginBottom: "12px", background: "rgba(0,0,0,0.25)", padding: "4px", borderRadius: "10px", border: "1px solid var(--panel-border)" }}>
+              <div style={{ display: "flex", gap: "6px", marginBottom: "12px", background: "var(--bg-deep)", padding: "5px", borderRadius: "14px", border: "1px solid var(--panel-border)", boxShadow: "inset 0 1px 3px rgba(15, 23, 42, 0.04)" }}>
                 {[
-                  { id: "Instagram", label: "Instagram", icon: <InstagramIcon />, color: "#E1306C" },
-                  { id: "Pinterest", label: "Pinterest", icon: <PinterestIcon />, color: "#E60023" },
-                  { id: "Twitter", label: "Twitter", icon: <XIcon />, color: "#1DA1F2" },
-                  { id: "YouTube", label: "YT Shorts", icon: <YouTubeIcon />, color: "#FF0000" },
-                ].map((t) => (
-                  <button
-                    key={t.id}
-                    type="button"
-                    title={t.label}
-                    onClick={() => handleTabSwitch(t.id as CaptionTab)}
-                    style={{
-                      flex: 1,
-                      padding: "8px 10px",
-                      borderRadius: "7px",
-                      border: activeCaptionTab === t.id ? `1.5px solid ${t.color}` : "1px solid transparent",
-                      background: activeCaptionTab === t.id ? "var(--surface)" : "transparent",
-                      color: activeCaptionTab === t.id ? t.color : "var(--text-muted)",
-                      fontSize: "0.76rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {t.icon}
-                  </button>
-                ))}
+                  { id: "Instagram", label: "Instagram", icon: <InstagramIcon />, color: "#E1306C", bg: "#E1306C", shadow: "rgba(225, 48, 108, 0.35)" },
+                  { id: "Pinterest", label: "Pinterest", icon: <PinterestIcon />, color: "#E60023", bg: "#E60023", shadow: "rgba(230, 0, 35, 0.35)" },
+                  { id: "Twitter", label: "Twitter (X)", icon: <XIcon />, color: "#1DA1F2", bg: "#1DA1F2", shadow: "rgba(29, 161, 242, 0.35)" },
+                  { id: "YouTube", label: "YouTube Shorts", icon: <YouTubeIcon />, color: "#FF0000", bg: "#FF0000", shadow: "rgba(255, 0, 0, 0.35)" },
+                ].map((t) => {
+                  const isActive = activeCaptionTab === t.id;
+                  return (
+                    <motion.button
+                      key={t.id}
+                      type="button"
+                      title={t.label}
+                      whileHover={{ scale: isActive ? 1.02 : 1.04, y: -1 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleTabSwitch(t.id as CaptionTab)}
+                      style={{
+                        flex: 1,
+                        padding: "9px 12px",
+                        borderRadius: "10px",
+                        border: isActive ? `1px solid ${t.bg}` : "1px solid transparent",
+                        background: isActive ? t.bg : "transparent",
+                        color: isActive ? "#FFFFFF" : "var(--secondary-text)",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        boxShadow: isActive ? `0 4px 14px ${t.shadow}` : "none",
+                        transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", filter: isActive ? "brightness(0) invert(1)" : "none" }}>
+                        {t.icon}
+                      </span>
+                    </motion.button>
+                  );
+                })}
               </div>
 
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>

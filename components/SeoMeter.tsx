@@ -112,18 +112,18 @@ export default function SeoMeter({
 
     let grade = "A+";
     let color = "#68B77A";
-    if (total < 75) {
+    if (total < 70) {
+      grade = "C";
+      color = "#EF4444";
+    } else if (total < 85) {
       grade = "B";
-      color = "#EAB308";
-    } else if (total < 88) {
-      grade = "B+";
-      color = "#60A5FA";
-    } else if (total < 96) {
+      color = "#F59E0B";
+    } else if (total < 95) {
       grade = "A";
-      color = "#68B77A";
+      color = "#10B981";
     } else {
       grade = "A+";
-      color = "#34D399";
+      color = "#059669";
     }
 
     return { total, wordScore, metaScore, kwScore, structScore, grade, color };

@@ -95,8 +95,8 @@ function CheckMarkIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
-      <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <svg width="14" height="14" viewBox="0 0 24 24" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -140,7 +140,7 @@ const PLATFORM_GUIDES: Record<PlatformId, PlatformGuide> = {
     id: "instagram",
     name: "Instagram Graph API",
     brandColor: "#E1306C",
-    gradientBg: "linear-gradient(135deg, rgba(225,48,108,0.2) 0%, rgba(131,58,180,0.15) 50%, rgba(252,176,69,0.1) 100%)",
+    gradientBg: "linear-gradient(135deg, #FDF2F8 0%, #FCE7F3 100%)",
     iconSvg: <InstagramIcon />,
     devPortalUrl: "https://developers.facebook.com/apps/",
     summary: "Connect your Instagram Business or Creator account to extract Reels, auto-fetch metrics, and publish automated pet content.",
@@ -180,7 +180,7 @@ const PLATFORM_GUIDES: Record<PlatformId, PlatformGuide> = {
     id: "pinterest",
     name: "Pinterest API v5",
     brandColor: "#E60023",
-    gradientBg: "linear-gradient(135deg, rgba(230,0,35,0.22) 0%, rgba(189,8,28,0.12) 100%)",
+    gradientBg: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)",
     iconSvg: <PinterestIcon />,
     devPortalUrl: "https://developers.pinterest.com/",
     summary: "Automate pet pin creation, fetch trending pet boards, and sync visual pet assets effortlessly.",
@@ -214,7 +214,7 @@ const PLATFORM_GUIDES: Record<PlatformId, PlatformGuide> = {
     id: "twitter",
     name: "X (Twitter) API v2",
     brandColor: "#1DA1F2",
-    gradientBg: "linear-gradient(135deg, rgba(29,161,242,0.2) 0%, rgba(0,0,0,0.3) 100%)",
+    gradientBg: "linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%)",
     iconSvg: <XIcon />,
     devPortalUrl: "https://developer.twitter.com/en/portal/dashboard",
     summary: "Auto-tweet viral pet clips, thread creation, and automated engagement with your pet audience.",
@@ -246,7 +246,7 @@ const PLATFORM_GUIDES: Record<PlatformId, PlatformGuide> = {
     id: "youtube",
     name: "YouTube Shorts Data API",
     brandColor: "#FF0000",
-    gradientBg: "linear-gradient(135deg, rgba(255,0,0,0.22) 0%, rgba(150,0,0,0.12) 100%)",
+    gradientBg: "linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%)",
     iconSvg: <YouTubeIcon />,
     devPortalUrl: "https://console.cloud.google.com/",
     summary: "Search trending pet Shorts, analyze view analytics, and publish automated pet video content.",
@@ -332,9 +332,9 @@ export default function SetupGuideModal({
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
-          background: "rgba(3, 7, 12, 0.82)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
+          background: "rgba(15, 23, 42, 0.45)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
         }}
       >
         {/* Backdrop Dismiss Click */}
@@ -361,19 +361,19 @@ export default function SetupGuideModal({
             maxHeight: "90vh",
             display: "flex",
             flexDirection: "column",
-            background: "#0D1620",
-            border: `1.5px solid ${guide.brandColor}55`,
+            background: "#FFFFFF",
+            border: "none",
             borderRadius: "22px",
-            boxShadow: `0 30px 80px rgba(0,0,0,0.85), 0 0 40px ${guide.brandColor}22`,
+            boxShadow: "0 25px 70px rgba(15, 23, 42, 0.22)",
             overflow: "hidden",
-            color: "#F1EEE7",
+            color: "#0F172A",
           }}
         >
           {/* Top Platform Switcher Header */}
           <div
             style={{
               background: guide.gradientBg,
-              borderBottom: "1px solid rgba(255,255,255,0.08)",
+              borderBottom: "1px solid #E2E8F0",
               padding: "18px 24px 14px 24px",
             }}
           >
@@ -390,13 +390,13 @@ export default function SetupGuideModal({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: `0 4px 14px ${guide.brandColor}66`,
+                    boxShadow: `0 4px 14px ${guide.brandColor}44`,
                   }}
                 >
                   {guide.iconSvg}
                 </span>
                 <div>
-                  <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#FFFFFF", letterSpacing: "0.01em" }}>
+                  <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.01em" }}>
                     {guide.name} API Setup Guide
                   </h2>
                 </div>
@@ -404,13 +404,13 @@ export default function SetupGuideModal({
 
               <motion.button
                 type="button"
-                whileHover={{ scale: 1.1, backgroundColor: "rgba(255, 255, 255, 0.25)" }}
+                whileHover={{ scale: 1.08, backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
                 title="Close Guide (Esc)"
                 style={{
-                  background: "rgba(255, 255, 255, 0.15)",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  background: "#FFFFFF",
+                  border: "1px solid #CBD5E1",
                   borderRadius: "50%",
                   width: "32px",
                   minWidth: "32px",
@@ -421,12 +421,13 @@ export default function SetupGuideModal({
                   aspectRatio: "1 / 1",
                   flexShrink: 0,
                   padding: 0,
-                  color: "#FFFFFF",
+                  lineHeight: 0,
+                  color: "#64748B",
                   cursor: "pointer",
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  boxShadow: "0 2px 6px rgba(15,23,42,0.06)",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -435,7 +436,7 @@ export default function SetupGuideModal({
             </div>
 
             {/* Platform Selection Tabs (Logo Only - Max Distant Space-Between Layout) */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 36px", background: "rgba(0,0,0,0.35)", borderRadius: "14px", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 36px", background: "rgba(255, 255, 255, 0.75)", borderRadius: "14px", border: "1px solid rgba(226, 232, 240, 0.9)" }}>
               {(["instagram", "pinterest", "twitter", "youtube"] as PlatformId[]).map((pKey) => {
                 const item = PLATFORM_GUIDES[pKey];
                 const isActive = pKey === activePlatformId;
@@ -452,16 +453,16 @@ export default function SetupGuideModal({
                       borderRadius: "8px",
                       border: "none",
                       background: isActive ? item.brandColor : "transparent",
-                      color: isActive ? "#FFFFFF" : "rgba(255, 255, 255, 0.65)",
+                      color: isActive ? "#FFFFFF" : "#64748B",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       transition: "all 0.2s ease",
-                      boxShadow: isActive ? `0 2px 10px ${item.brandColor}55` : "none",
+                      boxShadow: isActive ? `0 2px 10px ${item.brandColor}44` : "none",
                     }}
                   >
-                    <span style={{ display: "flex", opacity: isActive ? 1 : 0.7 }}>{item.iconSvg}</span>
+                    <span style={{ display: "flex", opacity: isActive ? 1 : 0.75 }}>{item.iconSvg}</span>
                   </button>
                 );
               })}
@@ -471,10 +472,10 @@ export default function SetupGuideModal({
           {/* Stepper Progress Bar */}
           <div style={{ padding: "16px 24px 0 24px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-              <span style={{ fontSize: "0.76rem", fontWeight: 700, color: guide.brandColor }}>
+              <span style={{ fontSize: "0.76rem", fontWeight: 800, color: guide.brandColor }}>
                 STEP {activeStepIndex + 1} OF {guide.steps.length}
               </span>
-              <span style={{ fontSize: "0.74rem", color: "var(--text-muted)", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
                 {Math.round(((activeStepIndex + 1) / guide.steps.length) * 100)}% Complete
               </span>
             </div>
@@ -497,11 +498,11 @@ export default function SetupGuideModal({
                       background: isCurrent
                         ? guide.brandColor
                         : isPassed
-                        ? "rgba(104, 183, 122, 0.7)"
-                        : "rgba(255,255,255,0.1)",
+                        ? "#A7F3D0"
+                        : "#E2E8F0",
                       cursor: "pointer",
                       transition: "all 0.25s ease",
-                      boxShadow: isCurrent ? `0 0 10px ${guide.brandColor}` : "none",
+                      boxShadow: isCurrent ? `0 0 8px ${guide.brandColor}55` : "none",
                     }}
                     title={`Step ${idx + 1}: ${st.title}`}
                   />
@@ -522,16 +523,16 @@ export default function SetupGuideModal({
               >
                 {/* Step Headline & Subtitle */}
                 <div style={{ marginBottom: "12px" }}>
-                  <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
+                  <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
                     {currentStep.title}
                   </h3>
-                  <p style={{ margin: 0, fontSize: "0.84rem", color: "#68B77A", fontWeight: 700 }}>
+                  <p style={{ margin: 0, fontSize: "0.84rem", color: "#2D8A4E", fontWeight: 700 }}>
                     {currentStep.subtitle}
                   </p>
                 </div>
 
                 {/* Detailed Instruction Text */}
-                <p style={{ fontSize: "0.86rem", lineHeight: 1.6, color: "rgba(241, 238, 231, 0.85)", margin: "0 0 16px 0" }}>
+                <p style={{ fontSize: "0.86rem", lineHeight: 1.6, color: "#334155", margin: "0 0 16px 0" }}>
                   {currentStep.detail}
                 </p>
 
@@ -548,9 +549,9 @@ export default function SetupGuideModal({
                         gap: "8px",
                         padding: "8px 14px",
                         borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.07)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#FFFFFF",
+                        background: "#F8FAFC",
+                        border: "1px solid #CBD5E1",
+                        color: "#0F172A",
                         fontSize: "0.8rem",
                         fontWeight: 700,
                         textDecoration: "none",
@@ -568,8 +569,8 @@ export default function SetupGuideModal({
                   <div style={{ marginBottom: "14px" }}>
                     <div
                       style={{
-                        background: "rgba(0, 0, 0, 0.45)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        background: "#F1F5F9",
+                        border: "1px solid #E2E8F0",
                         borderRadius: "10px",
                         padding: "10px 14px",
                         display: "flex",
@@ -578,7 +579,7 @@ export default function SetupGuideModal({
                         gap: "12px",
                       }}
                     >
-                      <code style={{ fontSize: "0.78rem", color: "#68B77A", fontFamily: "monospace", overflowX: "auto" }}>
+                      <code style={{ fontSize: "0.78rem", color: "#166534", fontFamily: "monospace", overflowX: "auto" }}>
                         {currentStep.copyableText}
                       </code>
                       <button
@@ -587,9 +588,9 @@ export default function SetupGuideModal({
                         style={{
                           padding: "5px 10px",
                           borderRadius: "6px",
-                          border: "none",
-                          background: copiedKey === currentStep.copyableText ? "#10B981" : "rgba(255,255,255,0.12)",
-                          color: "#FFF",
+                          border: "1px solid #CBD5E1",
+                          background: copiedKey === currentStep.copyableText ? "#10B981" : "#FFFFFF",
+                          color: copiedKey === currentStep.copyableText ? "#FFF" : "#0F172A",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -614,19 +615,19 @@ export default function SetupGuideModal({
                 {currentStep.tip && (
                   <div
                     style={{
-                      background: "rgba(104, 183, 122, 0.1)",
-                      border: "1px solid rgba(104, 183, 122, 0.25)",
+                      background: "#ECFDF5",
+                      border: "1px solid #A7F3D0",
                       borderRadius: "10px",
                       padding: "10px 12px",
                       display: "flex",
                       alignItems: "flex-start",
                       gap: "10px",
                       fontSize: "0.8rem",
-                      color: "#9FE0B0",
+                      color: "#065F46",
                       lineHeight: 1.45,
                     }}
                   >
-                    <span style={{ color: "#68B77A", display: "flex", marginTop: "2px" }}>
+                    <span style={{ color: "#059669", display: "flex", marginTop: "2px" }}>
                       <LightbulbIcon />
                     </span>
                     <span>{currentStep.tip}</span>
@@ -640,8 +641,8 @@ export default function SetupGuideModal({
           <div
             style={{
               padding: "16px 24px",
-              background: "rgba(0, 0, 0, 0.25)",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+              background: "#F8FAFC",
+              borderTop: "1px solid #E2E8F0",
               display: "flex",
               alignItems: "center",
               justifyContent: "flex-end",
@@ -663,9 +664,9 @@ export default function SetupGuideModal({
                     height: "36px",
                     padding: 0,
                     borderRadius: "9px",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    background: "transparent",
-                    color: "rgba(255, 255, 255, 0.85)",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
@@ -691,7 +692,7 @@ export default function SetupGuideModal({
                     background: guide.brandColor,
                     color: "#FFFFFF",
                     cursor: "pointer",
-                    boxShadow: `0 4px 14px ${guide.brandColor}55`,
+                    boxShadow: `0 4px 14px ${guide.brandColor}44`,
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",

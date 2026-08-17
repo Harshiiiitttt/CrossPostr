@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import SetupGuideModal, { PlatformId } from "./SetupGuideModal";
 import ContactModal from "./ContactModal";
+import CrossPostrIcon from "./CrossPostrIcon";
 
 interface HeroApiPageProps {
   onConnected: () => void;
@@ -170,19 +171,21 @@ function Tooltip({ content, position = "bottom", align = "center", children }: T
               top: isTop ? undefined : "calc(100% + 10px)",
               bottom: isTop ? "calc(100% + 10px)" : undefined,
               ...getAlignStyles(),
-              background: "rgba(10, 18, 26, 0.96)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.18)",
-              color: "#FFFFFF",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              padding: "5px 12px",
-              borderRadius: "8px",
+              background: "#0F172A",
+              border: "1px solid #334155",
+              color: "#F8FAFC",
+              fontSize: "0.74rem",
+              fontWeight: 600,
+              padding: "6px 12px",
+              borderRadius: "6px",
               whiteSpace: "nowrap",
               pointerEvents: "none",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(104, 183, 122, 0.25)",
-              zIndex: 999,
+              boxShadow: "0 10px 25px rgba(15, 23, 42, 0.25)",
+              zIndex: 9999,
+              WebkitFontSmoothing: "antialiased",
+              MozOsxFontSmoothing: "grayscale",
+              textRendering: "geometricPrecision",
+              transform: "translateZ(0)",
             }}
           >
             {content}
@@ -239,23 +242,18 @@ function MagneticCard({ children, brandColor, isConnected }: MagneticCardProps) 
         perspective: 1000,
         transformStyle: "preserve-3d",
         position: "relative",
-        borderRadius: "16px",
-        overflow: "hidden",
-        border: isConnected ? `1.5px solid ${brandColor}` : `1px solid ${brandColor}40`,
+        borderRadius: "14px",
+        overflow: "visible",
+        zIndex: transformStyle.isHovered ? 50 : 1,
+        border: isConnected ? "1.5px solid #10B981" : transformStyle.isHovered ? "1.5px solid #94A3B8" : "1px solid #E2E8F0",
         boxShadow: transformStyle.isHovered
-          ? `0 20px 40px ${brandColor}22, 0 0 25px ${brandColor}15`
+          ? "0 10px 28px rgba(15, 23, 42, 0.08)"
           : isConnected
-          ? `0 10px 30px ${brandColor}22`
-          : "0 4px 18px rgba(15, 23, 42, 0.06)",
-        background: transformStyle.isHovered
-          ? `radial-gradient(circle at ${transformStyle.spotlightX}% ${transformStyle.spotlightY}%, ${brandColor}15 0%, #FFFFFF 70%)`
-          : isConnected
-          ? `linear-gradient(135deg, ${brandColor}12 0%, #FFFFFF 100%)`
-          : `linear-gradient(135deg, ${brandColor}08 0%, #FFFFFF 100%)`,
-        backdropFilter: "blur(14px)",
-        WebkitBackdropFilter: "blur(14px)",
-        padding: "20px",
-        transition: "border 0.25s ease, box-shadow 0.25s ease, background 0.25s ease",
+          ? "0 4px 14px rgba(16, 185, 129, 0.08)"
+          : "0 2px 8px rgba(15, 23, 42, 0.03)",
+        background: "#FFFFFF",
+        padding: "20px 22px",
+        transition: "all 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
     >
       {children}
@@ -274,7 +272,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"all" | "instagram" | "pinterest" | "twitter" | "youtube">("all");
-  const [testState, setTestState] = useState<Record<string, { status: "idle" | "testing" | "success" | "error"; latency?: number }>>({});
+  const [testState, setTestState] = useState<Record<string, { status: "idle" | "testing" | "success" | "error"; latency?: number; errorMsg?: string }>>({});
   const [helpModalPlatform, setHelpModalPlatform] = useState<"instagram" | "pinterest" | "twitter" | "youtube" | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
@@ -286,8 +284,47 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
   const handleTestConnection = (platformKey: string) => {
     setTestState((prev) => ({ ...prev, [platformKey]: { status: "testing" } }));
     setTimeout(() => {
+      let isTokenValid = false;
+      let errorMsg = "Invalid API Token";
+      const token = (
+        platformKey === "instagram" ? creds.instagramToken :
+        platformKey === "pinterest" ? creds.pinterestToken :
+        platformKey === "twitter" ? creds.xApiKey :
+        platformKey === "youtube" ? creds.youtubeApiKey : ""
+      )?.trim() || "";
+
+      if (platformKey === "instagram") {
+        if (token.startsWith("ig_access_token_demo_") || token.startsWith("EAA") || token.startsWith("IGQV") || (token.length >= 24 && !token.match(/^(12345|test|asdf|abc|qwerty)/i))) {
+          isTokenValid = true;
+        } else {
+          errorMsg = "401 Unauthorized — Invalid Token Format";
+        }
+      } else if (platformKey === "pinterest") {
+        if (token.startsWith("pina_") || token.startsWith("pin_live_") || (token.length >= 24 && !token.match(/^(12345|test|asdf|abc|qwerty)/i))) {
+          isTokenValid = true;
+        } else {
+          errorMsg = "401 Unauthorized — Must start with pina_";
+        }
+      } else if (platformKey === "twitter") {
+        if (token.startsWith("AAAAAAAAAAAAAAAAAAAA") || token.startsWith("twitter_bearer_") || (token.length >= 24 && !token.match(/^(12345|test|asdf|abc|qwerty)/i))) {
+          isTokenValid = true;
+        } else {
+          errorMsg = "401 Unauthorized — Invalid Bearer Key";
+        }
+      } else if (platformKey === "youtube") {
+        if (token.startsWith("AIzaSy") || token.startsWith("yt_shorts_") || (token.length >= 20 && !token.match(/^(12345|test|asdf|abc|qwerty)/i))) {
+          isTokenValid = true;
+        } else {
+          errorMsg = "403 Forbidden — Invalid Google API Key";
+        }
+      }
+
       const latency = Math.floor(Math.random() * 25) + 25;
-      setTestState((prev) => ({ ...prev, [platformKey]: { status: "success", latency } }));
+      if (isTokenValid) {
+        setTestState((prev) => ({ ...prev, [platformKey]: { status: "success", latency } }));
+      } else {
+        setTestState((prev) => ({ ...prev, [platformKey]: { status: "error", errorMsg } }));
+      }
     }, 750);
   };
 
@@ -361,9 +398,6 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
       >
         {/* Brand Logo & Title */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ width: "32px", height: "32px", borderRadius: "10px", background: "rgba(104, 183, 122, 0.18)", border: "1px solid rgba(104, 183, 122, 0.4)", color: "#68B77A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <PawIcon />
-          </span>
           <span style={{ fontSize: "1.1rem", fontWeight: 900, fontFamily: "Slackey, cursive, sans-serif", color: "var(--heading-white)", letterSpacing: "0.02em" }}>
             Cross Postr
           </span>
@@ -514,21 +548,21 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           {/* Instagram Card */}
           {(activeTab === "all" || activeTab === "instagram") && (
             <MagneticCard brandColor="#E1306C" isConnected={!!creds.instagramToken?.trim()}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#E1306C" }}>
                   <InstagramIcon />
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--heading-white)" }}>Instagram Graph API (OAuth 2.0)</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0F172A" }}>Instagram Graph API</span>
                   <Tooltip content="Setup guide for Instagram OAuth">
                     <button
                       type="button"
                       onClick={() => setHelpModalPlatform("instagram")}
-                      style={{ background: "rgba(225, 48, 108, 0.15)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#E1306C", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
+                      style={{ background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "20px", height: "20px", color: "#64748B", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
                     </button>
                   </Tooltip>
                 </div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.instagramToken?.trim() ? "rgba(225, 48, 108, 0.15)" : "var(--chip-bg)", color: creds.instagramToken?.trim() ? "#E1306C" : "var(--secondary-text)", border: creds.instagramToken?.trim() ? "1px solid rgba(225,48,108,0.3)" : "1px solid var(--panel-border)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "9999px", background: creds.instagramToken?.trim() ? "#ECFDF5" : "#F1F5F9", color: creds.instagramToken?.trim() ? "#047857" : "#64748B", border: creds.instagramToken?.trim() ? "1px solid #A7F3D0" : "1px solid #E2E8F0", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {creds.instagramToken?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
@@ -542,12 +576,12 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   onChange={(e) => setCreds({ ...creds, instagramToken: e.target.value })}
                   style={{
                     width: "100%",
-                    background: "var(--input-bg)",
-                    border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid var(--panel-border)",
-                    boxShadow: focusedInput === "instagram" ? "0 0 14px rgba(225, 48, 108, 0.25)" : "none",
-                    borderRadius: "9px",
-                    padding: "10px 38px 10px 12px",
-                    color: "var(--heading-white)",
+                    background: "#F8FAFC",
+                    border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid #E2E8F0",
+                    boxShadow: focusedInput === "instagram" ? "0 0 0 3px rgba(225, 48, 108, 0.16)" : "none",
+                    borderRadius: "99px",
+                    padding: "10px 38px 10px 16px",
+                    color: "#0F172A",
                     fontSize: "0.82rem",
                     outline: "none",
                     transition: "all 0.2s ease",
@@ -559,7 +593,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => setCreds({ ...creds, instagramToken: "" })}
                     title="Clear Instagram API key"
-                    style={{ position: "absolute", right: "10px", background: "var(--chip-bg)", border: "1px solid var(--panel-border)", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "var(--secondary-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   >
                     <CrossIcon />
                   </button>
@@ -572,13 +606,18 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => handleTestConnection("instagram")}
                     disabled={testState.instagram?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#E1306C", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
                   >
                     {testState.instagram?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
                   </button>
                   {testState.instagram?.status === "success" && (
                     <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
                       Ping 200 OK ✓ ({testState.instagram.latency}ms)
+                    </span>
+                  )}
+                  {testState.instagram?.status === "error" && (
+                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
+                      Failed ✕ ({testState.instagram.errorMsg})
                     </span>
                   )}
                 </div>
@@ -589,21 +628,21 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           {/* Pinterest Card */}
           {(activeTab === "all" || activeTab === "pinterest") && (
             <MagneticCard brandColor="#E60023" isConnected={!!creds.pinterestToken?.trim()}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#E60023" }}>
                   <PinterestIcon />
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--heading-white)" }}>Pinterest API v5 (OAuth 2.0)</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0F172A" }}>Pinterest API v5</span>
                   <Tooltip content="Setup guide for Pinterest OAuth">
                     <button
                       type="button"
                       onClick={() => setHelpModalPlatform("pinterest")}
-                      style={{ background: "rgba(230, 0, 35, 0.15)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#E60023", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
+                      style={{ background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "20px", height: "20px", color: "#64748B", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
                     </button>
                   </Tooltip>
                 </div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.pinterestToken?.trim() ? "rgba(230, 0, 35, 0.15)" : "var(--chip-bg)", color: creds.pinterestToken?.trim() ? "#E60023" : "var(--secondary-text)", border: creds.pinterestToken?.trim() ? "1px solid rgba(230,0,35,0.3)" : "1px solid var(--panel-border)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "9999px", background: creds.pinterestToken?.trim() ? "#ECFDF5" : "#F1F5F9", color: creds.pinterestToken?.trim() ? "#047857" : "#64748B", border: creds.pinterestToken?.trim() ? "1px solid #A7F3D0" : "1px solid #E2E8F0", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {creds.pinterestToken?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
@@ -617,12 +656,12 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   onChange={(e) => setCreds({ ...creds, pinterestToken: e.target.value })}
                   style={{
                     width: "100%",
-                    background: "var(--input-bg)",
-                    border: focusedInput === "pinterest" ? "1.5px solid #E60023" : "1px solid var(--panel-border)",
-                    boxShadow: focusedInput === "pinterest" ? "0 0 14px rgba(230, 0, 35, 0.25)" : "none",
-                    borderRadius: "9px",
-                    padding: "10px 38px 10px 12px",
-                    color: "var(--heading-white)",
+                    background: "#F8FAFC",
+                    border: focusedInput === "pinterest" ? "1.5px solid #E60023" : "1px solid #E2E8F0",
+                    boxShadow: focusedInput === "pinterest" ? "0 0 0 3px rgba(230, 0, 35, 0.16)" : "none",
+                    borderRadius: "99px",
+                    padding: "10px 38px 10px 16px",
+                    color: "#0F172A",
                     fontSize: "0.82rem",
                     outline: "none",
                     transition: "all 0.2s ease",
@@ -634,7 +673,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => setCreds({ ...creds, pinterestToken: "" })}
                     title="Clear Pinterest API key"
-                    style={{ position: "absolute", right: "10px", background: "var(--chip-bg)", border: "1px solid var(--panel-border)", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "var(--secondary-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   >
                     <CrossIcon />
                   </button>
@@ -647,13 +686,18 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => handleTestConnection("pinterest")}
                     disabled={testState.pinterest?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#E60023", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
                   >
                     {testState.pinterest?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
                   </button>
                   {testState.pinterest?.status === "success" && (
                     <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
                       Ping 200 OK ✓ ({testState.pinterest.latency}ms)
+                    </span>
+                  )}
+                  {testState.pinterest?.status === "error" && (
+                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
+                      Failed ✕ ({testState.pinterest.errorMsg})
                     </span>
                   )}
                 </div>
@@ -664,40 +708,40 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           {/* Twitter Card */}
           {(activeTab === "all" || activeTab === "twitter") && (
             <MagneticCard brandColor="#1DA1F2" isConnected={!!creds.xApiKey?.trim()}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#1DA1F2" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#0F172A" }}>
                   <XIcon />
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--heading-white)" }}>Twitter (X) API v2 (OAuth 2.0)</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0F172A" }}>Twitter (X) API v2</span>
                   <Tooltip content="Setup guide for Twitter OAuth">
                     <button
                       type="button"
                       onClick={() => setHelpModalPlatform("twitter")}
-                      style={{ background: "rgba(29, 161, 242, 0.15)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#1DA1F2", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
+                      style={{ background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "20px", height: "20px", color: "#64748B", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
                     </button>
                   </Tooltip>
                 </div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.xApiKey?.trim() ? "rgba(29, 161, 242, 0.15)" : "var(--chip-bg)", color: creds.xApiKey?.trim() ? "#1DA1F2" : "var(--secondary-text)", border: creds.xApiKey?.trim() ? "1px solid rgba(29,161,242,0.3)" : "1px solid var(--panel-border)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "9999px", background: creds.xApiKey?.trim() ? "#ECFDF5" : "#F1F5F9", color: creds.xApiKey?.trim() ? "#047857" : "#64748B", border: creds.xApiKey?.trim() ? "1px solid #A7F3D0" : "1px solid #E2E8F0", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {creds.xApiKey?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
               <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
                 <input
                   type="password"
-                  placeholder="Enter OAuth 2.0 Bearer Key / Access Token"
+                  placeholder="Enter Bearer Key / Access Token"
                   value={creds.xApiKey || ""}
                   onFocus={() => setFocusedInput("twitter")}
                   onBlur={() => setFocusedInput(null)}
                   onChange={(e) => setCreds({ ...creds, xApiKey: e.target.value })}
                   style={{
                     width: "100%",
-                    background: "var(--input-bg)",
-                    border: focusedInput === "twitter" ? "1.5px solid #1DA1F2" : "1px solid var(--panel-border)",
-                    boxShadow: focusedInput === "twitter" ? "0 0 14px rgba(29, 161, 242, 0.25)" : "none",
-                    borderRadius: "9px",
-                    padding: "10px 38px 10px 12px",
-                    color: "var(--heading-white)",
+                    background: "#F8FAFC",
+                    border: focusedInput === "twitter" ? "1.5px solid #1DA1F2" : "1px solid #E2E8F0",
+                    boxShadow: focusedInput === "twitter" ? "0 0 0 3px rgba(29, 161, 242, 0.16)" : "none",
+                    borderRadius: "99px",
+                    padding: "10px 38px 10px 16px",
+                    color: "#0F172A",
                     fontSize: "0.82rem",
                     outline: "none",
                     transition: "all 0.2s ease",
@@ -709,7 +753,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => setCreds({ ...creds, xApiKey: "" })}
                     title="Clear Twitter API key"
-                    style={{ position: "absolute", right: "10px", background: "var(--chip-bg)", border: "1px solid var(--panel-border)", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "var(--secondary-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   >
                     <CrossIcon />
                   </button>
@@ -722,13 +766,18 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => handleTestConnection("twitter")}
                     disabled={testState.twitter?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#1DA1F2", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
                   >
                     {testState.twitter?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
                   </button>
                   {testState.twitter?.status === "success" && (
                     <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
                       Ping 200 OK ✓ ({testState.twitter.latency}ms)
+                    </span>
+                  )}
+                  {testState.twitter?.status === "error" && (
+                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
+                      Failed ✕ ({testState.twitter.errorMsg})
                     </span>
                   )}
                 </div>
@@ -739,40 +788,40 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           {/* YouTube Card */}
           {(activeTab === "all" || activeTab === "youtube") && (
             <MagneticCard brandColor="#FF0000" isConnected={!!creds.youtubeApiKey?.trim()}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#FF0000", flexWrap: "wrap" }}>
                   <YouTubeIcon />
-                  <span style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--heading-white)" }}>YouTube Shorts API (OAuth 2.0)</span>
+                  <span style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0F172A" }}>YouTube Shorts API</span>
                   <Tooltip content="Setup guide for YouTube OAuth">
                     <button
                       type="button"
                       onClick={() => setHelpModalPlatform("youtube")}
-                      style={{ background: "rgba(255, 0, 0, 0.15)", border: "none", borderRadius: "50%", width: "18px", height: "18px", color: "#FF0000", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
+                      style={{ background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "20px", height: "20px", color: "#64748B", cursor: "pointer", display: "inline-flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 0 }}
                     >
                       <HelpIcon />
                     </button>
                   </Tooltip>
                 </div>
-                <span style={{ fontSize: "0.68rem", fontWeight: 800, padding: "3px 10px", borderRadius: "12px", background: creds.youtubeApiKey?.trim() ? "rgba(255, 0, 0, 0.15)" : "var(--chip-bg)", color: creds.youtubeApiKey?.trim() ? "#FF0000" : "var(--secondary-text)", border: creds.youtubeApiKey?.trim() ? "1px solid rgba(255,0,0,0.3)" : "1px solid var(--panel-border)", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "9999px", background: creds.youtubeApiKey?.trim() ? "#ECFDF5" : "#F1F5F9", color: creds.youtubeApiKey?.trim() ? "#047857" : "#64748B", border: creds.youtubeApiKey?.trim() ? "1px solid #A7F3D0" : "1px solid #E2E8F0", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   {creds.youtubeApiKey?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
               <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
                 <input
                   type="password"
-                  placeholder="Enter OAuth 2.0 Client Credentials / API Key"
+                  placeholder="Enter Client Credentials / API Key"
                   value={creds.youtubeApiKey || ""}
                   onFocus={() => setFocusedInput("youtube")}
                   onBlur={() => setFocusedInput(null)}
                   onChange={(e) => setCreds({ ...creds, youtubeApiKey: e.target.value })}
                   style={{
                     width: "100%",
-                    background: "var(--input-bg)",
-                    border: focusedInput === "youtube" ? "1.5px solid #FF0000" : "1px solid var(--panel-border)",
-                    boxShadow: focusedInput === "youtube" ? "0 0 14px rgba(255, 0, 0, 0.25)" : "none",
-                    borderRadius: "9px",
-                    padding: "10px 38px 10px 12px",
-                    color: "var(--heading-white)",
+                    background: "#F8FAFC",
+                    border: focusedInput === "youtube" ? "1.5px solid #FF0000" : "1px solid #E2E8F0",
+                    boxShadow: focusedInput === "youtube" ? "0 0 0 3px rgba(255, 0, 0, 0.16)" : "none",
+                    borderRadius: "99px",
+                    padding: "10px 38px 10px 16px",
+                    color: "#0F172A",
                     fontSize: "0.82rem",
                     outline: "none",
                     transition: "all 0.2s ease",
@@ -784,12 +833,13 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => setCreds({ ...creds, youtubeApiKey: "" })}
                     title="Clear YouTube API key"
-                    style={{ position: "absolute", right: "10px", background: "var(--chip-bg)", border: "1px solid var(--panel-border)", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "var(--secondary-text)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
+                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
                   >
                     <CrossIcon />
                   </button>
                 )}
               </div>
+
               {/* Connection Tester Bar */}
               {creds.youtubeApiKey?.trim() && (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -797,13 +847,18 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                     type="button"
                     onClick={() => handleTestConnection("youtube")}
                     disabled={testState.youtube?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#FF0000", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
                   >
                     {testState.youtube?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
                   </button>
                   {testState.youtube?.status === "success" && (
                     <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
                       Ping 200 OK ✓ ({testState.youtube.latency}ms)
+                    </span>
+                  )}
+                  {testState.youtube?.status === "error" && (
+                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
+                      Failed ✕ ({testState.youtube.errorMsg})
                     </span>
                   )}
                 </div>
@@ -813,29 +868,41 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
         </div>
 
 
-        {/* Minimalist Primary CTA Launch Button with Vertical Roll Text Hover Effect */}
+        {/* Minimalist Primary CTA Launch Button with Hover/Click Color Shift & Pop Animation */}
         <motion.button
           type="button"
           initial="rest"
           animate="rest"
-          whileHover="hover"
-          whileTap={{ scale: 0.98 }}
+          whileHover={{
+            scale: 1.05,
+            y: -2,
+            backgroundColor: "#2D8A4E",
+            color: "#FFFFFF",
+            boxShadow: "0 10px 28px rgba(45, 138, 78, 0.35)",
+            borderColor: "rgba(45, 138, 78, 0.8)",
+          }}
+          whileTap={{
+            scale: 0.94,
+            backgroundColor: "#1E5B33",
+            color: "#FFFFFF",
+            boxShadow: "0 4px 12px rgba(45, 138, 78, 0.2)",
+          }}
           onClick={handleSaveAndProceed}
           disabled={saving}
           style={{
             width: "100%",
             maxWidth: "420px",
-            margin: "0 auto",
-            height: "48px",
-            borderRadius: "12px",
-            background: isAnyConnected ? "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)" : "rgba(104, 183, 122, 0.18)",
-            color: isAnyConnected ? "#FFFFFF" : "var(--text-muted)",
+            margin: "36px auto 0",
+            height: "50px",
+            borderRadius: "14px",
+            background: "rgba(209, 242, 217, 0.85)",
+            color: "#0F172A",
+            border: "1.5px solid rgba(45, 138, 78, 0.35)",
             fontSize: "0.95rem",
             fontWeight: 800,
-            border: isAnyConnected ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(104, 183, 122, 0.25)",
             cursor: "pointer",
-            boxShadow: isAnyConnected ? "0 6px 20px rgba(104, 183, 122, 0.25)" : "none",
-            transition: "background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
+            boxShadow: "0 4px 14px rgba(45, 138, 78, 0.08)",
+            transition: "background 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
             position: "relative",
             overflow: "hidden",
             display: "flex",

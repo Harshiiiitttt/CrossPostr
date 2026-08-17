@@ -17,32 +17,70 @@ WRITING STYLE & TONE (CRITICAL):
 - Maintain medical accuracy while simplifying the language.
 - Avoid repeating the same information across different sections.
 
-EXAMPLES OF CONTRAST TO FOLLOW:
-- Instead of: "Canine pancreatitis is characterized by inflammation of the pancreas resulting in digestive enzyme dysregulation."
-  Write: "Pancreatitis happens when your dog's pancreas becomes swollen and irritated. This makes it difficult for your dog to digest food properly and can make them feel very sick."
-- Instead of: "Clinical manifestations include gastrointestinal disturbances."
-  Write: "Your dog may vomit, stop eating, seem tired, or have stomach pain."
-
 BLOG STRUCTURE (Exactly 6-7 H2 sections in top-level "sections" array):
-1. Introduction: Briefly explain what the condition is and why dog owners should care.
-2. What Is It?: Explain the condition in simple, everyday language without textbook-style definitions.
-3. How Does It Affect Your Dog?: Explain what the condition does inside the dog's body simply, how the dog feels, and how it impacts daily life.
+1. Introduction: Briefly explain what the requested topic is and why dog owners should care.
+2. What Is It?: Explain the requested topic in simple, everyday language without textbook-style definitions.
+3. How Does It Affect Your Dog?: Explain what the requested topic does inside the dog's body simply, how the dog feels, and how it impacts daily life.
 4. Signs to Watch For: List common symptoms owners will notice at home using clear, compact bullet points.
-5. Causes: Explain common causes and risk factors simply.
-6. Treatment & Prevention: Provide a brief overview of treatment options and practical prevention tips.
+5. Causes & Risk Factors: Explain common causes and risk factors simply.
+6. Treatment & Prevention: Provide a brief overview of treatment options and practical management tips.
 7. When Should You See a Vet?: Explain when to seek veterinary care, encouraging timely treatment without creating unnecessary fear.
 Followed by:
-- Final Thoughts (Conclusion): A short, reassuring summary with practical advice.
-- 5 simple, SEO-friendly FAQs related to the topic.
+- Final Thoughts (Conclusion): A short, reassuring summary with practical advice directly about the requested topic.
+- 5 simple, SEO-friendly FAQs strictly related to the requested topic.
 
 RHYTHM & SCHEMA RULES:
-- H1 Title: SEO-friendly (50-60 characters, ~6-9 words), catchy, natural question or statement a worried owner would search online.
+- H1 Title: SEO-friendly (50-60 characters, ~6-9 words), catchy, natural question or statement a worried owner would search online about the requested topic.
 - Causes / What Is It section can use H3 "subtopics" to break down distinct causes or types in plain English.
 - Sections with lists (Signs, Treatment, Prevention, When to See a Vet) follow this three-part rhythm: (1) short setup sentence, (2) 4-6 specific bullet points in simple words, (3) short closing sentence.
 - The mandatory vet CTA string immediately follows before the conclusion.`;
 
 function buildPrompt(topic: string): string {
-  return `Write a simple, reader-friendly, SEO-optimized blog post for everyday dog owners about: "${topic}".
+  return `### CRITICAL: TOPIC ACCURACY & SINGLE SOURCE OF TRUTH
+The user's requested input topic is:
+"${topic}"
+
+This topic is the SINGLE SOURCE OF TRUTH for the entire article.
+Before generating the article, internally identify exactly what "${topic}" is about and what information a user searching for that topic expects.
+Every single part of the article—title, intro, headings, subtopics, paragraphs, bullet points, conclusion, and FAQs—MUST be directly related to "${topic}".
+
+### STRICT ANTI-TOPIC-DRIFT RULE
+Do NOT replace or drift the requested topic with:
+* A different dog-health condition
+* A loosely related dog-care subject
+* A previously generated topic
+* A generic dog-care topic
+* A travel, training, nutrition, grooming, or safety topic UNLESS it is directly relevant to "${topic}".
+
+For example, if the topic is "Anal Gland Care & Expressions Explained", discuss anal glands, location, impaction, expression, vet care, and prevention. Do NOT turn it into an article about car safety, harnesses, road trips, or grooming unless requested.
+
+### NO FORCED KEYWORD STUFFING
+* Use the primary topic naturally throughout the article.
+* Never force the exact topic phrase into a sentence simply for SEO.
+* Do not create unnatural headings unless the content is genuinely about that subject.
+* Prioritize semantic relevance and readability over keyword repetition.
+
+### CONTENT RELEVANCE RULE
+* Every section must answer a question or provide information that a reader searching for "${topic}" would reasonably expect.
+* Before including any section, internally ask: "Would someone who searched for '${topic}' expect to find this information?" If the answer is no, do not include that section.
+
+### TITLE AND META DESCRIPTION
+* The title must accurately describe the requested topic.
+* The meta description must accurately describe the actual content of the article.
+* Never create a title or meta description about one subject while the body discusses another.
+
+### FINAL SELF-CHECK DIRECTIVE
+Before returning the article, internally verify:
+1. Does the entire article answer the requested topic ("${topic}")?
+2. Are the majority of headings directly related to "${topic}"?
+3. Are the paragraphs actually discussing "${topic}"?
+4. Are the FAQs strictly relevant to "${topic}"?
+5. Does the conclusion discuss the same topic ("${topic}")?
+6. Did any unrelated subject accidentally replace the requested topic?
+7. Did I force the keyword into unnatural or unrelated sentences?
+
+If any answer indicates topic drift, rewrite the affected sections internally before returning the JSON.
+The generated article MUST be about "${topic}" first and SEO-optimized second. Never sacrifice topical accuracy for keyword placement.
 
 ${STRUCTURE_GUIDE}
 
@@ -63,7 +101,7 @@ Blog Length & Budget Requirements (STRICT CEILING):
 SEO Requirements:
 - Catchy, SEO-friendly title (50-60 characters, no generic "A Comprehensive Guide" or "Ultimate Guide").
 - Clear H2 and H3 headings matching the structure.
-- Natural keyword placement.
+- Natural keyword placement without topic drift.
 - Featured-snippet-friendly explanations.
 - 5 FAQs included separately via FAQ prompt.
 
@@ -73,11 +111,13 @@ Additional requirements:
 }
 
 function buildFaqPrompt(topic: string, title: string): string {
-  return `Write exactly 5 simple, SEO-friendly FAQs for a blog titled "${title}" about "${topic}".
+  return `Write exactly 5 simple, SEO-friendly FAQs for a blog titled "${title}" strictly about "${topic}".
 Requirements:
-- Phrased in simple, everyday language as a worried dog owner would actually search or ask online.
+- Every single FAQ question and answer MUST be 100% directly relevant to "${topic}".
+- Do NOT introduce unrelated topics (e.g. car travel, harnesses, grooming, or unrelated health conditions) unless "${topic}" is explicitly about that.
+- Phrased in simple, everyday language as a worried dog owner searching for "${topic}" would actually ask online.
 - Answers must be 1-2 clear, reassuring sentences in plain English (Grade 6-8 reading level).
-- Cover 5 distinct, non-overlapping questions (e.g., cause, symptoms, treatment, prevention, when to see a vet).
+- Cover 5 distinct, non-overlapping questions specific to "${topic}".
 Return JSON matching the schema exactly.`;
 }
 
@@ -176,7 +216,7 @@ async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: nu
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
+  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro"];
   let lastErr = "";
 
   for (const model of models) {
@@ -300,7 +340,7 @@ async function generateBody(topic: string): Promise<Omit<SeoBlog, "approxWordCou
           `keep content informative and concise without artificial filler, keep every paragraph complete, ` +
           `explain any medical terms immediately in plain language, and avoid repeating information across sections.`;
 
-    const attemptBody = await callGemini<Omit<SeoBlog, "approxWordCount" | "faqs">>(promptText, RESPONSE_SCHEMA, 3500);
+    const attemptBody = await callGemini<Omit<SeoBlog, "approxWordCount" | "faqs">>(promptText, RESPONSE_SCHEMA, 8192);
     lastBody = attemptBody;
 
     const words = bodyWordCount(attemptBody);
@@ -370,8 +410,8 @@ function getMockBlog(topic: string): SeoBlog {
   const { nounPhrase, displayTopic } = sanitizeTopic(topic || "Dog Care & Health Tips");
   const topicLower = displayTopic.toLowerCase();
 
-  const isSafetyTopic = /car|safety|harness|restraint|seatbelt|travel|crate|leash|collar|gear|carrier|seat/i.test(topicLower);
-  const isGroomingTopic = /shedding|coat|brushing|fur|grooming|hair|undercoat|bath|deshedding/i.test(topicLower);
+  const isSafetyTopic = /\b(car safety|car seatbelt|travel harness|vehicle restraint|car travel|seatbelt harness|dog car seat)\b/i.test(topicLower);
+  const isGroomingTopic = /\b(shedding|deshedding|dog brushing|coat grooming|fur coat care|grooming brush)\b/i.test(topicLower);
 
   const rawBlog: Omit<SeoBlog, "approxWordCount"> = isGroomingTopic
     ? {

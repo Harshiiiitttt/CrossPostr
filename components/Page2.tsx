@@ -144,6 +144,44 @@ const SERVICE_TYPES = [
   "Last-Minute Emergency Care",
 ];
 
+const SERVICE_TYPE_COLOR_MAP: Record<string, { color: string; bg: string; border: string; activeBg: string; activeBorder: string }> = {
+  "In-Home Boarding & Sitting": {
+    color: "#E85D75", // Warm Rose
+    bg: "rgba(232, 93, 117, 0.05)",
+    border: "rgba(232, 93, 117, 0.25)",
+    activeBg: "rgba(232, 93, 117, 0.14)",
+    activeBorder: "#E85D75",
+  },
+  "Dog Walking & Exercise": {
+    color: "#35A866", // Fresh Green
+    bg: "rgba(53, 168, 102, 0.05)",
+    border: "rgba(53, 168, 102, 0.25)",
+    activeBg: "rgba(53, 168, 102, 0.14)",
+    activeBorder: "#35A866",
+  },
+  "Pet Grooming & Spa": {
+    color: "#7C4DFF", // Vibrant Purple
+    bg: "rgba(124, 77, 255, 0.05)",
+    border: "rgba(124, 77, 255, 0.25)",
+    activeBg: "rgba(124, 77, 255, 0.14)",
+    activeBorder: "#7C4DFF",
+  },
+  "Overnight Care & House Sitting": {
+    color: "#3B82F6", // Trustworthy Blue
+    bg: "rgba(59, 130, 246, 0.05)",
+    border: "rgba(59, 130, 246, 0.25)",
+    activeBg: "rgba(59, 130, 246, 0.14)",
+    activeBorder: "#3B82F6",
+  },
+  "Last-Minute Emergency Care": {
+    color: "#F28C28", // Attention-Grabbing Orange
+    bg: "rgba(242, 140, 40, 0.05)",
+    border: "rgba(242, 140, 40, 0.25)",
+    activeBg: "rgba(242, 140, 40, 0.14)",
+    activeBorder: "#F28C28",
+  },
+};
+
 const PERSONA_TONES = [
   { key: "Enthusiastic Pet Parent", label: "Enthusiastic Parent", icon: <HeartIcon />, desc: "Warm, detailed & deeply appreciative" },
   { key: "Anxious First-Time Owner", label: "Anxious First-Timer", icon: <ShieldCheckIcon />, desc: "Hesitant initially, relieved by photo updates" },
@@ -151,6 +189,49 @@ const PERSONA_TONES = [
   { key: "Senior Dog Care Specialist", label: "Senior Dog Care", icon: <PawIcon />, desc: "Emphasizes gentle care & medical attentiveness" },
   { key: "Custom Persona", label: "Custom Persona", icon: <SparkIcon />, desc: "Write your own customer persona of choice" },
 ];
+
+const PERSONA_COLOR_MAP: Record<string, { color: string; bg: string; border: string; activeBg: string; activeBorder: string; shadow: string }> = {
+  "Enthusiastic Pet Parent": {
+    color: "#0D9488", // Teal
+    bg: "rgba(13, 148, 136, 0.05)",
+    border: "rgba(13, 148, 136, 0.25)",
+    activeBg: "rgba(13, 148, 136, 0.14)",
+    activeBorder: "#0D9488",
+    shadow: "rgba(13, 148, 136, 0.25)",
+  },
+  "Anxious First-Time Owner": {
+    color: "#D97706", // Yellow / Warm Amber
+    bg: "rgba(217, 119, 6, 0.05)",
+    border: "rgba(217, 119, 6, 0.25)",
+    activeBg: "rgba(217, 119, 6, 0.14)",
+    activeBorder: "#D97706",
+    shadow: "rgba(217, 119, 6, 0.25)",
+  },
+  "Busy Working Professional": {
+    color: "#E11D48", // Red / Rose
+    bg: "rgba(225, 29, 72, 0.05)",
+    border: "rgba(225, 29, 72, 0.25)",
+    activeBg: "rgba(225, 29, 72, 0.14)",
+    activeBorder: "#E11D48",
+    shadow: "rgba(225, 29, 72, 0.25)",
+  },
+  "Senior Dog Care Specialist": {
+    color: "#8B5CF6", // Lavender / Soft Purple
+    bg: "rgba(139, 92, 246, 0.05)",
+    border: "rgba(139, 92, 246, 0.25)",
+    activeBg: "rgba(139, 92, 246, 0.14)",
+    activeBorder: "#8B5CF6",
+    shadow: "rgba(139, 92, 246, 0.25)",
+  },
+  "Custom Persona": {
+    color: "#64748B", // Slate Gray
+    bg: "rgba(100, 116, 139, 0.05)",
+    border: "rgba(100, 116, 139, 0.25)",
+    activeBg: "rgba(100, 116, 139, 0.14)",
+    activeBorder: "#64748B",
+    shadow: "rgba(100, 116, 139, 0.25)",
+  },
+};
 
 const POPULAR_LOCATIONS = [
   "New Jersey",
@@ -321,10 +402,17 @@ export default function Page2({ onNext, onBack }: Page2Props) {
       {/* ── Header ──────────────────────────────────────── */}
       <div className="p2-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
         <div>
-          <span className="p2-step-chip">STEP 2 OF 3</span>
+          <div className="p3-step-chip-wrapper">
+            <span className="p3-step-chip">
+              <span className="p3-step-chip-dot" />
+              <span className="p3-step-chip-text">STEP 2 OF 3</span>
+              <span className="p3-step-chip-divider">•</span>
+              <span className="p3-step-chip-tag">CUSTOMER REVIEWS</span>
+            </span>
+          </div>
           <h1 className="p2-heading">Cuddlytails review generator</h1>
           <p className="p2-subheading">
-            Generates 3 realistic, narrative-style customer reviews with custom service types, locations & persona angles.<br />
+            Generates 3 realistic, narrative-style customer reviews with custom service types, locations &amp; persona angles.<br />
             Skip this page if you don&apos;t need reviews right now.
           </p>
         </div>
@@ -525,32 +613,43 @@ export default function Page2({ onNext, onBack }: Page2Props) {
               1. Select Care Service Type
             </label>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-              {SERVICE_TYPES.map((st) => (
-                <button
-                  key={st}
-                  type="button"
-                  className={`p2-chip ${serviceType === st ? "p2-chip--active" : ""}`}
-                  onClick={() => setServiceType(st)}
-                  style={{
-                    height: "34px",
-                    padding: "0 14px",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    borderRadius: "20px",
-                    fontSize: "0.83rem",
-                    fontWeight: 600,
-                    border: serviceType === st ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                    background: serviceType === st ? "rgba(104, 183, 122, 0.12)" : "var(--surface)",
-                    color: serviceType === st ? "#68B77A" : "var(--text-main)",
-                    cursor: "pointer",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  {serviceType === st && <CheckIcon />}
-                  {st}
-                </button>
-              ))}
+              {SERVICE_TYPES.map((st) => {
+                const isSelected = serviceType === st;
+                const theme = SERVICE_TYPE_COLOR_MAP[st] || {
+                  color: "#2D8A4E",
+                  bg: "rgba(45, 138, 78, 0.05)",
+                  border: "rgba(45, 138, 78, 0.25)",
+                  activeBg: "rgba(45, 138, 78, 0.14)",
+                  activeBorder: "#2D8A4E",
+                };
+                return (
+                  <button
+                    key={st}
+                    type="button"
+                    className={`p2-chip ${isSelected ? "p2-chip--active" : ""}`}
+                    onClick={() => setServiceType(st)}
+                    style={{
+                      height: "34px",
+                      padding: "0 14px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      borderRadius: "20px",
+                      fontSize: "0.83rem",
+                      fontWeight: 600,
+                      border: isSelected ? `1.5px solid ${theme.activeBorder}` : `1px solid ${theme.border}`,
+                      background: isSelected ? theme.activeBg : theme.bg,
+                      color: theme.color,
+                      cursor: "pointer",
+                      boxShadow: isSelected ? `0 2px 8px ${theme.border}` : "none",
+                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                  >
+                    {isSelected && <CheckIcon />}
+                    {st}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
@@ -562,6 +661,14 @@ export default function Page2({ onNext, onBack }: Page2Props) {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", alignItems: "stretch" }}>
               {PERSONA_TONES.map((pt) => {
                 const isSelected = isCustomPersona ? pt.key === "Custom Persona" : persona === pt.key;
+                const theme = PERSONA_COLOR_MAP[pt.key] || {
+                  color: "#2D8A4E",
+                  bg: "rgba(45, 138, 78, 0.05)",
+                  border: "rgba(45, 138, 78, 0.25)",
+                  activeBg: "rgba(45, 138, 78, 0.14)",
+                  activeBorder: "#2D8A4E",
+                  shadow: "rgba(45, 138, 78, 0.2)",
+                };
                 return (
                   <button
                     key={pt.key}
@@ -580,21 +687,22 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                       borderRadius: "10px",
                       textAlign: "left",
                       fontSize: "0.82rem",
-                      border: isSelected ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                      background: isSelected ? "rgba(104, 183, 122, 0.1)" : "var(--surface)",
+                      border: isSelected ? `1.5px solid ${theme.activeBorder}` : `1px solid ${theme.border}`,
+                      background: isSelected ? theme.activeBg : theme.bg,
                       color: "var(--text-main)",
                       cursor: "pointer",
                       display: "flex",
                       flexDirection: "column",
                       justifyContent: "center",
-                      transition: "all 0.15s ease",
+                      boxShadow: isSelected ? `0 4px 14px ${theme.shadow}` : "0 2px 6px rgba(15, 23, 42, 0.02)",
+                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: isSelected ? "#68B77A" : "var(--text-main)", display: "flex", alignItems: "center", gap: "6px" }}>
-                      {pt.icon}
+                    <div style={{ fontWeight: 700, color: theme.color, display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ color: theme.color, display: "inline-flex" }}>{pt.icon}</span>
                       {pt.label}
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "var(--text-muted)", marginTop: "3px", lineHeight: "1.3" }}>
+                    <div style={{ fontSize: "0.74rem", color: "var(--body-text, #334155)", opacity: 0.85, marginTop: "3px", lineHeight: "1.35" }}>
                       {pt.desc}
                     </div>
                   </button>

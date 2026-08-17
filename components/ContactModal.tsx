@@ -43,7 +43,7 @@ function CheckIcon() {
 function CloseIcon() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
-      <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -89,19 +89,18 @@ function Tooltip({ content, position = "bottom", align = "center", children }: T
               left: align === "left" ? "0px" : align === "right" ? "auto" : "50%",
               right: align === "right" ? "0px" : "auto",
               transform: align === "center" ? "translateX(-50%)" : undefined,
-              background: "rgba(10, 18, 26, 0.96)",
-              backdropFilter: "blur(14px)",
-              WebkitBackdropFilter: "blur(14px)",
-              border: "1px solid rgba(255, 255, 255, 0.18)",
-              color: "#FFFFFF",
-              fontSize: "0.72rem",
-              fontWeight: 700,
-              padding: "5px 12px",
-              borderRadius: "8px",
+              background: "#0F172A",
+              border: "1px solid #334155",
+              color: "#F8FAFC",
+              fontSize: "0.74rem",
+              fontWeight: 600,
+              padding: "6px 12px",
+              borderRadius: "6px",
               whiteSpace: "nowrap",
               pointerEvents: "none",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.6), 0 0 12px rgba(104, 183, 122, 0.25)",
+              boxShadow: "0 10px 25px rgba(15, 23, 42, 0.25)",
               zIndex: 9999,
+              WebkitFontSmoothing: "antialiased",
             }}
           >
             {content}
@@ -135,9 +134,9 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(5, 10, 16, 0.8)",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
+              background: "rgba(15, 23, 42, 0.45)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           />
 
@@ -151,38 +150,40 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               position: "relative",
               width: "100%",
               maxWidth: "460px",
-              background: "var(--panel)",
-              border: "1px solid var(--panel-border)",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
               borderRadius: "20px",
               padding: "26px",
-              boxShadow: "0 20px 50px rgba(15, 23, 42, 0.12), 0 0 30px rgba(45, 138, 78, 0.08)",
-              color: "var(--heading-white)",
+              boxShadow: "0 20px 50px rgba(15, 23, 42, 0.15), 0 0 30px rgba(45, 138, 78, 0.06)",
+              color: "#0F172A",
               zIndex: 10,
             }}
           >
             {/* Header */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ width: "36px", height: "36px", borderRadius: "12px", background: "rgba(104, 183, 122, 0.2)", border: "1px solid rgba(104, 183, 122, 0.4)", color: "#68B77A", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <MailIcon />
+                <span style={{ width: "36px", height: "36px", borderRadius: "12px", background: "#ECFDF5", border: "1px solid #A7F3D0", color: "#2D8A4E", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <MailIcon color="#2D8A4E" />
                 </span>
                 <div>
-                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#FFFFFF", fontFamily: "Slackey, cursive, sans-serif" }}>
+                  <h2 style={{ fontSize: "1.2rem", fontWeight: 800, margin: 0, color: "#0F172A", fontFamily: "Slackey, cursive, sans-serif" }}>
                     Get in Touch
                   </h2>
-                  <p style={{ fontSize: "0.78rem", margin: "2px 0 0 0", color: "var(--text-muted)" }}>
+                  <p style={{ fontSize: "0.78rem", margin: "2px 0 0 0", color: "#64748B" }}>
                     Feel free to reach out directly via email or GitHub.
                   </p>
                 </div>
               </div>
 
-              <button
+              <motion.button
                 type="button"
+                whileHover={{ scale: 1.08, backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                whileTap={{ scale: 0.95 }}
                 onClick={onClose}
                 aria-label="Close"
                 style={{
-                  background: "rgba(255, 255, 255, 0.15)",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
+                  background: "#FEF2F2",
+                  border: "1.5px solid rgba(239, 68, 68, 0.3)",
                   borderRadius: "50%",
                   width: "32px",
                   minWidth: "32px",
@@ -193,26 +194,26 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                   aspectRatio: "1 / 1",
                   flexShrink: 0,
                   padding: 0,
-                  color: "#FFFFFF",
+                  color: "#EF4444",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "all 0.15s ease",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.4)",
+                  boxShadow: "0 2px 6px rgba(239, 68, 68, 0.12)",
                 }}
               >
                 <CloseIcon />
-              </button>
+              </motion.button>
             </div>
 
             {/* Direct Email Card with ONLY Copy Button */}
-            <div style={{ background: "rgba(255, 255, 255, 0.04)", border: "1px solid rgba(255, 255, 255, 0.08)", borderRadius: "14px", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
+            <div style={{ background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "14px", padding: "14px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", overflow: "hidden" }}>
-                <span style={{ color: "#68B77A", display: "flex" }}><MailIcon /></span>
+                <span style={{ color: "#2D8A4E", display: "flex" }}><MailIcon color="#2D8A4E" /></span>
                 <div style={{ overflow: "hidden" }}>
-                  <div style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-muted)", fontWeight: 700 }}>Direct Email</div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#FFFFFF", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{contactEmail}</div>
+                  <div style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "#64748B", fontWeight: 700 }}>Direct Email</div>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 700, color: "#0F172A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{contactEmail}</div>
                 </div>
               </div>
 
@@ -221,9 +222,9 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                   type="button"
                   onClick={handleCopyEmail}
                   style={{
-                    background: copied ? "rgba(104, 183, 122, 0.25)" : "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
-                    border: copied ? "1px solid rgba(104, 183, 122, 0.5)" : "1px solid rgba(255, 255, 255, 0.2)",
-                    color: "#FFFFFF",
+                    background: copied ? "#ECFDF5" : "#2D8A4E",
+                    border: copied ? "1px solid #A7F3D0" : "1.5px solid #2D8A4E",
+                    color: copied ? "#047857" : "#FFFFFF",
                     padding: "8px 16px",
                     borderRadius: "10px",
                     fontSize: "0.8rem",
@@ -232,7 +233,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
-                    boxShadow: copied ? "none" : "0 4px 14px rgba(104, 183, 122, 0.25)",
+                    boxShadow: copied ? "none" : "0 4px 14px rgba(45, 138, 78, 0.25)",
                     transition: "all 0.15s ease",
                     flexShrink: 0,
                   }}
@@ -254,8 +255,8 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "6px",
-                    color: "var(--text-muted)",
-                    fontSize: "0.8rem",
+                    color: "#0F172A",
+                    fontSize: "0.82rem",
                     textDecoration: "none",
                     fontWeight: 700,
                     transition: "color 0.15s ease",
@@ -271,9 +272,9 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
-                    background: "rgba(104, 183, 122, 0.15)",
-                    border: "1px solid rgba(104, 183, 122, 0.35)",
-                    color: "#68B77A",
+                    background: "#ECFDF5",
+                    border: "1px solid #A7F3D0",
+                    color: "#047857",
                     padding: "7px 15px",
                     borderRadius: "10px",
                     fontSize: "0.78rem",

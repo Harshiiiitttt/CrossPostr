@@ -8,6 +8,7 @@ import HeroApiPage from "@/components/HeroApiPage";
 import ApiSettingsModal from "@/components/ApiSettingsModal";
 
 import HistoryDrawer from "@/components/HistoryDrawer";
+import CrossPostrIcon from "@/components/CrossPostrIcon";
 
 const TOTAL_STEPS = 3;
 
@@ -261,7 +262,17 @@ export default function Wizard() {
 
       {/* ── Fixed left sidebar ────────────────────────── */}
       <aside className={`sidebar ${isCollapsed ? "sidebar-collapsed" : ""}`}>
-        {/* Top Controls: Sidebar Toggle (Left) + Nav Arrows (Center) + Settings (Right) */}
+        {/* Brand Mark ("Cross Postr 🐾") placed right above control buttons */}
+        {!isCollapsed && (
+          <div className="brand-mark-wrapper" style={{ marginBottom: "14px" }}>
+            <div className="brand-mark" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>Cross Postr</span>
+              <span className="brand-paw" style={{ opacity: 0.7 }}><PawIcon /></span>
+            </div>
+          </div>
+        )}
+
+        {/* Controls Bar: Sidebar Toggle (Left) + Nav Arrows & Settings (Right) */}
         <div className="sidebar-top-controls">
           <button
             type="button"
@@ -316,14 +327,7 @@ export default function Wizard() {
           )}
         </div>
 
-        <div className="sidebar-top" style={{ marginTop: isCollapsed ? "36px" : "12px" }}>
-          {/* Brand with Slackey font + Green Paw */}
-          {!isCollapsed && (
-            <div className="brand-mark" style={{ marginBottom: "14px" }}>
-              <span>Cross Postr</span>
-              <span className="brand-paw"><PawIcon /></span>
-            </div>
-          )}
+        <div className="sidebar-top" style={{ marginTop: isCollapsed ? "16px" : "8px" }}>
 
           {/* Vertical step rail */}
           <nav className="step-rail" aria-label="Progress">
