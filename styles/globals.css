@@ -128,73 +128,30 @@ ellipse {
 /* ═══════════════════════════════════════════════════════
    CUSTOM GLOBAL & TEXTAREA SCROLLBAR SYSTEM (LIGHT THEME)
    ═══════════════════════════════════════════════════════ */
-html, body, * {
-  scrollbar-width: thin !important;
-  scrollbar-color: #64748B #E2E8F0 !important;
+/* Prevent accidental text selection when dragging scrollbars or UI controls */
+.p3-panel-bar,
+.p3-aside-header-bar,
+.p3-aside-tab-bar,
+.p3-aside-style-label,
+.p3-section-label,
+.p3-tabs,
+.p3-btn,
+.wizard-sidebar,
+.mobile-top-bar,
+.history-drawer-header,
+.history-drawer-tabs {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-::-webkit-scrollbar {
-  width: 10px !important;
-  height: 10px !important;
-}
-
-::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
-  border-radius: 8px !important;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #64748B !important;
-  border-radius: 8px !important;
-  border: 2px solid #F1F5F9 !important;
-  min-height: 40px !important;
-  transition: background 0.2s ease !important;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #334155 !important;
-}
-
-::-webkit-scrollbar-corner {
-  background: #F1F5F9 !important;
-}
-
-textarea {
-  scrollbar-width: thin !important;
-  scrollbar-color: #64748B #E2E8F0 !important;
-}
-
-textarea::-webkit-scrollbar {
-  width: 10px !important;
-  height: 10px !important;
-}
-
-textarea::-webkit-scrollbar-button {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-textarea::-webkit-scrollbar-track {
-  background: #F1F5F9 !important;
-  border-radius: 8px !important;
-}
-
-textarea::-webkit-scrollbar-thumb {
-  background: #64748B !important;
-  border-radius: 8px !important;
-  border: 2px solid #F1F5F9 !important;
-  min-height: 40px !important;
-}
-
-textarea::-webkit-scrollbar-thumb:hover {
-  background: #334155 !important;
+/* Explicitly preserve selectable reading text for blog articles & reviews */
+.p3-blog-body,
+.p3-article,
+.p3-preview,
+.social-post-text,
+.p3-focus-content {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 html {
@@ -250,6 +207,11 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
   transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), padding 0.3s ease;
 }
 
+.sidebar > * {
+  position: relative;
+  z-index: 2;
+}
+
 .sidebar.sidebar-collapsed {
   width: 72px;
   padding: 0 12px 24px;
@@ -301,8 +263,9 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
   display: block !important;
   width: 20px !important;
   height: 20px !important;
-  stroke: #68B77A !important;
+  stroke: #475569 !important;
   fill: none !important;
+  transition: stroke 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar-toggle-btn:hover {
@@ -310,8 +273,12 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
   border: none !important;
   box-shadow: none !important;
   opacity: 1;
-  transform: scale(1.2);
-  filter: drop-shadow(0 0 10px rgba(45, 138, 78, 0.4));
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(15, 23, 42, 0.15));
+}
+
+.sidebar-toggle-btn:hover svg {
+  stroke: #0F172A !important;
 }
 
 .sidebar-nav-arrows {
@@ -609,43 +576,49 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
 .main-scroll-area {
   flex: 1;
   overflow-y: auto;
-  padding: 44px 44px 32px;
+  padding: 36px 44px 24px;
 }
 
-/* ── Fixed Footer Navigation ─────────────────────────── */
+/* ── Small Horizontal Footer Navigation ─────────────────────────── */
 .wizard-nav-footer {
   height: 56px !important;
   min-height: 56px !important;
-  background: rgba(248, 250, 252, 0.72) !important;
+  max-height: 56px !important;
+  background: rgba(248, 250, 252, 0.88) !important;
   backdrop-filter: blur(16px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-  border-top: 1.5px solid rgba(224, 236, 229, 0.7) !important;
-  padding: 0 28px !important;
+  border-top: 1.5px solid rgba(224, 236, 229, 0.8) !important;
+  padding: 0 24px !important;
   display: flex !important;
   align-items: center !important;
   z-index: 50 !important;
   flex-shrink: 0 !important;
-  box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.05), 0 -1px 3px rgba(15, 23, 42, 0.04) !important;
+  overflow: hidden !important;
+  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.04) !important;
 }
 
 .wizard-nav-container {
   width: 100%;
   max-width: 100%;
+  height: 100%;
   margin: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-.wizard-nav-left,
-.wizard-nav-right {
+.wizard-nav-left {
   display: flex;
   align-items: center;
-  min-width: 120px;
+  justify-content: flex-start;
+  min-width: 80px;
 }
 
 .wizard-nav-right {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
+  min-width: 80px;
 }
 
 @keyframes stepIndicatorFade {
@@ -661,17 +634,20 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
 
 .wizard-nav-step-indicator {
   font-family: var(--font-body);
-  font-size: 0.82rem;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  line-height: 1;
   animation: stepIndicatorFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .wizard-btn-placeholder {
-  width: 88px;
-  height: 34px;
+  width: 72px;
+  height: 24px;
   visibility: hidden;
 }
 
@@ -679,15 +655,17 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
   font-family: var(--font-body);
-  font-size: 0.84rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  height: 34px;
-  min-width: 88px;
-  padding: 0 18px;
-  border-radius: 8px;
+  height: 24px !important;
+  min-height: 24px !important;
+  min-width: 72px;
+  padding: 0 12px;
+  border-radius: 5px;
   cursor: pointer;
+  line-height: 1;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
 }
@@ -898,23 +876,23 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
   }
 
   .main-scroll-area {
-    padding: 16px 12px 84px !important;
+    padding: 16px 12px 24px !important;
   }
 
   .wizard-nav-footer {
-    padding: 8px 16px !important;
-    height: 56px !important;
-    min-height: 56px !important;
+    display: flex !important;
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding: 0 12px !important;
     z-index: 90 !important;
-    background: rgba(248, 250, 252, 0.82) !important;
+    background: rgba(248, 250, 252, 0.92) !important;
     backdrop-filter: blur(16px) saturate(180%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
-    border-top: 1.5px solid rgba(224, 236, 229, 0.7) !important;
-    box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.08) !important;
+    border-top: 1.5px solid rgba(224, 236, 229, 0.8) !important;
   }
 
   .wizard-nav-left,
@@ -987,9 +965,12 @@ input[type="url"]:hover {
 }
 
 input[type="text"]:focus,
-input[type="url"]:focus {
-  border-color: var(--accent) !important;
-  box-shadow: 0 0 0 3px rgba(104, 183, 122, 0.18) !important;
+input[type="url"]:focus,
+input:focus,
+textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: #94A3B8 !important;
 }
 
 input[type="file"] {
@@ -1896,13 +1877,6 @@ a:focus-visible {
   max-height: calc(100vh - 340px);
 }
 
-.p3-scroll::-webkit-scrollbar { width: 8px; }
-.p3-scroll::-webkit-scrollbar-track { background: #F1F5F9; border-radius: 8px; }
-.p3-scroll::-webkit-scrollbar-thumb {
-  background: #64748B !important;
-  border-radius: 8px;
-}
-
 /* ── Blog typography ────────────────────────────────── */
 .p3-blog-body {
   font-size: 0.855rem;
@@ -2050,11 +2024,12 @@ a:focus-visible {
 /* Content Style always-visible label */
 .p3-aside-style-label {
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.68rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.7;
+  color: #334155 !important;
+  opacity: 1 !important;
   margin: 0;
   padding: 0 14px 8px;
 }
@@ -2062,44 +2037,37 @@ a:focus-visible {
 /* Style/section labels inside aside */
 .p3-section-label {
   font-family: var(--font-mono);
-  font-size: 0.67rem;
+  font-size: 0.68rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--muted);
-  opacity: 0.7;
+  color: #334155 !important;
+  opacity: 1 !important;
   margin: 0;
   padding: 0 14px 6px;
 }
 
-/* ── Content Angle Tabs Vibrant Styling ───────────────────── */
+/* ── Content Angle Tabs Preserved Theme Styling ───────────────────── */
 .p3-tabs {
   display: flex !important;
-  gap: 8px !important;
+  gap: 6px !important;
   padding: 0 14px 14px !important;
-  flex-wrap: wrap !important;
+  flex-wrap: nowrap !important;
 }
 
 .p3-tab {
+  flex: 1 !important;
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 6px !important;
   border-radius: 10px !important;
-  padding: 7px 14px !important;
-  font-size: 0.82rem !important;
+  padding: 7px 12px !important;
+  font-size: 0.81rem !important;
   font-weight: 600 !important;
   cursor: pointer !important;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.p3-tab-icon {
-  font-size: 0.9rem !important;
-  line-height: 1 !important;
-  display: inline-block !important;
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
-
-.p3-tab:hover .p3-tab-icon {
-  transform: scale(1.2) rotate(6deg) !important;
+  transition: all 0.2s ease-in-out !important;
+  user-select: none !important;
 }
 
 /* 1. Safe Bet — Emerald Green Theme */
@@ -2114,7 +2082,6 @@ a:focus-visible {
   border-color: #10B981 !important;
   color: #065F46 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15) !important;
 }
 
 .p3-tab--safe-bet.p3-tab--active {
@@ -2122,7 +2089,7 @@ a:focus-visible {
   border-color: #047857 !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -2138,7 +2105,6 @@ a:focus-visible {
   border-color: #0284C7 !important;
   color: #075985 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.15) !important;
 }
 
 .p3-tab--clean-label.p3-tab--active {
@@ -2146,7 +2112,7 @@ a:focus-visible {
   border-color: #0369A1 !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -2162,7 +2128,6 @@ a:focus-visible {
   border-color: #7C3AED !important;
   color: #581C87 !important;
   transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15) !important;
 }
 
 .p3-tab--micro-story.p3-tab--active {
@@ -2170,7 +2135,7 @@ a:focus-visible {
   border-color: #6B21A8 !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.35) !important;
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3) !important;
   transform: translateY(-1px) !important;
 }
 
@@ -2184,12 +2149,6 @@ a:focus-visible {
   min-height: 180px;
   max-height: 320px;
   overflow-y: auto;
-}
-
-.p3-preview::-webkit-scrollbar { width: 4px; }
-.p3-preview::-webkit-scrollbar-thumb {
-  background: var(--panel-border);
-  border-radius: 4px;
 }
 
 .p3-preview-text {
@@ -2963,9 +2922,9 @@ a:focus-visible {
 }
 
 .p3-meta-count--optimal {
-  background: rgba(104, 183, 122, 0.15);
-  color: #2E7D32;
-  border-color: rgba(104, 183, 122, 0.4);
+  background: rgba(16, 185, 129, 0.16) !important;
+  color: #10B981 !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
   font-weight: 600;
 }
 
@@ -3213,17 +3172,22 @@ a:focus-visible {
 
 /* ── Distraction-Free Studio Focus Mode Modal ─────────────── */
 .p3-focus-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(7, 17, 27, 0.42);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  z-index: 100;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 12px 16px;
-  animation: p3-fade 0.2s ease-out;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  z-index: 9999999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  animation: p3-fade 0.2s ease-out !important;
 }
 
 @keyframes p3-fade {
@@ -3787,6 +3751,40 @@ a:focus-visible {
   flex-shrink: 0;
 }
 
+.step-pane.active.step-slide-next {
+  animation: stepSlideInNext 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.step-pane.active.step-slide-back {
+  animation: stepSlideInBack 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stepSlideInNext {
+  0% {
+    opacity: 0;
+    transform: translateX(65px) scale(0.975);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes stepSlideInBack {
+  0% {
+    opacity: 0;
+    transform: translateX(-65px) scale(0.975);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 .p3-loader-title-wrap {
   display: flex;
   flex-direction: column;
@@ -4024,6 +4022,11 @@ a:focus-visible {
   animation: floatDogIdle 4.5s ease-in-out infinite;
   filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3));
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-touch-callout: none !important;
+  pointer-events: none !important;
 }
 
 .sidebar-dog-art:hover .sidebar-dog-img {
@@ -4104,32 +4107,36 @@ a:focus-visible {
 }
 
 .step-pane.active.step-slide-next {
-  animation: stepSlideInNext 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: stepSlideInNext 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .step-pane.active.step-slide-back {
-  animation: stepSlideInBack 0.36s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: stepSlideInBack 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes stepSlideInNext {
   0% {
     opacity: 0;
-    transform: translateX(34px) scale(0.985);
+    transform: translateX(65px) scale(0.975);
+    filter: blur(4px);
   }
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
+    filter: blur(0);
   }
 }
 
 @keyframes stepSlideInBack {
   0% {
     opacity: 0;
-    transform: translateX(-34px) scale(0.985);
+    transform: translateX(-65px) scale(0.975);
+    filter: blur(4px);
   }
   100% {
     opacity: 1;
     transform: translateX(0) scale(1);
+    filter: blur(0);
   }
 }
 
@@ -6833,31 +6840,13 @@ mark.seo-kw-highlight {
 @media (min-width: 769px) {
   .main-content,
   .main-scroll-area {
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 24px !important;
+    overflow-x: hidden !important;
+    padding-bottom: 0 !important;
   }
 
   .main-scroll-area::-webkit-scrollbar {
-    height: 12px !important;
-    display: block !important;
-  }
-
-  .main-scroll-area::-webkit-scrollbar-track {
-    background: #E2E8F0 !important;
-    border-radius: 6px !important;
-  }
-
-  .main-scroll-area::-webkit-scrollbar-thumb {
-    background: #64748B !important;
-    border-radius: 6px !important;
-    border: 2px solid #E2E8F0 !important;
-    min-width: 60px !important;
-    cursor: grab !important;
-  }
-
-  .main-scroll-area::-webkit-scrollbar-thumb:hover {
-    background: #334155 !important;
+    height: 0 !important;
+    display: none !important;
   }
 
   .step-content-anim,
@@ -7287,6 +7276,150 @@ mark.seo-kw-highlight {
     margin: 0 auto !important;
     align-items: center !important;
     text-align: center !important;
+  }
+
+  /* ── Page 3 Mobile Panel Bar Sleek Single-Row Layout (<640px) ── */
+  .p3-panel-bar {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+  .p3-panel-label {
+    width: auto !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    color: #0F172A !important;
+    word-break: break-word !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    white-space: normal !important;
+  }
+  .p3-panel-bar-right {
+    width: auto !important;
+    flex-shrink: 0 !important;
+    margin-top: 0 !important;
+  }
+  .p3-action-toolbar {
+    margin-left: 0 !important;
+    padding: 2px 4px !important;
+    gap: 2px !important;
+    height: 30px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+  }
+  .p3-action-toolbar .p3-toolbar-btn {
+    width: 26px !important;
+    height: 26px !important;
+    padding: 0 !important;
+  }
+  .p3-action-toolbar .p3-toolbar-sep {
+    height: 12px !important;
+    margin: 0 1px !important;
+  }
+
+  /* ── Make Lightbulb Idea & Submit Buttons Smaller on Mobile (<640px) ── */
+  .p3-input-idea-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .p3-input-idea-btn svg {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+  }
+  #p3-gen-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+  }
+
+  /* ── Hide Lightbulb Idea & Submit Buttons & Make + New Blog Button Smaller on Mobile (<640px) ── */
+  .p3-field--compact .p3-input-idea-btn,
+  .p3-field--compact #p3-gen-btn {
+    display: none !important;
+  }
+  .p3-new-blog-btn {
+    height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 0.74rem !important;
+    gap: 4px !important;
+    margin-left: 4px !important;
+  }
+  .p3-new-blog-btn svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  /* ── Studio Canvas Skeleton Mobile Layout (<640px) ── */
+  .p3-skeleton-workspace-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: 100% !important;
+    grid-template-columns: 1fr !important;
+  }
+  .p3-skeleton-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .p3-skeleton-header-left {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 6px !important;
+  }
+  .p3-skeleton-topic-badge {
+    max-width: 100% !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  .p3-skeleton-stepper-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  /* ── Right Aside Tab Bar & CONTENT ANGLE Uncluttering (<640px) ── */
+  .p3-aside-header-bar {
+    padding: 8px !important;
+  }
+  .p3-aside-tab-bar {
+    gap: 4px !important;
+    padding: 3px !important;
+  }
+  .p3-aside-tab {
+    padding: 7px 6px !important;
+    font-size: 0.72rem !important;
+    gap: 4px !important;
+  }
+  .p3-aside-tab svg {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  .p3-tabs {
+    padding: 0 10px 12px !important;
+    gap: 4px !important;
+  }
+  .p3-tab {
+    padding: 8px 4px !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    letter-spacing: -0.01em !important;
   }
 }
 

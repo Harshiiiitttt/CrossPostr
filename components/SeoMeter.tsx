@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import type { SeoBlog } from "@/lib/types";
+import { computeSeoScore } from "@/lib/seoCalculator";
 
 interface SeoMeterProps {
   blog: SeoBlog;
@@ -61,73 +62,10 @@ export default function SeoMeter({
     return fullText.trim().split(/\s+/).filter(Boolean).length;
   }, [fullText]);
 
-  // Dynamic Realistic SEO Score Calculation
+  // Single source of truth SEO calculation
   const seoMetrics = useMemo(() => {
-    // 1. Word Count Score (max 25)
-    let wordScore = 0;
-    if (wordCount >= 1200 && wordCount <= 2200) wordScore = 25;
-    else if (wordCount >= 800) wordScore = 20;
-    else if (wordCount >= 500) wordScore = 14;
-    else wordScore = 8;
-
-    // 2. Meta Description Precision (max 20)
-    let metaScore = 0;
-    const metaLen = metaDescription.trim().length;
-    if (metaLen >= 150 && metaLen <= 160) metaScore = 20; // Optimal Google SERP Snippet length
-    else if (metaLen >= 140 && metaLen <= 165) metaScore = 17;
-    else if (metaLen >= 100 && metaLen <= 180) metaScore = 12;
-    else if (metaLen > 0) metaScore = 6;
-
-    // 3. Keyword Density Balance (max 25)
-    let kwScore = 20; // default realistic baseline
-    const words = fullText.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
-    const stopWords = new Set([
-      "the", "and", "a", "to", "of", "in", "is", "for", "that", "you", "it", "on", "with",
-      "your", "this", "can", "are", "be", "as", "or", "an", "have", "from", "at", "by"
-    ]);
-    const freqMap: Record<string, number> = {};
-    words.forEach((w) => {
-      if (w.length > 3 && !stopWords.has(w)) {
-        freqMap[w] = (freqMap[w] || 0) + 1;
-      }
-    });
-    const topCount = Object.values(freqMap).sort((a, b) => b - a)[0] || 0;
-    const topDensity = (topCount / (words.length || 1)) * 100;
-    if (topDensity >= 1.2 && topDensity <= 2.8) kwScore = 25;
-    else if (topDensity >= 0.8 && topDensity <= 3.5) kwScore = 20;
-    else kwScore = 14;
-
-    // 4. Structure & FAQs Rich Snippets (max 30)
-    let structScore = 0;
-    const h2Count = blog.sections.length;
-    if (h2Count >= 4) structScore += 12;
-    else if (h2Count >= 2) structScore += 8;
-
-    if (blog.faqs.length >= 5) structScore += 10;
-    else if (blog.faqs.length >= 3) structScore += 6;
-
-    if (blog.vetCta.toLowerCase().includes("cuddlytails") || blog.vetCta.length > 20) structScore += 8;
-
-    const total = Math.min(100, Math.max(45, wordScore + metaScore + kwScore + structScore));
-
-    let grade = "A+";
-    let color = "#68B77A";
-    if (total < 70) {
-      grade = "C";
-      color = "#EF4444";
-    } else if (total < 85) {
-      grade = "B";
-      color = "#F59E0B";
-    } else if (total < 95) {
-      grade = "A";
-      color = "#10B981";
-    } else {
-      grade = "A+";
-      color = "#059669";
-    }
-
-    return { total, wordScore, metaScore, kwScore, structScore, grade, color };
-  }, [wordCount, metaDescription, blog, fullText]);
+    return computeSeoScore(blog, metaDescription);
+  }, [blog, metaDescription]);
 
   // Extract Keyword Densities
   const keywordStats = useMemo(() => {
@@ -224,6 +162,7 @@ export default function SeoMeter({
           type="button"
           className="p3-btn p3-btn--ghost p3-btn--sm"
           onClick={() => setShowKeywordDetails(!showKeywordDetails)}
+          style={{ color: "#334155", fontWeight: 700, borderColor: "#CBD5E1" }}
         >
           {showKeywordDetails ? "Hide Metrics" : "View Keyword Details"}
         </button>
@@ -291,8 +230,8 @@ export default function SeoMeter({
               className="seo-stat-value"
               style={{
                 color:
-                  metaDescription.length >= 140 && metaDescription.length <= 165
-                    ? "#68B77A"
+                  metaDescription.length >= 150 && metaDescription.length <= 160
+                    ? "#10B981"
                     : "#EAB308",
               }}
             >

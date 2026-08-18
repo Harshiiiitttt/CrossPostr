@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { PetCareReview } from "@/lib/types";
 import PawLoader from "@/components/PawLoader";
 import Toast from "@/components/Toast";
@@ -59,8 +59,12 @@ function LocationPinIcon() {
 
 function PawIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M12 13c-2.8 0-5 2.2-5 5 0 .6.4 1 1 1h8c.6 0 1-.4 1-1 0-2.8-2.2-5-5-5zm-5-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm10 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm-8.5-4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z" />
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M12 11.8c-2.6 0-4.6 1.7-4.6 3.6 0 1.5 1.5 2.6 4.6 2.6s4.6-1.1 4.6-2.6c0-1.9-2-3.6-4.6-3.6z" />
+      <circle cx="6.8" cy="8.6" r="2" />
+      <circle cx="10.2" cy="6.1" r="2" />
+      <circle cx="13.8" cy="6.1" r="2" />
+      <circle cx="17.2" cy="8.6" r="2" />
     </svg>
   );
 }
@@ -91,12 +95,12 @@ function ClockIcon() {
   );
 }
 
-function ThreeDotsIcon() {
+function ThreeDotsIcon({ color = "#0F172A" }: { color?: string }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="#68B77A" aria-hidden="true" style={{ display: "block" }}>
-      <circle cx="4.5" cy="12" r="2.4" fill="#68B77A" />
-      <circle cx="12" cy="12" r="2.4" fill="#68B77A" />
-      <circle cx="19.5" cy="12" r="2.4" fill="#68B77A" />
+    <svg width="16" height="16" viewBox="0 0 24 24" fill={color} aria-hidden="true" style={{ display: "block" }}>
+      <circle cx="4.5" cy="12" r="2.4" fill={color} />
+      <circle cx="12" cy="12" r="2.4" fill={color} />
+      <circle cx="19.5" cy="12" r="2.4" fill={color} />
     </svg>
   );
 }
@@ -250,11 +254,23 @@ function getInitials(name: string): string {
     .join("");
 }
 
+const AVATAR_COLOR_PALETTES = [
+  { bg: "linear-gradient(135deg, #FFE4E6 0%, #FECDD3 100%)", border: "#FDA4AF", color: "#E11D48" }, // Rose / Coral
+  { bg: "linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)", border: "#7DD3FC", color: "#0284C7" }, // Ocean Blue
+  { bg: "linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%)", border: "#C084FC", color: "#7C3AED" }, // Violet / Purple
+  { bg: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)", border: "#FCD34D", color: "#D97706" }, // Amber / Gold
+  { bg: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)", border: "#6EE7B7", color: "#059669" }, // Emerald Green
+];
+
+function getReviewerAvatarStyle(index: number) {
+  return AVATAR_COLOR_PALETTES[index % AVATAR_COLOR_PALETTES.length];
+}
+
 // ── Stars component ──────────────────────────────────────────────────────────
 
 function Stars({ rating }: { rating: number }) {
   return (
-    <span className="p2-stars" aria-label={`${rating} out of 5 stars`}>
+    <span className="p2-stars" style={{ color: "#F59E0B", letterSpacing: "2px", textShadow: "0 0 8px rgba(245, 158, 11, 0.3)" }} aria-label={`${rating} out of 5 stars`}>
       {"★".repeat(rating)}{"☆".repeat(Math.max(0, 5 - rating))}
     </span>
   );
@@ -411,38 +427,54 @@ export default function Page2({ onNext, onBack }: Page2Props) {
             </span>
           </div>
           <h1 className="p2-heading">Cuddlytails review generator</h1>
-          <p className="p2-subheading">
-            Generates 3 realistic, narrative-style customer reviews with custom service types, locations &amp; persona angles.<br />
-            Skip this page if you don&apos;t need reviews right now.
+          <p className="p2-subheading" style={{ fontSize: "0.85rem", color: "#64748B", marginTop: "4px" }}>
+            Generates 3 realistic, narrative-style customer reviews with custom service types &amp; persona angles.
           </p>
         </div>
         <button
           type="button"
           onClick={() => setIsHistoryOpen(true)}
           style={{
-            background: "rgba(104, 183, 122, 0.12)",
-            border: "1px solid rgba(104, 183, 122, 0.3)",
-            color: "#68B77A",
+            background: "#F1F5F9",
+            border: "1px solid #CBD5E1",
+            color: "#334155",
             padding: "8px 14px",
             borderRadius: "10px",
             fontSize: "0.85rem",
             fontWeight: 600,
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
+            justifyContent: "center",
+            gap: "5px",
+            lineHeight: 1,
             cursor: "pointer",
             whiteSpace: "nowrap",
             marginTop: "8px",
+            transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.05)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#E2E8F0";
+            e.currentTarget.style.borderColor = "#94A3B8";
+            e.currentTarget.style.color = "#0F172A";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#F1F5F9";
+            e.currentTarget.style.borderColor = "#CBD5E1";
+            e.currentTarget.style.color = "#334155";
           }}
         >
-          <HistoryIcon /> History ({reviewHistory.length})
+          <HistoryIcon />
+          <span style={{ display: "inline-block", lineHeight: "1" }}>
+            History <strong style={{ color: "#E2776B", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>({reviewHistory.length})</strong>
+          </span>
         </button>
       </div>
 
       {/* ── Collapsed Parameters Summary Ribbon ──────────── */}
       {isCollapsed ? (
         <div
-          className="glass-panel"
+          className="glass-panel p2-collapsed-card"
           style={{
             background: "var(--panel)",
             border: "1px solid var(--panel-border)",
@@ -460,20 +492,56 @@ export default function Page2({ onNext, onBack }: Page2Props) {
             <span style={{ fontSize: "0.78rem", fontWeight: 700, textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.05em" }}>
               Active Options:
             </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(104, 183, 122, 0.12)", border: "1px solid rgba(104, 183, 122, 0.3)", color: "#68B77A", padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 600 }}>
-              <CheckIcon /> {serviceType}
-            </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(104, 183, 122, 0.12)", border: "1px solid rgba(104, 183, 122, 0.3)", color: "#68B77A", padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 600 }}>
-              <HeartIcon /> {isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona}
-            </span>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(104, 183, 122, 0.12)", border: "1px solid rgba(104, 183, 122, 0.3)", color: "#68B77A", padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 600 }}>
-              {reviewLength === "detailed" ? <><BookOpenIcon /> Detailed Story</> : <><ZapIcon /> Short Testimonial</>}
-            </span>
-            {location && (
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(104, 183, 122, 0.12)", border: "1px solid rgba(104, 183, 122, 0.3)", color: "#68B77A", padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 600 }}>
-                <LocationPinIcon /> {location}
-              </span>
-            )}
+            {(() => {
+              const svcColor = SERVICE_TYPE_COLOR_MAP[serviceType] || {
+                color: "#35A866",
+                bg: "rgba(53, 168, 102, 0.12)",
+                border: "#35A866",
+              };
+              const personaColor = isCustomPersona
+                ? PERSONA_COLOR_MAP["Custom Persona"]
+                : (PERSONA_COLOR_MAP[persona] || { color: "#0D9488", bg: "rgba(13, 148, 136, 0.12)", border: "#0D9488" });
+              
+              return (
+                <>
+                  {/* Service Type Pill */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: svcColor.activeBg || svcColor.bg, border: `1px solid ${svcColor.activeBorder || svcColor.color}`, color: svcColor.color, padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 700, boxShadow: `0 1px 4px ${svcColor.color}18` }}>
+                    <CheckIcon /> {serviceType}
+                  </span>
+
+                  {/* Persona Pill */}
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: personaColor.activeBg || personaColor.bg, border: `1px solid ${personaColor.activeBorder || personaColor.color}`, color: personaColor.color, padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 700, boxShadow: `0 1px 4px ${personaColor.color}18` }}>
+                    <HeartIcon /> {isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona}
+                  </span>
+
+                  {/* Format Pill */}
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      background: reviewLength === "detailed" ? "rgba(13, 148, 136, 0.12)" : "#E0F2FE",
+                      border: reviewLength === "detailed" ? "1px solid #0D9488" : "1px solid #06B6D4",
+                      color: reviewLength === "detailed" ? "#0D9488" : "#0891B2",
+                      padding: "4px 12px",
+                      borderRadius: "16px",
+                      fontSize: "0.8rem",
+                      fontWeight: 700,
+                      boxShadow: reviewLength === "detailed" ? "0 1px 4px rgba(13, 148, 136, 0.18)" : "0 1px 4px rgba(6, 182, 212, 0.18)",
+                    }}
+                  >
+                    {reviewLength === "detailed" ? <><BookOpenIcon /> Detailed Story</> : <><ZapIcon /> Short Testimonial</>}
+                  </span>
+
+                  {/* Location Pill */}
+                  {location && (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(124, 58, 237, 0.12)", border: "1px solid #7C3AED", color: "#7C3AED", padding: "4px 12px", borderRadius: "16px", fontSize: "0.8rem", fontWeight: 700 }}>
+                      <LocationPinIcon /> {location}
+                    </span>
+                  )}
+                </>
+              );
+            })()}
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -488,12 +556,13 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                 alignItems: "center",
                 gap: "6px",
                 borderRadius: "8px",
-                border: "1px solid var(--panel-border)",
-                background: "var(--surface)",
-                color: "var(--text-main)",
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                color: "#0F172A",
                 fontSize: "0.82rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                 transition: "all 0.15s ease",
               }}
             >
@@ -594,12 +663,13 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                 alignItems: "center",
                 gap: "6px",
                 borderRadius: "8px",
-                border: "1px solid rgba(104, 183, 122, 0.35)",
-                background: "rgba(104, 183, 122, 0.12)",
-                color: "#68B77A",
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                color: "#0F172A",
                 fontSize: "0.78rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
+                boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
                 transition: "all 0.15s ease",
               }}
             >
@@ -658,7 +728,7 @@ export default function Page2({ onNext, onBack }: Page2Props) {
             <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "8px" }}>
               2. Customer Persona & Tone Angle
             </label>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", alignItems: "stretch" }}>
+            <div className="p2-persona-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", alignItems: "stretch" }}>
               {PERSONA_TONES.map((pt) => {
                 const isSelected = isCustomPersona ? pt.key === "Custom Persona" : persona === pt.key;
                 const theme = PERSONA_COLOR_MAP[pt.key] || {
@@ -673,6 +743,7 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                   <button
                     key={pt.key}
                     type="button"
+                    className="p2-persona-btn"
                     onClick={() => {
                       if (pt.key === "Custom Persona") {
                         setIsCustomPersona(true);
@@ -763,7 +834,7 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                     marginBottom: 0,
                     padding: "0 12px 0 34px",
                     borderRadius: "8px",
-                    border: "1.5px solid #68B77A",
+                    border: location ? "1.5px solid #7C3AED" : "1px solid var(--panel-border)",
                     background: "var(--surface)",
                     color: "var(--text-main)",
                     fontSize: "0.85rem",
@@ -772,7 +843,7 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                   }}
                 />
               </div>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+              <div className="p2-location-track" style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                 {POPULAR_LOCATIONS.map((loc) => (
                   <button
                     key={loc}
@@ -786,11 +857,12 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                       justifyContent: "center",
                       gap: "6px",
                       fontSize: "0.8rem",
-                      fontWeight: 600,
+                      fontWeight: 700,
                       borderRadius: "8px",
-                      border: location === loc ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                      background: location === loc ? "rgba(104, 183, 122, 0.15)" : "var(--surface)",
-                      color: location === loc ? "#68B77A" : "var(--text-main)",
+                      border: location === loc ? "1.5px solid #7C3AED" : "1px solid var(--panel-border)",
+                      background: location === loc ? "rgba(124, 58, 237, 0.12)" : "var(--surface)",
+                      color: location === loc ? "#7C3AED" : "var(--text-main)",
+                      boxShadow: location === loc ? "0 2px 8px rgba(124, 58, 237, 0.18)" : "none",
                       cursor: "pointer",
                       transition: "all 0.15s ease",
                       boxSizing: "border-box",
@@ -822,11 +894,12 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                   gap: "6px",
                   borderRadius: "8px",
                   fontSize: "0.82rem",
-                  fontWeight: 600,
-                  border: reviewLength === "detailed" ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                  background: reviewLength === "detailed" ? "rgba(104, 183, 122, 0.15)" : "var(--surface)",
-                  color: reviewLength === "detailed" ? "#68B77A" : "var(--text-main)",
+                  fontWeight: 700,
+                  border: reviewLength === "detailed" ? "1.5px solid #0D9488" : "1px solid var(--panel-border)",
+                  background: reviewLength === "detailed" ? "rgba(13, 148, 136, 0.12)" : "var(--surface)",
+                  color: reviewLength === "detailed" ? "#0D9488" : "var(--text-main)",
                   cursor: "pointer",
+                  boxShadow: reviewLength === "detailed" ? "0 2px 8px rgba(13, 148, 136, 0.18)" : "none",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -845,11 +918,12 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                   gap: "6px",
                   borderRadius: "8px",
                   fontSize: "0.82rem",
-                  fontWeight: 600,
-                  border: reviewLength === "short" ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                  background: reviewLength === "short" ? "rgba(104, 183, 122, 0.15)" : "var(--surface)",
-                  color: reviewLength === "short" ? "#68B77A" : "var(--text-main)",
+                  fontWeight: 700,
+                  border: reviewLength === "short" ? "1.5px solid #06B6D4" : "1px solid var(--panel-border)",
+                  background: reviewLength === "short" ? "#E0F2FE" : "var(--surface)",
+                  color: reviewLength === "short" ? "#0891B2" : "var(--text-main)",
                   cursor: "pointer",
+                  boxShadow: reviewLength === "short" ? "0 2px 10px rgba(6, 182, 212, 0.22)" : "none",
                   transition: "all 0.15s ease",
                 }}
               >
@@ -941,261 +1015,438 @@ export default function Page2({ onNext, onBack }: Page2Props) {
 
       {/* ── Loading Card (Skeleton Shimmer & Live Status Header) ───────────────── */}
       {reviewsLoading && (
-        <div className="p2-skeleton-card ai-active-glow" style={{ marginTop: 24 }}>
-          {/* Shimmer sweep */}
-          <div className="p2-skeleton-shimmer" />
+        <div className="p2-skeleton-card ai-active-glow" style={{ marginTop: 24, borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(226, 232, 240, 0.8)", background: "#FFFFFF", boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.04)" }}>
+          {/* Multi-Color Loader Header */}
+          <div style={{ padding: "16px 20px", borderBottom: "1px solid #E2E8F0", background: "linear-gradient(135deg, #ECFDF5 0%, #F0F9FF 45%, #FAF5FF 100%)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <motion.span
+                  animate={{ scale: [1, 1.6, 1], opacity: [0.25, 0.75, 0.25] }}
+                  transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+                  style={{
+                    position: "absolute",
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#10B981",
+                  }}
+                />
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#059669", boxShadow: "0 0 8px #059669", zIndex: 1 }} />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>Crafting 3 Authentic Reviews...</span>
+                </div>
 
-          {/* Loader Header */}
-          <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--panel-border)", background: "rgba(104, 183, 122, 0.08)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span className="p2-spinner" style={{ width: "16px", height: "16px", color: "#68B77A" }} />
-              <div>
-                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#68B77A" }}>
-                  Crafting 3 Authentic Reviews...
-                </div>
-                <div style={{ fontSize: "0.76rem", color: "var(--text-muted)", marginTop: "2px" }}>
-                  Service: <strong>{serviceType}</strong> &bull; Tone: <strong>{persona}</strong>{location ? ` &bull; City: ${location}` : ""}
-                </div>
+                {/* Multi-Color Parameter Badges */}
+                {(() => {
+                  const svcColor = SERVICE_TYPE_COLOR_MAP[serviceType] || {
+                    color: "#35A866",
+                    bg: "rgba(53, 168, 102, 0.12)",
+                    border: "#35A866",
+                  };
+                  const personaColor = isCustomPersona
+                    ? PERSONA_COLOR_MAP["Custom Persona"]
+                    : (PERSONA_COLOR_MAP[persona] || { color: "#0D9488", bg: "rgba(13, 148, 136, 0.12)", border: "#0D9488" });
+
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px", marginTop: "2px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: svcColor.color, background: svcColor.activeBg || svcColor.bg, border: `1px solid ${svcColor.activeBorder || svcColor.color}`, padding: "1px 8px", borderRadius: "9999px" }}>
+                        {serviceType}
+                      </span>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: personaColor.color, background: personaColor.activeBg || personaColor.bg, border: `1px solid ${personaColor.activeBorder || personaColor.color}`, padding: "1px 8px", borderRadius: "9999px" }}>
+                        Tone: {isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona}
+                      </span>
+                      {location && (
+                        <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#7C3AED", background: "rgba(124, 58, 237, 0.12)", border: "1px solid #7C3AED", padding: "1px 8px", borderRadius: "9999px" }}>
+                          {location}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
+            <span className="p2-spinner" style={{ width: "20px", height: "20px", color: "#059669" }} />
           </div>
 
-          {/* 3 Skeleton Review Rows */}
+          {/* 3 Staggered Animated Skeleton Review Rows */}
           {[0, 1, 2].map((idx) => (
-            <div
+            <motion.div
               key={idx}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: idx * 0.12 }}
               className={`p2-review-row${idx < 2 ? " p2-review-row--divided" : ""}`}
-              style={{ padding: "20px", opacity: 0.8 }}
+              style={{ padding: "20px", display: "flex", alignItems: "flex-start", gap: "16px", borderBottom: idx < 2 ? "1px solid #F1F5F9" : "none" }}
             >
               {/* Skeleton Avatar */}
               <div
-                className="p2-avatar p2-skeleton-block"
+                className="skeleton-shimmer"
                 style={{ width: "42px", height: "42px", borderRadius: "50%", flexShrink: 0 }}
               />
 
               {/* Skeleton Review Body */}
-              <div className="p2-review-body" style={{ flex: 1 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-                  <div className="p2-skeleton-block" style={{ width: "120px", height: "14px" }} />
-                  <div className="p2-skeleton-block" style={{ width: "70px", height: "12px" }} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div className="skeleton-shimmer" style={{ width: "130px", height: "14px", borderRadius: "4px" }} />
+                  <div className="skeleton-shimmer" style={{ width: "70px", height: "12px", borderRadius: "4px" }} />
                 </div>
-                <div className="p2-skeleton-block" style={{ width: "180px", height: "11px", marginBottom: "10px" }} />
-                <div className="p2-skeleton-block" style={{ width: "92%", height: "12px", marginBottom: "6px" }} />
-                <div className="p2-skeleton-block" style={{ width: "80%", height: "12px" }} />
+                <div className="skeleton-shimmer" style={{ width: "160px", height: "18px", borderRadius: "6px", marginBottom: "4px" }} />
+                <div className="skeleton-shimmer" style={{ width: "96%", height: "13px", borderRadius: "4px" }} />
+                <div className="skeleton-shimmer" style={{ width: "90%", height: "13px", borderRadius: "4px" }} />
+                <div className="skeleton-shimmer" style={{ width: "75%", height: "13px", borderRadius: "4px" }} />
               </div>
 
               {/* Skeleton Copy Button */}
               <div
-                className="p2-skeleton-block"
-                style={{ width: "70px", height: "32px", borderRadius: "8px" }}
+                className="skeleton-shimmer"
+                style={{ width: "75px", height: "32px", borderRadius: "8px", flexShrink: 0 }}
               />
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
 
       {/* ── Reviews card ────────────────────────────────── */}
-      {!reviewsLoading && reviews && (
-        <div className="p2-reviews-card text-reveal-entry" style={{ marginTop: 24 }}>
-          <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--panel-border)", background: "rgba(104, 183, 122, 0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.05em", color: "#68B77A", textTransform: "uppercase", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-              <PawIcon /> Generated Reviews &bull; {serviceType} {location ? `(${location})` : ""}
-            </span>
-            {/* Tone label + Three Dots Action Menu */}
-            <div ref={menuRefHeader} style={{ display: "flex", alignItems: "center", gap: "10px", position: "relative" }}>
-              <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
-                Tone: <strong>{persona}</strong>
-              </span>
+      {!reviewsLoading && reviews && (() => {
+        const personaColor = isCustomPersona
+          ? PERSONA_COLOR_MAP["Custom Persona"]
+          : (PERSONA_COLOR_MAP[persona] || { color: "#0D9488", bg: "rgba(13, 148, 136, 0.12)", border: "#0D9488" });
 
-              <button
-                type="button"
-                onClick={() => setShowReviewsHeaderMenu((prev) => !prev)}
-                title="Export & Copy Options"
-                style={{
-                  padding: "4px 6px",
-                  border: "none",
-                  background: "transparent",
-                  color: "#68B77A",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  opacity: showReviewsHeaderMenu ? 1 : 0.75,
-                  borderRadius: "4px",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
-                onMouseLeave={(e) => (e.currentTarget.style.opacity = showReviewsHeaderMenu ? "1" : "0.75")}
-              >
-                <ThreeDotsIcon />
-              </button>
+        return (
+          <div className="p2-reviews-card text-reveal-entry" style={{ marginTop: 24, borderRadius: "14px", overflow: "hidden", border: "1px solid rgba(226, 232, 240, 0.8)", boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.04)" }}>
+            {/* Clean Minimalist Header */}
+            <div className="p2-reviews-header" style={{ padding: "12px 18px", borderBottom: "1px solid #E2E8F0", background: "#F8FAFC", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: "0.78rem", fontWeight: 800, letterSpacing: "0.04em", color: "#475569", textTransform: "uppercase" }}>
+                  Generated Reviews
+                </span>
+                <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "6px", marginTop: "2px" }}>
+                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155", background: "#E2E8F0", border: "1px solid #CBD5E1", padding: "1.5px 8px", borderRadius: "9999px", whiteSpace: "nowrap" }}>
+                    {serviceType} {location ? `(${location})` : ""}
+                  </span>
+                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: personaColor.color, background: personaColor.activeBg || personaColor.bg, border: `1px solid ${personaColor.activeBorder || personaColor.color}`, padding: "1.5px 8px", borderRadius: "9999px", whiteSpace: "nowrap" }}>
+                    Tone: {isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona}
+                  </span>
+                </div>
+              </div>
 
-              {/* Dropdown Menu */}
-              {showReviewsHeaderMenu && (
-                <div
+              {/* Three Dots Action Menu */}
+              <div ref={menuRefHeader} style={{ position: "relative", flexShrink: 0, marginTop: "2px" }}>
+
+                <button
+                  type="button"
+                  onClick={() => setShowReviewsHeaderMenu((prev) => !prev)}
+                  title="Export & Copy Options"
                   style={{
-                    position: "absolute",
-                    top: "36px",
-                    right: "0",
-                    zIndex: 100,
-                    background: "var(--panel)",
-                    border: "1px solid var(--panel-border)",
-                    borderRadius: "10px",
-                    boxShadow: "0 10px 25px rgba(0,0,0,0.5)",
-                    padding: "6px",
-                    minWidth: "190px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "2px",
+                    padding: "4px 6px",
+                    border: "none",
+                    background: "transparent",
+                    color: "#0F172A",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    opacity: showReviewsHeaderMenu ? 1 : 0.75,
+                    borderRadius: "4px",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={(e) => (e.currentTarget.style.opacity = showReviewsHeaderMenu ? "1" : "0.75")}
+                >
+                  <ThreeDotsIcon color="#0F172A" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showReviewsHeaderMenu && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "36px",
+                      right: "0",
+                      zIndex: 100,
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "12px",
+                      boxShadow: "0 10px 30px rgba(15, 23, 42, 0.12)",
+                      padding: "6px",
+                      minWidth: "190px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        copyAllReviews();
+                        setShowReviewsHeaderMenu(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#0F172A",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <CopyIcon /> Copy All Reviews
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportAsMarkdown();
+                        setShowReviewsHeaderMenu(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#0F172A",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <DownloadIcon /> Export as .MD
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportAsJson();
+                        setShowReviewsHeaderMenu(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#0F172A",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <DownloadIcon /> Export as .JSON
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        exportAsText();
+                        setShowReviewsHeaderMenu(false);
+                      }}
+                      style={{
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        borderRadius: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#0F172A",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        textAlign: "left",
+                        width: "100%",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <DownloadIcon /> Export as .TXT
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+          <div style={{ padding: "8px 0" }}>
+            {reviews.map((r, i) => {
+              const avatarStyle = getReviewerAvatarStyle(i);
+              return (
+                <motion.div
+                  key={i}
+                  className="p2-review-row p2-review-card-item"
+                  whileHover={{ y: -3, boxShadow: "0 10px 28px rgba(15, 23, 42, 0.06)", borderColor: "#CBD5E1" }}
+                  transition={{ duration: 0.2 }}
+                  style={{
+                    padding: "20px 22px",
+                    margin: "12px 14px",
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "14px",
+                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.03)",
+                    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      copyAllReviews();
-                      setShowReviewsHeaderMenu(false);
-                    }}
+                  {/* Unique Pastel Gradient Avatar with initials */}
+                  <div
+                    className="p2-avatar"
+                    aria-hidden="true"
                     style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      borderRadius: "6px",
-                      background: "transparent",
-                      border: "none",
-                      color: "var(--text-main)",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      textAlign: "left",
-                      width: "100%",
+                      background: avatarStyle.bg,
+                      border: `1.5px solid ${avatarStyle.border}`,
+                      color: avatarStyle.color,
+                      boxShadow: `0 2px 10px ${avatarStyle.color}25`,
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <CopyIcon /> Copy All Reviews
-                  </button>
+                    {getInitials(r.reviewerName)}
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      exportAsMarkdown();
-                      setShowReviewsHeaderMenu(false);
-                    }}
-                    style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      borderRadius: "6px",
-                      background: "transparent",
-                      border: "none",
-                      color: "var(--text-main)",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      textAlign: "left",
-                      width: "100%",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <DownloadIcon /> Export as .MD
-                  </button>
+                  {/* Review content */}
+                  <div className="p2-review-body" style={{ flex: 1 }}>
+                    <div className="p2-review-top" style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                      <span className="p2-reviewer-name" style={{ fontWeight: 800, fontSize: "0.94rem", color: "#0F172A" }}>{r.reviewerName}</span>
+                      <div style={{ filter: "drop-shadow(0 1px 3px rgba(245, 158, 11, 0.28))" }}>
+                        <Stars rating={r.rating} />
+                      </div>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      exportAsJson();
-                      setShowReviewsHeaderMenu(false);
-                    }}
-                    style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      borderRadius: "6px",
-                      background: "transparent",
-                      border: "none",
-                      color: "var(--text-main)",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      textAlign: "left",
-                      width: "100%",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
-                  >
-                    <DownloadIcon /> Export as .JSON
-                  </button>
+                    {/* Harmonized Neutral Badges */}
+                    <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", margin: "6px 0 10px 0" }}>
+                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 9px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        🐕 {r.dogName} {r.dogBreed ? `(${r.dogBreed})` : ""}
+                      </span>
+                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 9px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                        👤 Walker: {r.providerName}
+                      </span>
+                    </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      exportAsText();
-                      setShowReviewsHeaderMenu(false);
+                    <p className="p2-review-text" style={{ fontSize: "0.89rem", color: "#334155", lineHeight: "1.68", letterSpacing: "-0.01em" }}>{r.reviewText}</p>
+                  </div>
+
+                  {/* Tactile Scale Pop Copy Button with Dark Shade of Green */}
+                  <motion.button
+                    id={`p2-copy-btn-${i}`}
+                    className={`p2-copy-btn ${copiedIndex === i ? "copied-pop" : ""}`}
+                    onClick={() => copySingleReview(r.reviewText, i)}
+                    whileHover={{ scale: 1.04 }}
+                    animate={
+                      copiedIndex === i
+                        ? { scale: [1, 0.88, 1], backgroundColor: "#15803D", borderColor: "#166534", color: "#FFFFFF" }
+                        : { scale: 1, backgroundColor: "#ECFDF5", borderColor: "#A7F3D0", color: "#047857" }
+                    }
+                    transition={{
+                      scale: { duration: 0.38, times: [0, 0.4, 1], ease: [0.25, 1, 0.5, 1] },
+                      backgroundColor: { duration: 0.25, ease: "easeOut" },
+                      borderColor: { duration: 0.25, ease: "easeOut" },
+                      color: { duration: 0.25, ease: "easeOut" },
                     }}
                     style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      borderRadius: "6px",
-                      background: "transparent",
-                      border: "none",
-                      color: "var(--text-main)",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
+                      height: "30px",
+                      minWidth: "78px",
+                      padding: "0 10px",
+                      borderRadius: "7px",
+                      fontWeight: 700,
+                      fontSize: "0.78rem",
                       cursor: "pointer",
-                      textAlign: "left",
-                      width: "100%",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "5px",
+                      boxShadow: copiedIndex === i ? "0 3px 12px rgba(21, 128, 61, 0.35)" : "0 1px 3px rgba(4, 120, 87, 0.08)",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1,
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(104, 183, 122, 0.15)")}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <DownloadIcon /> Export as .TXT
-                  </button>
-                </div>
-              )}
-            </div>
+                    {copiedIndex === i ? (
+                      <>
+                        <CheckIcon /> Copied!
+                      </>
+                    ) : (
+                      <>
+                        <CopyIcon /> Copy
+                      </>
+                    )}
+                  </motion.button>
+                </motion.div>
+              );
+            })}
           </div>
-
-          {reviews.map((r, i) => (
-            <div
-              key={i}
-              className={`p2-review-row${i < reviews.length - 1 ? " p2-review-row--divided" : ""}`}
-            >
-              {/* Avatar with initials */}
-              <div className="p2-avatar" aria-hidden="true">
-                {getInitials(r.reviewerName)}
-              </div>
-
-              {/* Review content */}
-              <div className="p2-review-body">
-                <div className="p2-review-top">
-                  <span className="p2-reviewer-name">{r.reviewerName}</span>
-                  <Stars rating={r.rating} />
-                </div>
-                <p className="p2-review-info">
-                  Dog: <strong>{r.dogName}</strong>{r.dogBreed ? ` (${r.dogBreed})` : ""}&nbsp;&bull;&nbsp;Provider: <strong>{r.providerName}</strong>
-                </p>
-                <p className="p2-review-text">{r.reviewText}</p>
-              </div>
-
-              {/* Copy button */}
-              <button
-                id={`p2-copy-btn-${i}`}
-                className={`p2-copy-btn ${copiedIndex === i ? "copied-pop" : ""}`}
-                onClick={() => copySingleReview(r.reviewText, i)}
-              >
-                {copiedIndex === i ? <CheckIcon /> : <CopyIcon />}
-                {copiedIndex === i ? "Copied!" : "Copy"}
-              </button>
-            </div>
-          ))}
         </div>
-      )}
+      );
+    })()}
+
+      {/* 📱 Phone-Only Uncluttered Responsive CSS Styles (<640px) */}
+      <style>{`
+        @media (max-width: 640px) {
+          .p2-collapsed-card {
+            position: relative !important;
+            padding: 12px 14px 14px 14px !important;
+          }
+          #p2-generate-btn-ribbon {
+            position: absolute !important;
+            right: 14px !important;
+            bottom: 12px !important;
+            z-index: 10 !important;
+          }
+          .p2-controls-card {
+            padding: 14px 12px !important;
+            margin-bottom: 14px !important;
+            border-radius: 12px !important;
+          }
+          .p2-persona-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 6px !important;
+          }
+          .p2-persona-btn {
+            padding: 9px 8px !important;
+            font-size: 0.76rem !important;
+          }
+          .p2-location-track {
+            display: flex !important;
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+            width: 100% !important;
+            padding-bottom: 4px !important;
+            scrollbar-width: none !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+          .p2-location-track::-webkit-scrollbar {
+            display: none !important;
+          }
+          .p2-reviews-card, .p2-skeleton-card {
+            padding: 12px !important;
+            margin-top: 14px !important;
+            border-radius: 12px !important;
+          }
+          .p2-review-row {
+            padding: 14px 10px !important;
+            gap: 10px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

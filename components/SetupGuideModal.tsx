@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export type PlatformId = "instagram" | "pinterest" | "twitter" | "youtube";
@@ -294,6 +294,37 @@ export default function SetupGuideModal({
   });
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (platform) {
+      setPlatformSteps({
+        instagram: 0,
+        pinterest: 0,
+        twitter: 0,
+        youtube: 0,
+      });
+    }
+  }, [platform]);
+
+  const handleClose = () => {
+    setPlatformSteps({
+      instagram: 0,
+      pinterest: 0,
+      twitter: 0,
+      youtube: 0,
+    });
+    onClose();
+  };
+
+  useEffect(() => {
+    if (platform) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [platform]);
+
   if (!platform) return null;
 
   const activeStepIndex = platformSteps[activePlatformId] || 0;
@@ -324,6 +355,7 @@ export default function SetupGuideModal({
   return (
     <AnimatePresence>
       <div
+        className="setup-guide-modal-overlay"
         style={{
           position: "fixed",
           inset: 0,
@@ -342,12 +374,13 @@ export default function SetupGuideModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={handleClose}
           style={{ position: "absolute", inset: 0 }}
         />
 
         {/* Modal Container with Fixed Uniform Height */}
         <motion.div
+          className="setup-guide-modal-card"
           initial={{ opacity: 0, scale: 0.94, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 16 }}
@@ -371,6 +404,7 @@ export default function SetupGuideModal({
         >
           {/* Top Platform Switcher Header */}
           <div
+            className="setup-guide-modal-header"
             style={{
               background: guide.gradientBg,
               borderBottom: "1px solid #E2E8F0",
@@ -395,9 +429,9 @@ export default function SetupGuideModal({
                 >
                   {guide.iconSvg}
                 </span>
-                <div>
+                <div className="setup-guide-modal-title">
                   <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.01em" }}>
-                    {guide.name} API Setup Guide
+                    {guide.name.endsWith("API") ? `${guide.name} Setup Guide` : `${guide.name} API Setup Guide`}
                   </h2>
                 </div>
               </div>
@@ -406,7 +440,7 @@ export default function SetupGuideModal({
                 type="button"
                 whileHover={{ scale: 1.08, backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
                 whileTap={{ scale: 0.95 }}
-                onClick={onClose}
+                onClick={handleClose}
                 title="Close Guide (Esc)"
                 style={{
                   background: "#FFFFFF",
@@ -435,34 +469,39 @@ export default function SetupGuideModal({
               </motion.button>
             </div>
 
-            {/* Platform Selection Tabs (Logo Only - Max Distant Space-Between Layout) */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", padding: "8px 36px", background: "rgba(255, 255, 255, 0.75)", borderRadius: "14px", border: "1px solid rgba(226, 232, 240, 0.9)" }}>
+            {/* Platform Selection Segmented Pill Tabs */}
+            <div className="setup-guide-modal-tabs" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "6px", width: "100%", padding: "4px", background: "rgba(255, 255, 255, 0.85)", borderRadius: "14px", border: "1px solid rgba(226, 232, 240, 0.9)", boxShadow: "inset 0 1px 2px rgba(15,23,42,0.03)" }}>
               {(["instagram", "pinterest", "twitter", "youtube"] as PlatformId[]).map((pKey) => {
                 const item = PLATFORM_GUIDES[pKey];
                 const isActive = pKey === activePlatformId;
+                const platformLabel = pKey === "instagram" ? "Instagram" : pKey === "pinterest" ? "Pinterest" : pKey === "twitter" ? "X (Twitter)" : "YouTube";
                 return (
                   <button
                     key={pKey}
                     type="button"
+                    className="setup-guide-modal-tab-btn"
                     onClick={() => handleSwitchPlatform(pKey)}
                     title={item.name}
                     aria-label={item.name}
                     style={{
-                      width: "36px",
-                      height: "36px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: isActive ? item.brandColor : "transparent",
-                      color: isActive ? "#FFFFFF" : "#64748B",
-                      cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 10px",
+                      borderRadius: "10px",
+                      border: "none",
+                      background: isActive ? item.brandColor : "transparent",
+                      color: isActive ? "#FFFFFF" : "#64748B",
+                      fontSize: "0.78rem",
+                      fontWeight: isActive ? 700 : 600,
+                      cursor: "pointer",
                       transition: "all 0.2s ease",
                       boxShadow: isActive ? `0 2px 10px ${item.brandColor}44` : "none",
                     }}
                   >
-                    <span style={{ display: "flex", opacity: isActive ? 1 : 0.75 }}>{item.iconSvg}</span>
+                    <span style={{ display: "flex", flexShrink: 0, opacity: isActive ? 1 : 0.85 }}>{item.iconSvg}</span>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{platformLabel}</span>
                   </button>
                 );
               })}
@@ -498,7 +537,7 @@ export default function SetupGuideModal({
                       background: isCurrent
                         ? guide.brandColor
                         : isPassed
-                        ? "#A7F3D0"
+                        ? `${guide.brandColor}66`
                         : "#E2E8F0",
                       cursor: "pointer",
                       transition: "all 0.25s ease",
@@ -512,7 +551,7 @@ export default function SetupGuideModal({
           </div>
 
           {/* Active Step Content Card (Fixed Flex Height) */}
-          <div style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
+          <div className="setup-guide-modal-body" style={{ flex: 1, padding: "20px 24px", overflowY: "auto" }}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${activePlatformId}-${activeStepIndex}`}
@@ -526,7 +565,7 @@ export default function SetupGuideModal({
                   <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
                     {currentStep.title}
                   </h3>
-                  <p style={{ margin: 0, fontSize: "0.84rem", color: "#2D8A4E", fontWeight: 700 }}>
+                  <p style={{ margin: 0, fontSize: "0.84rem", color: guide.brandColor, fontWeight: 700 }}>
                     {currentStep.subtitle}
                   </p>
                 </div>
@@ -536,7 +575,7 @@ export default function SetupGuideModal({
                   {currentStep.detail}
                 </p>
 
-                {/* Action Button Link (if available) */}
+                {/* Enhanced Action CTA Button Link (if available) */}
                 {currentStep.linkUrl && (
                   <div style={{ marginBottom: "14px" }}>
                     <a
@@ -547,14 +586,15 @@ export default function SetupGuideModal({
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "8px",
-                        padding: "8px 14px",
+                        padding: "9px 16px",
                         borderRadius: "10px",
-                        background: "#F8FAFC",
-                        border: "1px solid #CBD5E1",
-                        color: "#0F172A",
-                        fontSize: "0.8rem",
+                        background: guide.brandColor,
+                        border: "none",
+                        color: "#FFFFFF",
+                        fontSize: "0.82rem",
                         fontWeight: 700,
                         textDecoration: "none",
+                        boxShadow: `0 4px 14px ${guide.brandColor}35`,
                         transition: "all 0.15s ease",
                       }}
                     >
@@ -611,23 +651,23 @@ export default function SetupGuideModal({
                   </div>
                 )}
 
-                {/* Pro Tip Callout Box */}
+                {/* Brand-Themed Pro Tip Callout Box */}
                 {currentStep.tip && (
                   <div
                     style={{
-                      background: "#ECFDF5",
-                      border: "1px solid #A7F3D0",
+                      background: `${guide.brandColor}0F`,
+                      border: `1px solid ${guide.brandColor}33`,
                       borderRadius: "10px",
-                      padding: "10px 12px",
+                      padding: "10px 14px",
                       display: "flex",
                       alignItems: "flex-start",
                       gap: "10px",
-                      fontSize: "0.8rem",
-                      color: "#065F46",
-                      lineHeight: 1.45,
+                      fontSize: "0.81rem",
+                      color: "#1E293B",
+                      lineHeight: 1.48,
                     }}
                   >
-                    <span style={{ color: "#059669", display: "flex", marginTop: "2px" }}>
+                    <span style={{ color: guide.brandColor, display: "flex", marginTop: "2px", flexShrink: 0 }}>
                       <LightbulbIcon />
                     </span>
                     <span>{currentStep.tip}</span>
@@ -639,94 +679,149 @@ export default function SetupGuideModal({
 
           {/* Bottom Navigation Stepper Controls */}
           <div
+            className="setup-guide-modal-footer"
             style={{
-              padding: "16px 24px",
+              padding: "14px 24px",
               background: "#F8FAFC",
               borderTop: "1px solid #E2E8F0",
               display: "flex",
               alignItems: "center",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               marginTop: "auto",
               flexShrink: 0,
             }}
           >
-
-            {/* Stepper Buttons (Icons Only for Back / Next) */}
-            <div style={{ display: "flex", gap: "8px" }}>
-              {!isFirstStep && (
+            {/* Left: Previous Step Button */}
+            <div>
+              {!isFirstStep ? (
                 <button
                   type="button"
                   onClick={() => setActiveStepIndex((prev) => Math.max(0, prev - 1))}
-                  title="Previous Step"
-                  aria-label="Previous Step"
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    padding: 0,
-                    borderRadius: "9px",
+                    padding: "8px 16px",
+                    borderRadius: "10px",
                     border: "1px solid #CBD5E1",
                     background: "#FFFFFF",
                     color: "#334155",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    gap: "6px",
+                    boxShadow: "0 1px 3px rgba(15,23,42,0.05)",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   <ChevronLeftIcon />
+                  <span>Back</span>
                 </button>
+              ) : (
+                <span style={{ fontSize: "0.78rem", color: "#94A3B8", fontWeight: 600 }}>
+                  Step 1 of {guide.steps.length}
+                </span>
               )}
+            </div>
 
+            {/* Right: Next Step or Finish Setup Button */}
+            <div>
               {isLastStep ? (
                 <button
                   type="button"
-                  onClick={onClose}
-                  title="Done & Close Guide"
-                  aria-label="Done & Close Guide"
+                  onClick={handleClose}
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    padding: 0,
-                    borderRadius: "9px",
+                    padding: "9px 20px",
+                    borderRadius: "10px",
                     border: "none",
                     background: guide.brandColor,
                     color: "#FFFFFF",
+                    fontSize: "0.84rem",
+                    fontWeight: 700,
                     cursor: "pointer",
                     boxShadow: `0 4px 14px ${guide.brandColor}44`,
                     display: "inline-flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   <CheckMarkIcon />
+                  <span>Complete Setup</span>
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setActiveStepIndex((prev) => Math.min(guide.steps.length - 1, prev + 1))}
-                  title="Next Step"
-                  aria-label="Next Step"
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    padding: 0,
-                    borderRadius: "9px",
+                    padding: "9px 20px",
+                    borderRadius: "10px",
                     border: "none",
                     background: guide.brandColor,
                     color: "#FFFFFF",
+                    fontSize: "0.84rem",
+                    fontWeight: 700,
                     cursor: "pointer",
                     boxShadow: `0 4px 14px ${guide.brandColor}44`,
                     display: "inline-flex",
                     alignItems: "center",
-                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.15s ease",
                   }}
                 >
+                  <span>Next Step</span>
                   <ChevronRightIcon />
                 </button>
               )}
             </div>
           </div>
         </motion.div>
+
+        {/* 📱 Phone-Only Mobile Responsive CSS Styles (<640px) */}
+        <style>{`
+          @media (max-width: 640px) {
+            .setup-guide-modal-overlay {
+              padding: 10px !important;
+              overscroll-behavior: contain !important;
+              touch-action: none !important;
+            }
+            .setup-guide-modal-card {
+              max-width: 100% !important;
+              height: 66vh !important;
+              min-height: 410px !important;
+              max-height: 72vh !important;
+              border-radius: 18px !important;
+              overscroll-behavior: contain !important;
+            }
+            .setup-guide-modal-header {
+              padding: 14px 14px 10px 14px !important;
+            }
+            .setup-guide-modal-title h2 {
+              font-size: 0.96rem !important;
+            }
+            .setup-guide-modal-tabs {
+              display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
+              gap: 6px !important;
+              padding: 4px !important;
+              width: 100% !important;
+            }
+            .setup-guide-modal-tab-btn {
+              width: 100% !important;
+              padding: 7px 6px !important;
+              font-size: 0.74rem !important;
+              justify-content: center !important;
+              text-align: center !important;
+            }
+            .setup-guide-modal-body {
+              padding: 14px 16px !important;
+              overscroll-behavior: contain !important;
+              -webkit-overflow-scrolling: touch !important;
+            }
+            .setup-guide-modal-footer {
+              padding: 12px 16px !important;
+            }
+          }
+        `}</style>
       </div>
     </AnimatePresence>
   );

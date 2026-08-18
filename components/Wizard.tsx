@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import Page1 from "@/components/Page1";
 import Page2 from "@/components/Page2";
@@ -9,6 +9,7 @@ import ApiSettingsModal from "@/components/ApiSettingsModal";
 
 import HistoryDrawer from "@/components/HistoryDrawer";
 import CrossPostrIcon from "@/components/CrossPostrIcon";
+import { useBlogGeneration } from "@/lib/BlogGenerationContext";
 
 const TOTAL_STEPS = 3;
 
@@ -29,6 +30,8 @@ function PawIcon() {
     </svg>
   );
 }
+
+
 
 function SettingsIcon() {
   return (
@@ -98,13 +101,35 @@ function ArrowRightIcon() {
 // ── Transparent Background Sidebar Dog Image ────────────────────────────────
 function SidebarDogArt() {
   return (
-    <div className="sidebar-dog-art" aria-hidden="true">
+    <div
+      className="sidebar-dog-art"
+      aria-hidden="true"
+      onContextMenu={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
+      style={{
+        userSelect: "none",
+        WebkitUserSelect: "none",
+      }}
+    >
       <div className="sidebar-dog-paws">
         <span className="dog-paw-bubble p1"><PawIcon /></span>
         <span className="dog-paw-bubble p2"><PawIcon /></span>
         <span className="dog-paw-bubble p3"><PawIcon /></span>
       </div>
-      <img src="/sidebar-dog-transparent.png" alt="CuddlyTails dog illustration" className="sidebar-dog-img" />
+      <img
+        src="/sidebar-dog-transparent.png"
+        alt="CuddlyTails dog illustration"
+        className="sidebar-dog-img"
+        draggable={false}
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+        style={{
+          pointerEvents: "none",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          WebkitTouchCallout: "none",
+        }}
+      />
     </div>
   );
 }
@@ -113,15 +138,23 @@ export default function Wizard() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState<"next" | "back">("next");
   const [hasConnectedApi, setHasConnectedApi] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
+  const { loading: isBlogGenerating } = useBlogGeneration();
 
   useEffect(() => {
-    const isAuth = localStorage.getItem("cuddlytails_user_authenticated");
-    const saved = localStorage.getItem("cuddlytails_api_credentials");
-    if (isAuth === "true" || saved) {
-      setHasConnectedApi(true);
+    try {
+      const isAuth = localStorage.getItem("cuddlytails_user_authenticated");
+      const saved = localStorage.getItem("cuddlytails_api_credentials");
+      if (isAuth === "true" || saved) {
+        setHasConnectedApi(true);
+      }
+    } catch {
+      // ignore SSR/storage errors
+    } finally {
+      setIsInitializing(false);
     }
   }, []);
 
@@ -188,6 +221,10 @@ export default function Wizard() {
     setStep(1);
     setHasConnectedApi(true);
   };
+
+  if (isInitializing) {
+    return <div style={{ minHeight: "100vh", background: "var(--bg-main, #F8FAFC)" }} />;
+  }
 
   if (!hasConnectedApi) {
     return <HeroApiPage onConnected={handleConnected} />;
@@ -357,7 +394,14 @@ export default function Wizard() {
                   {/* Text */}
                   {!isCollapsed && (
                     <span className="step-text">
-                      <span className="step-title">{s.title}</span>
+                      <span className="step-title" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        {s.title}
+                        {n === 3 && isBlogGenerating && (
+                          <span style={{ fontSize: "0.65rem", fontWeight: 800, padding: "1px 6px", borderRadius: "99px", background: "#ECFDF5", color: "#059669", border: "1px solid #A7F3D0", animation: "pulse 1.5s infinite" }}>
+                            ⚡ Generating...
+                          </span>
+                        )}
+                      </span>
                       {(state === "active" || state === "upcoming") && (
                         <span className="step-subtitle">{s.subtitle}</span>
                       )}
@@ -390,9 +434,10 @@ export default function Wizard() {
           </div>
         </div>
 
-        {/* ── Dedicated Fixed Navigation Bar ─────────────────────────── */}
+        {/* ── Small Horizontal Bottom Navigation Bar ─────────────────────────── */}
         <footer className="wizard-nav-footer">
           <div className="wizard-nav-container">
+            {/* Extreme Left: Back Button */}
             <div className="wizard-nav-left">
               {step > 1 ? (
                 <motion.button
@@ -401,17 +446,19 @@ export default function Wizard() {
                   onClick={goBack}
                   initial="rest"
                   whileHover="hover"
-                  whileTap={{ scale: 0.95 }}
-                  style={{ position: "relative", overflow: "hidden" }}
+                  whileTap={{ scale: 0.94 }}
+                  style={{ position: "relative", overflow: "hidden", height: "44px", padding: "0 14px", minWidth: "80px", borderRadius: "12px", fontSize: "0.88rem" }}
                 >
                   <motion.div
                     variants={{
                       rest: { y: "0%", opacity: 1 },
-                      hover: { y: "-120%", opacity: 0 },
+                      hover: { y: "-130%", opacity: 0 },
                     }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
                       position: "absolute",
+                      top: 0,
+                      left: 0,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -425,12 +472,14 @@ export default function Wizard() {
                   </motion.div>
                   <motion.div
                     variants={{
-                      rest: { y: "120%", opacity: 0 },
+                      rest: { y: "130%", opacity: 0 },
                       hover: { y: "0%", opacity: 1 },
                     }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
                       position: "absolute",
+                      top: 0,
+                      left: 0,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -444,33 +493,49 @@ export default function Wizard() {
                   </motion.div>
                 </motion.button>
               ) : (
-                <div className="wizard-btn-placeholder" aria-hidden="true" />
+                <div className="wizard-btn-placeholder" aria-hidden="true" style={{ width: "80px", height: "44px" }} />
               )}
             </div>
 
+            {/* Centered Step Indicator */}
             <div key={step} className="wizard-nav-step-indicator">
               Step {step} of {TOTAL_STEPS}
             </div>
 
+            {/* Extreme Right: Animated Next Button (Page 2 Style) */}
             <div className="wizard-nav-right">
               {step < TOTAL_STEPS ? (
                 <motion.button
                   id={step === 2 ? "p2-next-btn" : "wizard-next-btn"}
-                  className="wizard-btn wizard-btn-next"
+                  className="wizard-btn wizard-btn-next p2-animated-next-btn"
                   onClick={goNext}
                   initial="rest"
                   whileHover="hover"
-                  whileTap={{ scale: 0.95 }}
-                  style={{ position: "relative", overflow: "hidden" }}
+                  whileTap={{ scale: 0.94 }}
+                  style={{
+                    position: "relative",
+                    overflow: "hidden",
+                    height: "44px",
+                    padding: "0 14px",
+                    minWidth: "84px",
+                    borderRadius: "12px",
+                    background: "linear-gradient(135deg, #68B77A 0%, #4E985E 100%)",
+                    color: "#FFFFFF",
+                    border: "none",
+                    boxShadow: "0 4px 16px rgba(104, 183, 122, 0.42)",
+                    cursor: "pointer",
+                  }}
                 >
                   <motion.div
                     variants={{
                       rest: { y: "0%", opacity: 1 },
-                      hover: { y: "-120%", opacity: 0 },
+                      hover: { y: "-130%", opacity: 0 },
                     }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     style={{
                       position: "absolute",
+                      top: 0,
+                      left: 0,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -478,18 +543,22 @@ export default function Wizard() {
                       width: "100%",
                       height: "100%",
                       pointerEvents: "none",
+                      fontWeight: 700,
+                      fontSize: "0.88rem",
                     }}
                   >
                     Next <ArrowRightIcon />
                   </motion.div>
                   <motion.div
                     variants={{
-                      rest: { y: "120%", opacity: 0 },
+                      rest: { y: "130%", opacity: 0 },
                       hover: { y: "0%", opacity: 1 },
                     }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                     style={{
                       position: "absolute",
+                      top: 0,
+                      left: 0,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -497,6 +566,8 @@ export default function Wizard() {
                       width: "100%",
                       height: "100%",
                       pointerEvents: "none",
+                      fontWeight: 700,
+                      fontSize: "0.88rem",
                     }}
                   >
                     Next <ArrowRightIcon />
@@ -506,6 +577,13 @@ export default function Wizard() {
                 <button
                   className="wizard-btn wizard-btn-next wizard-btn-done"
                   disabled
+                  style={{
+                    height: "44px",
+                    padding: "0 14px",
+                    minWidth: "84px",
+                    borderRadius: "12px",
+                    fontSize: "0.88rem",
+                  }}
                 >
                   Completed
                 </button>

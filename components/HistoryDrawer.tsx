@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useBlogGeneration } from "@/lib/BlogGenerationContext";
+import { computeSeoScore } from "@/lib/seoCalculator";
 
 interface HistoryDrawerProps {
   isOpen: boolean;
@@ -69,6 +70,16 @@ function TrashIcon() {
   );
 }
 
+function AlertTriangleIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle" }}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
 function EmptyDocIcon() {
   return (
     <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -91,95 +102,6 @@ function formatRelativeTime(timestamp: number): string {
   return `${diffDays}d ago`;
 }
 
-function computeSeoScore(blogItem: any): { score: number; grade: string; color: string } {
-  if (!blogItem) return { score: 92, grade: "A", color: "#68B77A" };
-  const blog = blogItem.blog || blogItem;
-  const metaDescription = blogItem.metaDescription || blog.metaDescription || "";
-  
-  const parts: string[] = [blog.title || "", ...(blog.intro || [])];
-  (blog.sections || []).forEach((sec: any) => {
-    parts.push(sec.heading || "");
-    if (sec.paragraphs) parts.push(...sec.paragraphs);
-    if (sec.bullets) parts.push(...sec.bullets);
-    if (sec.subtopics) {
-      sec.subtopics.forEach((st: any) => {
-        parts.push(st.subheading || "", ...(st.paragraphs || []));
-      });
-    }
-  });
-  parts.push(blog.vetCta || "", ...(blog.conclusion || []));
-  (blog.faqs || []).forEach((faq: any) => parts.push(faq.question || "", faq.answer || ""));
-  
-  const fullText = parts.join(" ");
-  const wordCount = fullText.trim().split(/\s+/).filter(Boolean).length;
-
-  // 1. Word Count Score (max 25)
-  let wordScore = 0;
-  if (wordCount >= 1200 && wordCount <= 2200) wordScore = 25;
-  else if (wordCount >= 800) wordScore = 20;
-  else if (wordCount >= 500) wordScore = 14;
-  else wordScore = 8;
-
-  // 2. Meta Description Precision (max 20)
-  let metaScore = 0;
-  const metaLen = metaDescription.trim().length;
-  if (metaLen >= 150 && metaLen <= 160) metaScore = 20;
-  else if (metaLen >= 140 && metaLen <= 165) metaScore = 17;
-  else if (metaLen >= 100 && metaLen <= 180) metaScore = 12;
-  else if (metaLen > 0) metaScore = 6;
-  else metaScore = 14; // default baseline
-
-  // 3. Keyword Density Balance (max 25)
-  let kwScore = 20;
-  const words = fullText.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
-  const stopWords = new Set([
-    "the", "and", "a", "to", "of", "in", "is", "for", "that", "you", "it", "on", "with",
-    "your", "this", "can", "are", "be", "as", "or", "an", "have", "from", "at", "by"
-  ]);
-  const freqMap: Record<string, number> = {};
-  words.forEach((w) => {
-    if (w.length > 3 && !stopWords.has(w)) {
-      freqMap[w] = (freqMap[w] || 0) + 1;
-    }
-  });
-  const topCount = Object.values(freqMap).sort((a, b) => b - a)[0] || 0;
-  const topDensity = (topCount / (words.length || 1)) * 100;
-  if (topDensity >= 1.2 && topDensity <= 2.8) kwScore = 25;
-  else if (topDensity >= 0.8 && topDensity <= 3.5) kwScore = 20;
-  else kwScore = 14;
-
-  // 4. Structure & FAQs Rich Snippets (max 30)
-  let structScore = 0;
-  const h2Count = (blog.sections || []).length;
-  if (h2Count >= 4) structScore += 12;
-  else if (h2Count >= 2) structScore += 8;
-
-  if ((blog.faqs || []).length >= 5) structScore += 10;
-  else if ((blog.faqs || []).length >= 3) structScore += 6;
-
-  if ((blog.vetCta || "").toLowerCase().includes("cuddlytails") || (blog.vetCta || "").length > 20) structScore += 8;
-
-  const total = Math.min(100, Math.max(45, wordScore + metaScore + kwScore + structScore));
-
-  let grade = "A+";
-  let color = "#059669"; // Emerald Teal
-  if (total < 75) {
-    grade = "B";
-    color = "#D97706"; // Sunset Amber
-  } else if (total < 88) {
-    grade = "B+";
-    color = "#2563EB"; // Ocean Blue
-  } else if (total < 96) {
-    grade = "A";
-    color = "#059669"; // Emerald
-  } else {
-    grade = "A+";
-    color = "#7C3AED"; // Royal Violet
-  }
-
-  return { score: total, grade, color };
-}
-
 function getPersonaStyle(personaName: string = ""): { bg: string; border: string; color: string } {
   const name = personaName.toLowerCase();
   if (name.includes("playful") || name.includes("caring")) {
@@ -193,6 +115,26 @@ function getPersonaStyle(personaName: string = ""): { bg: string; border: string
   }
   return { bg: "#ECFDF5", border: "#A7F3D0", color: "#059669" };
 }
+
+const cascadeContainerVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const cascadeItemVariants: Variants = {
+  hidden: { opacity: 0, y: 16, scale: 0.98 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 320, damping: 26 },
+  },
+};
 
 export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }: HistoryDrawerProps) {
   const {
@@ -209,6 +151,7 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
   const [mode, setMode] = useState<"blogs" | "reviews">(initialMode);
   const [search, setSearch] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -218,6 +161,7 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
   const handleModeChange = (newMode: "blogs" | "reviews") => {
     setMode(newMode);
     setShowClearConfirm(false);
+    setDeletingItemId(null);
   };
 
   if (!isOpen || !mounted) return null;
@@ -264,16 +208,16 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
           {/* Mode Tabs */}
           <div className="history-drawer-tabs">
             <button
-              className={`history-tab ${mode === "blogs" ? "active" : ""}`}
-              onClick={() => handleModeChange("blogs")}
-            >
-              <FileTextIcon /> SEO Blogs ({blogHistory.length})
-            </button>
-            <button
               className={`history-tab ${mode === "reviews" ? "active" : ""}`}
               onClick={() => handleModeChange("reviews")}
             >
               <StarIcon /> Customer Reviews ({reviewHistory.length})
+            </button>
+            <button
+              className={`history-tab ${mode === "blogs" ? "active" : ""}`}
+              onClick={() => handleModeChange("blogs")}
+            >
+              <FileTextIcon /> SEO Blogs ({blogHistory.length})
             </button>
           </div>
 
@@ -305,13 +249,19 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
                   <p>{search ? "No blogs match your search query." : "Generated blogs will automatically appear here."}</p>
                 </div>
               ) : (
-                <div className="history-list">
+                <motion.div
+                  className="history-list"
+                  variants={cascadeContainerVariants}
+                  initial="hidden"
+                  animate="show"
+                >
                   {filteredBlogHistory.map((item) => {
-                    const seo = computeSeoScore(item.blog);
+                    const seoMetrics = computeSeoScore(item);
+                    const seo = { score: seoMetrics.total, grade: seoMetrics.grade, color: seoMetrics.color };
                     const personaName = item.persona?.name || "Pet Parent";
                     const personaStyle = getPersonaStyle(personaName);
                     return (
-                      <div key={item.id} className="history-card">
+                      <motion.div key={item.id} className="history-card" variants={cascadeItemVariants}>
                         <div className="history-card-header">
                           <span
                             className="history-card-badge"
@@ -371,28 +321,103 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
                           />
                         </div>
 
-                        <div className="history-card-actions">
-                          <button
-                            className="history-action-btn restore"
-                            onClick={() => {
-                              loadBlogFromHistory(item);
-                              onClose();
-                            }}
-                          >
-                            <RestoreIcon /> Restore Article
-                          </button>
-                          <button
-                            className="history-action-btn delete"
-                            onClick={() => deleteBlogHistoryItem(item.id)}
-                            title="Delete from history"
-                          >
-                            <TrashIcon />
-                          </button>
-                        </div>
-                      </div>
+                        <AnimatePresence mode="wait">
+                          {deletingItemId === item.id ? (
+                            <motion.div
+                              key="confirm-delete-blog"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2, ease: "easeOut" }}
+                              style={{
+                                marginTop: "12px",
+                                padding: "14px 16px",
+                                background: "linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)",
+                                border: "1.5px solid #FECDD3",
+                                borderRadius: "12px",
+                                boxShadow: "0 4px 14px rgba(239, 68, 68, 0.08)",
+                                overflow: "hidden",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                                <AlertTriangleIcon />
+                                <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "#991B1B" }}>
+                                  Delete from history?
+                                </span>
+                              </div>
+
+                              <p style={{ fontSize: "0.78rem", color: "#7F1D1D", margin: "0 0 12px 0", lineHeight: "1.45" }}>
+                                Are you sure you want to delete this article? This action cannot be undone.
+                              </p>
+
+                              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setDeletingItemId(null)}
+                                  style={{
+                                    background: "#FFFFFF",
+                                    border: "1px solid #CBD5E1",
+                                    color: "#475569",
+                                    padding: "6px 14px",
+                                    borderRadius: "8px",
+                                    fontSize: "0.76rem",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    deleteBlogHistoryItem(item.id);
+                                    setDeletingItemId(null);
+                                  }}
+                                  style={{
+                                    background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                                    border: "none",
+                                    color: "#FFFFFF",
+                                    padding: "6px 14px",
+                                    borderRadius: "8px",
+                                    fontSize: "0.76rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+                                  }}
+                                >
+                                  <TrashIcon /> Confirm Delete
+                                </button>
+                              </div>
+                            </motion.div>
+                          ) : (
+                            <div className="history-card-actions">
+                              <button
+                                className="history-action-btn restore"
+                                onClick={() => {
+                                  loadBlogFromHistory(item);
+                                  onClose();
+                                }}
+                              >
+                                <RestoreIcon /> Restore Article
+                              </button>
+                              <button
+                                className="history-action-btn delete"
+                                onClick={() => setDeletingItemId(item.id)}
+                                title="Delete from history"
+                              >
+                                <TrashIcon />
+                              </button>
+                            </div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
                     );
                   })}
-                </div>
+                </motion.div>
               )
             ) : filteredReviewHistory.length === 0 ? (
               <div className="history-empty">
@@ -401,9 +426,14 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
                 <p>{search ? "No reviews match your search query." : "Generated customer reviews will appear here."}</p>
               </div>
             ) : (
-              <div className="history-list">
+              <motion.div
+                className="history-list"
+                variants={cascadeContainerVariants}
+                initial="hidden"
+                animate="show"
+              >
                 {filteredReviewHistory.map((item) => (
-                  <div key={item.id} className="history-card">
+                  <motion.div key={item.id} className="history-card" variants={cascadeItemVariants}>
                     <div className="history-card-header">
                       <span className="history-card-badge" style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
                         <LocationPinIcon /> {item.location} • {item.serviceType}
@@ -418,27 +448,102 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
                       ))}
                     </div>
 
-                    <div className="history-card-actions">
-                      <button
-                        className="history-action-btn restore"
-                        onClick={() => {
-                          loadReviewsFromHistory(item);
-                          onClose();
-                        }}
-                      >
-                        <RestoreIcon /> Restore Reviews
-                      </button>
-                      <button
-                        className="history-action-btn delete"
-                        onClick={() => deleteReviewHistoryItem(item.id)}
-                        title="Delete from history"
-                      >
-                        <TrashIcon />
-                      </button>
-                    </div>
-                  </div>
+                    <AnimatePresence mode="wait">
+                      {deletingItemId === item.id ? (
+                        <motion.div
+                          key="confirm-delete-review"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2, ease: "easeOut" }}
+                          style={{
+                            marginTop: "12px",
+                            padding: "14px 16px",
+                            background: "linear-gradient(135deg, #FEF2F2 0%, #FFF5F5 100%)",
+                            border: "1.5px solid #FECDD3",
+                            borderRadius: "12px",
+                            boxShadow: "0 4px 14px rgba(239, 68, 68, 0.08)",
+                            overflow: "hidden",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+                            <AlertTriangleIcon />
+                            <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "#991B1B" }}>
+                              Delete from history?
+                            </span>
+                          </div>
+
+                          <p style={{ fontSize: "0.78rem", color: "#7F1D1D", margin: "0 0 12px 0", lineHeight: "1.45" }}>
+                            Are you sure you want to delete these reviews? This action cannot be undone.
+                          </p>
+
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+                            <button
+                              type="button"
+                              onClick={() => setDeletingItemId(null)}
+                              style={{
+                                background: "#FFFFFF",
+                                border: "1px solid #CBD5E1",
+                                color: "#475569",
+                                padding: "6px 14px",
+                                borderRadius: "8px",
+                                fontSize: "0.76rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Cancel
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                deleteReviewHistoryItem(item.id);
+                                setDeletingItemId(null);
+                              }}
+                              style={{
+                                background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                                border: "none",
+                                color: "#FFFFFF",
+                                padding: "6px 14px",
+                                borderRadius: "8px",
+                                fontSize: "0.76rem",
+                                fontWeight: 800,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                boxShadow: "0 2px 8px rgba(239, 68, 68, 0.3)",
+                              }}
+                            >
+                              <TrashIcon /> Confirm Delete
+                            </button>
+                          </div>
+                        </motion.div>
+                      ) : (
+                        <div className="history-card-actions">
+                          <button
+                            className="history-action-btn restore"
+                            onClick={() => {
+                              loadReviewsFromHistory(item);
+                              onClose();
+                            }}
+                          >
+                            <RestoreIcon /> Restore Reviews
+                          </button>
+                          <button
+                            className="history-action-btn delete"
+                            onClick={() => setDeletingItemId(item.id)}
+                            title="Delete from history"
+                          >
+                            <TrashIcon />
+                          </button>
+                        </div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </div>
 
@@ -455,7 +560,7 @@ export default function HistoryDrawer({ isOpen, onClose, initialMode = "blogs" }
                   transition={{ duration: 0.2 }}
                 >
                   <div className="history-confirm-header">
-                    <span className="history-confirm-icon">⚠️</span>
+                    <span className="history-confirm-icon"><AlertTriangleIcon /></span>
                     <div>
                       <h5>Are you sure?</h5>
                       <p>

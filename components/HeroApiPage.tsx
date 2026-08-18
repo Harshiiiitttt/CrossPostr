@@ -64,7 +64,7 @@ function YouTubeIcon() {
 
 function ZapIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   );
@@ -98,8 +98,8 @@ function ArrowRightIcon() {
 
 function CrossIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
-      <path d="M18 6L6 18M6 6l12 12" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <svg width="10" height="10" viewBox="0 0 24 24" style={{ display: "block", flexShrink: 0 }}>
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
     </svg>
   );
 }
@@ -127,6 +127,45 @@ function MailIcon() {
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
       <polyline points="22,6 12,13 2,6" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", flexShrink: 0 }}>
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "block", flexShrink: 0 }}>
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  );
+}
+
+function LightbulbIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+      <path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1.55.6 2.9 1.5 3.9.76.76 1.23 1.52 1.41 2.5" />
+    </svg>
+  );
+}
+
+function HourglassIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 22h14" />
+      <path d="M5 2h14" />
+      <path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22" />
+      <path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2" />
     </svg>
   );
 }
@@ -276,6 +315,11 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
   const [helpModalPlatform, setHelpModalPlatform] = useState<"instagram" | "pinterest" | "twitter" | "youtube" | null>(null);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
+
+  const toggleShowPassword = (platformKey: string) => {
+    setShowPassword((prev) => ({ ...prev, [platformKey]: !prev[platformKey] }));
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
@@ -337,7 +381,15 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
     }
   }, []);
 
+  const updatePlatformCred = (platformKey: string, field: keyof ApiCredentials, value: string) => {
+    setCreds((prev) => ({ ...prev, [field]: value }));
+    setTestState((prev) => ({ ...prev, [platformKey]: { status: "idle" } }));
+    setShowPassword((prev) => ({ ...prev, [platformKey]: false }));
+  };
+
   const handleAutoFillDemo = () => {
+    setTestState({});
+    setShowPassword({});
     const demoCreds: ApiCredentials = {
       instagramToken: "ig_access_token_demo_cuddlytails_9942",
       pinterestToken: "pin_live_token_demo_7731",
@@ -349,6 +401,8 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
   };
 
   const handleAutoFillSingleDemoKey = (platform: PlatformId) => {
+    setTestState((prev) => ({ ...prev, [platform]: { status: "idle" } }));
+    setShowPassword((prev) => ({ ...prev, [platform]: false }));
     if (platform === "instagram") setCreds((prev) => ({ ...prev, instagramToken: "ig_access_token_demo_cuddlytails_9942" }));
     if (platform === "pinterest") setCreds((prev) => ({ ...prev, pinterestToken: "pin_live_token_demo_7731" }));
     if (platform === "twitter") setCreds((prev) => ({ ...prev, xApiKey: "twitter_bearer_token_demo_8820" }));
@@ -566,60 +620,183 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   {creds.instagramToken?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
-              <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  height: "42px",
+                  background: "#F8FAFC",
+                  border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid #E2E8F0",
+                  boxShadow: focusedInput === "instagram" ? "0 0 0 3px rgba(225, 48, 108, 0.16)" : "none",
+                  borderRadius: "12px",
+                  padding: "0 12px 0 14px",
+                  marginBottom: "4px",
+                  transition: "all 0.2s ease",
+                }}
+              >
                 <input
-                  type="password"
+                  type={showPassword["instagram"] ? "text" : "password"}
                   placeholder="Enter OAuth Access Token / App Secret"
                   value={creds.instagramToken || ""}
                   onFocus={() => setFocusedInput("instagram")}
                   onBlur={() => setFocusedInput(null)}
-                  onChange={(e) => setCreds({ ...creds, instagramToken: e.target.value })}
+                  onChange={(e) => updatePlatformCred("instagram", "instagramToken", e.target.value)}
                   style={{
-                    width: "100%",
-                    background: "#F8FAFC",
-                    border: focusedInput === "instagram" ? "1.5px solid #E1306C" : "1px solid #E2E8F0",
-                    boxShadow: focusedInput === "instagram" ? "0 0 0 3px rgba(225, 48, 108, 0.16)" : "none",
-                    borderRadius: "99px",
-                    padding: "10px 38px 10px 16px",
+                    flex: 1,
+                    height: "100%",
+                    lineHeight: "42px",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
                     color: "#0F172A",
                     fontSize: "0.82rem",
-                    outline: "none",
-                    transition: "all 0.2s ease",
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
 
-                {creds.instagramToken && (
-                  <button
-                    type="button"
-                    onClick={() => setCreds({ ...creds, instagramToken: "" })}
-                    title="Clear Instagram API key"
-                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                  >
-                    <CrossIcon />
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {creds.instagramToken && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#CBD5E1", color: "#0F172A" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleShowPassword("instagram")}
+                      title={showPassword["instagram"] ? "Hide API key" : "Show API key"}
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "all 0.15s ease" }}
+                    >
+                      {showPassword["instagram"] ? <EyeOffIcon /> : <EyeIcon />}
+                    </motion.button>
+                  )}
+                  {creds.instagramToken && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => updatePlatformCred("instagram", "instagramToken", "")}
+                      title="Clear Instagram API key"
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#0F172A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease" }}
+                    >
+                      <CrossIcon />
+                    </motion.button>
+                  )}
+                </div>
               </div>
+
+              {/* Expected Format Helper Hint */}
+              <div style={{ fontSize: "0.68rem", color: "#64748B", marginBottom: "10px", paddingLeft: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: "#F59E0B", display: "inline-flex", flexShrink: 0 }}><LightbulbIcon /></span>
+                <span>Format: Starts with <code style={{ color: "#E1306C", background: "rgba(225,48,108,0.08)", padding: "1px 4px", borderRadius: "3px" }}>EAA...</code> or <code style={{ color: "#E1306C", background: "rgba(225,48,108,0.08)", padding: "1px 4px", borderRadius: "3px" }}>IGQV...</code></span>
+              </div>
+
               {/* Connection Tester Bar */}
               {creds.instagramToken?.trim() && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                   <button
                     type="button"
                     onClick={() => handleTestConnection("instagram")}
                     disabled={testState.instagram?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{
+                      background: testState.instagram?.status === "testing" ? "#F1F5F9" : "rgba(45, 138, 78, 0.08)",
+                      border: "1px solid rgba(45, 138, 78, 0.3)",
+                      borderRadius: "8px",
+                      padding: "4px 10px",
+                      color: "#2D8A4E",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: testState.instagram?.status === "testing" ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 1px 3px rgba(45, 138, 78, 0.08)",
+                    }}
                   >
-                    {testState.instagram?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
+                    {testState.instagram?.status === "testing" ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 180 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                          style={{ display: "inline-flex", color: "#64748B", flexShrink: 0 }}
+                        >
+                          <HourglassIcon />
+                        </motion.span>
+                        <span>Testing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ display: "inline-flex", color: "#F59E0B", flexShrink: 0 }}><ZapIcon /></span>
+                        <span>Test Ping Token</span>
+                      </>
+                    )}
                   </button>
-                  {testState.instagram?.status === "success" && (
-                    <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
-                      Ping 200 OK ✓ ({testState.instagram.latency}ms)
-                    </span>
-                  )}
-                  {testState.instagram?.status === "error" && (
-                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
-                      Failed ✕ ({testState.instagram.errorMsg})
-                    </span>
-                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {testState.instagram?.status === "success" && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          color: "#047857",
+                          background: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <CheckIcon /> Ping 200 OK ({testState.instagram.latency}ms)
+                      </span>
+                    )}
+
+                    {testState.instagram?.status === "error" && (
+                      <>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "#DC2626",
+                            background: "#FEF2F2",
+                            border: "1px solid #FCA5A5",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title={testState.instagram.errorMsg}
+                        >
+                          Failed ✕ ({testState.instagram.errorMsg})
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setHelpModalPlatform("instagram")}
+                          title="Open Instagram Setup Guide"
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#E1306C",
+                            background: "rgba(225, 48, 108, 0.08)",
+                            border: "1px solid rgba(225, 48, 108, 0.25)",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <HelpIcon /> Guide
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </MagneticCard>
@@ -646,60 +823,183 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   {creds.pinterestToken?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
-              <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  height: "42px",
+                  background: "#F8FAFC",
+                  border: focusedInput === "pinterest" ? "1.5px solid #E60023" : "1px solid #E2E8F0",
+                  boxShadow: focusedInput === "pinterest" ? "0 0 0 3px rgba(230, 0, 35, 0.16)" : "none",
+                  borderRadius: "12px",
+                  padding: "0 12px 0 14px",
+                  marginBottom: "4px",
+                  transition: "all 0.2s ease",
+                }}
+              >
                 <input
-                  type="password"
+                  type={showPassword["pinterest"] ? "text" : "password"}
                   placeholder="Enter OAuth Access Token (pina_...)"
                   value={creds.pinterestToken || ""}
                   onFocus={() => setFocusedInput("pinterest")}
                   onBlur={() => setFocusedInput(null)}
-                  onChange={(e) => setCreds({ ...creds, pinterestToken: e.target.value })}
+                  onChange={(e) => updatePlatformCred("pinterest", "pinterestToken", e.target.value)}
                   style={{
-                    width: "100%",
-                    background: "#F8FAFC",
-                    border: focusedInput === "pinterest" ? "1.5px solid #E60023" : "1px solid #E2E8F0",
-                    boxShadow: focusedInput === "pinterest" ? "0 0 0 3px rgba(230, 0, 35, 0.16)" : "none",
-                    borderRadius: "99px",
-                    padding: "10px 38px 10px 16px",
+                    flex: 1,
+                    height: "100%",
+                    lineHeight: "42px",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
                     color: "#0F172A",
                     fontSize: "0.82rem",
-                    outline: "none",
-                    transition: "all 0.2s ease",
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
 
-                {creds.pinterestToken && (
-                  <button
-                    type="button"
-                    onClick={() => setCreds({ ...creds, pinterestToken: "" })}
-                    title="Clear Pinterest API key"
-                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                  >
-                    <CrossIcon />
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {creds.pinterestToken && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#CBD5E1", color: "#0F172A" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleShowPassword("pinterest")}
+                      title={showPassword["pinterest"] ? "Hide API key" : "Show API key"}
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "all 0.15s ease" }}
+                    >
+                      {showPassword["pinterest"] ? <EyeOffIcon /> : <EyeIcon />}
+                    </motion.button>
+                  )}
+                  {creds.pinterestToken && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => updatePlatformCred("pinterest", "pinterestToken", "")}
+                      title="Clear Pinterest API key"
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#0F172A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease" }}
+                    >
+                      <CrossIcon />
+                    </motion.button>
+                  )}
+                </div>
               </div>
+
+              {/* Expected Format Helper Hint */}
+              <div style={{ fontSize: "0.68rem", color: "#64748B", marginBottom: "10px", paddingLeft: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: "#F59E0B", display: "inline-flex", flexShrink: 0 }}><LightbulbIcon /></span>
+                <span>Format: Starts with <code style={{ color: "#E60023", background: "rgba(230,0,35,0.08)", padding: "1px 4px", borderRadius: "3px" }}>pina_...</code> or <code style={{ color: "#E60023", background: "rgba(230,0,35,0.08)", padding: "1px 4px", borderRadius: "3px" }}>pin_live_...</code></span>
+              </div>
+
               {/* Connection Tester Bar */}
               {creds.pinterestToken?.trim() && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                   <button
                     type="button"
                     onClick={() => handleTestConnection("pinterest")}
                     disabled={testState.pinterest?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{
+                      background: testState.pinterest?.status === "testing" ? "#F1F5F9" : "rgba(45, 138, 78, 0.08)",
+                      border: "1px solid rgba(45, 138, 78, 0.3)",
+                      borderRadius: "8px",
+                      padding: "4px 10px",
+                      color: "#2D8A4E",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: testState.pinterest?.status === "testing" ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 1px 3px rgba(45, 138, 78, 0.08)",
+                    }}
                   >
-                    {testState.pinterest?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
+                    {testState.pinterest?.status === "testing" ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 180 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                          style={{ display: "inline-flex", color: "#64748B", flexShrink: 0 }}
+                        >
+                          <HourglassIcon />
+                        </motion.span>
+                        <span>Testing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ display: "inline-flex", color: "#F59E0B", flexShrink: 0 }}><ZapIcon /></span>
+                        <span>Test Ping Token</span>
+                      </>
+                    )}
                   </button>
-                  {testState.pinterest?.status === "success" && (
-                    <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
-                      Ping 200 OK ✓ ({testState.pinterest.latency}ms)
-                    </span>
-                  )}
-                  {testState.pinterest?.status === "error" && (
-                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
-                      Failed ✕ ({testState.pinterest.errorMsg})
-                    </span>
-                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {testState.pinterest?.status === "success" && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          color: "#047857",
+                          background: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <CheckIcon /> Ping 200 OK ({testState.pinterest.latency}ms)
+                      </span>
+                    )}
+
+                    {testState.pinterest?.status === "error" && (
+                      <>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "#DC2626",
+                            background: "#FEF2F2",
+                            border: "1px solid #FCA5A5",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title={testState.pinterest.errorMsg}
+                        >
+                          Failed ✕ ({testState.pinterest.errorMsg})
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setHelpModalPlatform("pinterest")}
+                          title="Open Pinterest Setup Guide"
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#E60023",
+                            background: "rgba(230, 0, 35, 0.08)",
+                            border: "1px solid rgba(230, 0, 35, 0.25)",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <HelpIcon /> Guide
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </MagneticCard>
@@ -726,60 +1026,183 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   {creds.xApiKey?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
-              <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  height: "42px",
+                  background: "#F8FAFC",
+                  border: focusedInput === "twitter" ? "1.5px solid #1DA1F2" : "1px solid #E2E8F0",
+                  boxShadow: focusedInput === "twitter" ? "0 0 0 3px rgba(29, 161, 242, 0.16)" : "none",
+                  borderRadius: "12px",
+                  padding: "0 12px 0 14px",
+                  marginBottom: "4px",
+                  transition: "all 0.2s ease",
+                }}
+              >
                 <input
-                  type="password"
+                  type={showPassword["twitter"] ? "text" : "password"}
                   placeholder="Enter Bearer Key / Access Token"
                   value={creds.xApiKey || ""}
                   onFocus={() => setFocusedInput("twitter")}
                   onBlur={() => setFocusedInput(null)}
-                  onChange={(e) => setCreds({ ...creds, xApiKey: e.target.value })}
+                  onChange={(e) => updatePlatformCred("twitter", "xApiKey", e.target.value)}
                   style={{
-                    width: "100%",
-                    background: "#F8FAFC",
-                    border: focusedInput === "twitter" ? "1.5px solid #1DA1F2" : "1px solid #E2E8F0",
-                    boxShadow: focusedInput === "twitter" ? "0 0 0 3px rgba(29, 161, 242, 0.16)" : "none",
-                    borderRadius: "99px",
-                    padding: "10px 38px 10px 16px",
+                    flex: 1,
+                    height: "100%",
+                    lineHeight: "42px",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
                     color: "#0F172A",
                     fontSize: "0.82rem",
-                    outline: "none",
-                    transition: "all 0.2s ease",
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
 
-                {creds.xApiKey && (
-                  <button
-                    type="button"
-                    onClick={() => setCreds({ ...creds, xApiKey: "" })}
-                    title="Clear Twitter API key"
-                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                  >
-                    <CrossIcon />
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {creds.xApiKey && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#CBD5E1", color: "#0F172A" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleShowPassword("twitter")}
+                      title={showPassword["twitter"] ? "Hide API key" : "Show API key"}
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "all 0.15s ease" }}
+                    >
+                      {showPassword["twitter"] ? <EyeOffIcon /> : <EyeIcon />}
+                    </motion.button>
+                  )}
+                  {creds.xApiKey && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => updatePlatformCred("twitter", "xApiKey", "")}
+                      title="Clear Twitter API key"
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#0F172A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease" }}
+                    >
+                      <CrossIcon />
+                    </motion.button>
+                  )}
+                </div>
               </div>
+
+              {/* Expected Format Helper Hint */}
+              <div style={{ fontSize: "0.68rem", color: "#64748B", marginBottom: "10px", paddingLeft: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: "#F59E0B", display: "inline-flex", flexShrink: 0 }}><LightbulbIcon /></span>
+                <span>Format: Starts with <code style={{ color: "#1DA1F2", background: "rgba(29,161,242,0.08)", padding: "1px 4px", borderRadius: "3px" }}>AAAA...</code> or <code style={{ color: "#1DA1F2", background: "rgba(29,161,242,0.08)", padding: "1px 4px", borderRadius: "3px" }}>twitter_bearer_...</code></span>
+              </div>
+
               {/* Connection Tester Bar */}
               {creds.xApiKey?.trim() && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                   <button
                     type="button"
                     onClick={() => handleTestConnection("twitter")}
                     disabled={testState.twitter?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{
+                      background: testState.twitter?.status === "testing" ? "#F1F5F9" : "rgba(45, 138, 78, 0.08)",
+                      border: "1px solid rgba(45, 138, 78, 0.3)",
+                      borderRadius: "8px",
+                      padding: "4px 10px",
+                      color: "#2D8A4E",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: testState.twitter?.status === "testing" ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 1px 3px rgba(45, 138, 78, 0.08)",
+                    }}
                   >
-                    {testState.twitter?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
+                    {testState.twitter?.status === "testing" ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 180 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                          style={{ display: "inline-flex", color: "#64748B", flexShrink: 0 }}
+                        >
+                          <HourglassIcon />
+                        </motion.span>
+                        <span>Testing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ display: "inline-flex", color: "#F59E0B", flexShrink: 0 }}><ZapIcon /></span>
+                        <span>Test Ping Token</span>
+                      </>
+                    )}
                   </button>
-                  {testState.twitter?.status === "success" && (
-                    <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
-                      Ping 200 OK ✓ ({testState.twitter.latency}ms)
-                    </span>
-                  )}
-                  {testState.twitter?.status === "error" && (
-                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
-                      Failed ✕ ({testState.twitter.errorMsg})
-                    </span>
-                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {testState.twitter?.status === "success" && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          color: "#047857",
+                          background: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <CheckIcon /> Ping 200 OK ({testState.twitter.latency}ms)
+                      </span>
+                    )}
+
+                    {testState.twitter?.status === "error" && (
+                      <>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "#DC2626",
+                            background: "#FEF2F2",
+                            border: "1px solid #FCA5A5",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title={testState.twitter.errorMsg}
+                        >
+                          Failed ✕ ({testState.twitter.errorMsg})
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setHelpModalPlatform("twitter")}
+                          title="Open Twitter Setup Guide"
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#1DA1F2",
+                            background: "rgba(29, 161, 242, 0.08)",
+                            border: "1px solid rgba(29, 161, 242, 0.25)",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <HelpIcon /> Guide
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </MagneticCard>
@@ -806,61 +1229,183 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
                   {creds.youtubeApiKey?.trim() ? <><CheckIcon /> Connected</> : "Disconnected"}
                 </span>
               </div>
-              <div style={{ position: "relative", display: "flex", alignItems: "center", marginBottom: "10px" }}>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  width: "100%",
+                  height: "42px",
+                  background: "#F8FAFC",
+                  border: focusedInput === "youtube" ? "1.5px solid #FF0000" : "1px solid #E2E8F0",
+                  boxShadow: focusedInput === "youtube" ? "0 0 0 3px rgba(255, 0, 0, 0.16)" : "none",
+                  borderRadius: "12px",
+                  padding: "0 12px 0 14px",
+                  marginBottom: "4px",
+                  transition: "all 0.2s ease",
+                }}
+              >
                 <input
-                  type="password"
+                  type={showPassword["youtube"] ? "text" : "password"}
                   placeholder="Enter Client Credentials / API Key"
                   value={creds.youtubeApiKey || ""}
                   onFocus={() => setFocusedInput("youtube")}
                   onBlur={() => setFocusedInput(null)}
-                  onChange={(e) => setCreds({ ...creds, youtubeApiKey: e.target.value })}
+                  onChange={(e) => updatePlatformCred("youtube", "youtubeApiKey", e.target.value)}
                   style={{
-                    width: "100%",
-                    background: "#F8FAFC",
-                    border: focusedInput === "youtube" ? "1.5px solid #FF0000" : "1px solid #E2E8F0",
-                    boxShadow: focusedInput === "youtube" ? "0 0 0 3px rgba(255, 0, 0, 0.16)" : "none",
-                    borderRadius: "99px",
-                    padding: "10px 38px 10px 16px",
+                    flex: 1,
+                    height: "100%",
+                    lineHeight: "42px",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
                     color: "#0F172A",
                     fontSize: "0.82rem",
-                    outline: "none",
-                    transition: "all 0.2s ease",
+                    padding: 0,
+                    margin: 0,
                   }}
                 />
 
-                {creds.youtubeApiKey && (
-                  <button
-                    type="button"
-                    onClick={() => setCreds({ ...creds, youtubeApiKey: "" })}
-                    title="Clear YouTube API key"
-                    style={{ position: "absolute", right: "12px", background: "#F1F5F9", border: "1px solid #E2E8F0", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", minHeight: "22px", maxHeight: "22px", aspectRatio: "1 / 1", flexShrink: 0, color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}
-                  >
-                    <CrossIcon />
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+                  {creds.youtubeApiKey && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#CBD5E1", color: "#0F172A" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => toggleShowPassword("youtube")}
+                      title={showPassword["youtube"] ? "Hide API key" : "Show API key"}
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#64748B", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "all 0.15s ease" }}
+                    >
+                      {showPassword["youtube"] ? <EyeOffIcon /> : <EyeIcon />}
+                    </motion.button>
+                  )}
+                  {creds.youtubeApiKey && (
+                    <motion.button
+                      type="button"
+                      whileHover={{ backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => updatePlatformCred("youtube", "youtubeApiKey", "")}
+                      title="Clear YouTube API key"
+                      style={{ background: "#F1F5F9", border: "1px solid #CBD5E1", borderRadius: "50%", width: "22px", minWidth: "22px", maxWidth: "22px", height: "22px", color: "#0F172A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease" }}
+                    >
+                      <CrossIcon />
+                    </motion.button>
+                  )}
+                </div>
+              </div>
+
+              {/* Expected Format Helper Hint */}
+              <div style={{ fontSize: "0.68rem", color: "#64748B", marginBottom: "10px", paddingLeft: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: "#F59E0B", display: "inline-flex", flexShrink: 0 }}><LightbulbIcon /></span>
+                <span>Format: Starts with <code style={{ color: "#FF0000", background: "rgba(255,0,0,0.08)", padding: "1px 4px", borderRadius: "3px" }}>AIzaSy...</code> or <code style={{ color: "#FF0000", background: "rgba(255,0,0,0.08)", padding: "1px 4px", borderRadius: "3px" }}>yt_shorts_...</code></span>
               </div>
 
               {/* Connection Tester Bar */}
               {creds.youtubeApiKey?.trim() && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginTop: "4px" }}>
                   <button
                     type="button"
                     onClick={() => handleTestConnection("youtube")}
                     disabled={testState.youtube?.status === "testing"}
-                    style={{ background: "transparent", border: "none", color: "#2D8A4E", fontSize: "0.74rem", fontWeight: 700, cursor: "pointer", padding: 0 }}
+                    style={{
+                      background: testState.youtube?.status === "testing" ? "#F1F5F9" : "rgba(45, 138, 78, 0.08)",
+                      border: "1px solid rgba(45, 138, 78, 0.3)",
+                      borderRadius: "8px",
+                      padding: "4px 10px",
+                      color: "#2D8A4E",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: testState.youtube?.status === "testing" ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      transition: "all 0.15s ease",
+                      boxShadow: "0 1px 3px rgba(45, 138, 78, 0.08)",
+                    }}
                   >
-                    {testState.youtube?.status === "testing" ? "Testing Connection..." : "⚡ Test Ping Token"}
+                    {testState.youtube?.status === "testing" ? (
+                      <>
+                        <motion.span
+                          animate={{ rotate: 180 }}
+                          transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+                          style={{ display: "inline-flex", color: "#64748B", flexShrink: 0 }}
+                        >
+                          <HourglassIcon />
+                        </motion.span>
+                        <span>Testing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span style={{ display: "inline-flex", color: "#F59E0B", flexShrink: 0 }}><ZapIcon /></span>
+                        <span>Test Ping Token</span>
+                      </>
+                    )}
                   </button>
-                  {testState.youtube?.status === "success" && (
-                    <span style={{ fontSize: "0.7rem", color: "#2D8A4E", fontWeight: 700 }}>
-                      Ping 200 OK ✓ ({testState.youtube.latency}ms)
-                    </span>
-                  )}
-                  {testState.youtube?.status === "error" && (
-                    <span style={{ fontSize: "0.7rem", color: "#EF4444", fontWeight: 700 }}>
-                      Failed ✕ ({testState.youtube.errorMsg})
-                    </span>
-                  )}
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {testState.youtube?.status === "success" && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          color: "#047857",
+                          background: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <CheckIcon /> Ping 200 OK ({testState.youtube.latency}ms)
+                      </span>
+                    )}
+
+                    {testState.youtube?.status === "error" && (
+                      <>
+                        <span
+                          style={{
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            color: "#DC2626",
+                            background: "#FEF2F2",
+                            border: "1px solid #FCA5A5",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                          title={testState.youtube.errorMsg}
+                        >
+                          Failed ✕ ({testState.youtube.errorMsg})
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => setHelpModalPlatform("youtube")}
+                          title="Open YouTube Setup Guide"
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#FF0000",
+                            background: "rgba(255, 0, 0, 0.08)",
+                            border: "1px solid rgba(255, 0, 0, 0.25)",
+                            borderRadius: "6px",
+                            padding: "3px 8px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <HelpIcon /> Guide
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </MagneticCard>
@@ -892,7 +1437,7 @@ export default function HeroApiPage({ onConnected }: HeroApiPageProps) {
           style={{
             width: "100%",
             maxWidth: "420px",
-            margin: "36px auto 0",
+            margin: "64px auto 0",
             height: "50px",
             borderRadius: "14px",
             background: "rgba(209, 242, 217, 0.85)",

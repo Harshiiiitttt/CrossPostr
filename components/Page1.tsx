@@ -510,10 +510,10 @@ export default function Page1({ onNext }: Page1Props) {
           <div className="card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #E1306C 0%, #C13584 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(225, 48, 108, 0.3)" }}>
+                <span style={{ width: "24px", minWidth: "24px", maxWidth: "24px", height: "24px", minHeight: "24px", maxHeight: "24px", flexShrink: 0, aspectRatio: "1 / 1", borderRadius: "50%", background: "linear-gradient(135deg, #15803D 0%, #166534 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, lineHeight: 1, boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)" }}>
                   1
                 </span>
-                <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#BE185D", background: "#FDF2F8", border: "1px solid #FBCFE8", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
+                <label style={{ margin: 0, fontSize: "0.78rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#334155", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "4px 10px", display: "inline-flex", alignItems: "center" }}>
                   Instagram Reel Source URL
                 </label>
               </div>
@@ -524,7 +524,7 @@ export default function Page1({ onNext }: Page1Props) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={loadDemoUrl}
-                className="demo-btn-shimmer"
+                className="demo-btn-shimmer page1-demo-reel-btn"
                 style={{
                   padding: "5px 14px",
                   borderRadius: "8px",
@@ -640,10 +640,10 @@ export default function Page1({ onNext }: Page1Props) {
           {/* Card 2: Image & Text Watermark 2-Column Grid Layout */}
           <div className="card" style={{ padding: "20px 24px", marginBottom: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
-              <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #0284C7 0%, #0369A1 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)" }}>
+              <span style={{ width: "24px", minWidth: "24px", maxWidth: "24px", height: "24px", minHeight: "24px", maxHeight: "24px", flexShrink: 0, aspectRatio: "1 / 1", borderRadius: "50%", background: "linear-gradient(135deg, #15803D 0%, #166534 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, lineHeight: 1, boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)" }}>
                 2
               </span>
-              <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#0369A1", background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
+              <label style={{ margin: 0, fontSize: "0.78rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#334155", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "4px 10px", display: "inline-flex", alignItems: "center" }}>
                 Watermark Branding &amp; Overlay
               </label>
             </div>
@@ -715,7 +715,7 @@ export default function Page1({ onNext }: Page1Props) {
                   placeholder="e.g. @cuddlytails"
                   value={textWatermark}
                   onChange={(e) => setTextWatermark(e.target.value)}
-                  style={{ borderRadius: "10px", margin: "0 0 14px 0", width: "100%", background: "var(--input-bg)", color: "var(--heading-white)", border: "1px solid var(--panel-border)" }}
+                  style={{ borderRadius: "10px", margin: "0 0 14px 0", padding: "8px 12px", width: "100%", background: "var(--input-bg)", color: "var(--heading-white)", border: "1.5px solid var(--panel-border)", outline: "none", boxShadow: "none" }}
                 />
 
                 {/* Advanced Settings Toggle */}
@@ -770,9 +770,9 @@ export default function Page1({ onNext }: Page1Props) {
                                 borderRadius: "6px",
                                 fontSize: "0.72rem",
                                 fontWeight: 600,
-                                border: watermarkPos === pos ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                                background: watermarkPos === pos ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
-                                color: watermarkPos === pos ? "#68B77A" : "var(--text-main)",
+                                border: watermarkPos === pos ? "1.5px solid #15803D" : "1px solid var(--panel-border)",
+                                background: watermarkPos === pos ? "#F0FDF4" : "var(--panel)",
+                                color: watermarkPos === pos ? "#15803D" : "var(--text-main)",
                                 cursor: "pointer",
                               }}
                             >
@@ -787,30 +787,63 @@ export default function Page1({ onNext }: Page1Props) {
                           Aesthetic Style
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px", marginBottom: "12px" }}>
-                          {(["glass", "neon", "dark", "gold"] as WatermarkStyle[]).map((st) => (
-                            <button
-                              key={st}
-                              type="button"
-                              onClick={() => setWatermarkStyle(st)}
-                              style={{
-                                padding: "4px 8px",
-                                borderRadius: "6px",
-                                fontSize: "0.72rem",
-                                fontWeight: 600,
-                                border: watermarkStyle === st ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                                background: watermarkStyle === st ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
-                                color: watermarkStyle === st ? "#68B77A" : "var(--text-main)",
-                                cursor: "pointer",
-                                display: "inline-flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "4px",
-                              }}
-                            >
-                              {STYLE_LABELS[st].icon}
-                              <span>{STYLE_LABELS[st].label}</span>
-                            </button>
-                          ))}
+                          {(["glass", "neon", "dark", "gold"] as WatermarkStyle[]).map((st) => {
+                            const isActive = watermarkStyle === st;
+                            const aestheticStyles: Record<WatermarkStyle, { border: string; bg: string; color: string; shadow: string }> = {
+                              glass: {
+                                border: "1.5px solid #0284C7",
+                                bg: "rgba(240, 249, 255, 0.95)",
+                                color: "#0369A1",
+                                shadow: "0 3px 10px rgba(2, 132, 199, 0.2)",
+                              },
+                              neon: {
+                                border: "1.5px solid #10B981",
+                                bg: "#ECFDF5",
+                                color: "#047857",
+                                shadow: "0 0 10px rgba(16, 185, 129, 0.35)",
+                              },
+                              dark: {
+                                border: "1.5px solid #0F172A",
+                                bg: "#1E293B",
+                                color: "#FFFFFF",
+                                shadow: "0 3px 10px rgba(15, 23, 42, 0.35)",
+                              },
+                              gold: {
+                                border: "1.5px solid #D97706",
+                                bg: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
+                                color: "#B45309",
+                                shadow: "0 3px 10px rgba(217, 119, 6, 0.25)",
+                              },
+                            };
+                            const styleCfg = aestheticStyles[st];
+
+                            return (
+                              <button
+                                key={st}
+                                type="button"
+                                onClick={() => setWatermarkStyle(st)}
+                                style={{
+                                  padding: "5px 8px",
+                                  borderRadius: "7px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: isActive ? 700 : 600,
+                                  border: isActive ? styleCfg.border : "1px solid var(--panel-border)",
+                                  background: isActive ? styleCfg.bg : "var(--panel)",
+                                  color: isActive ? styleCfg.color : "var(--text-main)",
+                                  boxShadow: isActive ? styleCfg.shadow : "none",
+                                  cursor: "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  gap: "5px",
+                                  transition: "all 0.2s ease-in-out",
+                                }}
+                              >
+                                {STYLE_LABELS[st].icon}
+                                <span>{STYLE_LABELS[st].label}</span>
+                              </button>
+                            );
+                          })}
                         </div>
 
                         {/* Size Scale Selector */}
@@ -829,9 +862,9 @@ export default function Page1({ onNext }: Page1Props) {
                                 borderRadius: "6px",
                                 fontSize: "0.72rem",
                                 fontWeight: 600,
-                                border: watermarkScale === sc ? "1.5px solid #68B77A" : "1px solid var(--panel-border)",
-                                background: watermarkScale === sc ? "rgba(104, 183, 122, 0.18)" : "var(--panel)",
-                                color: watermarkScale === sc ? "#68B77A" : "var(--text-main)",
+                                border: watermarkScale === sc ? "1.5px solid #15803D" : "1px solid var(--panel-border)",
+                                background: watermarkScale === sc ? "#F0FDF4" : "var(--panel)",
+                                color: watermarkScale === sc ? "#15803D" : "var(--text-main)",
                                 cursor: "pointer",
                               }}
                             >
@@ -845,7 +878,7 @@ export default function Page1({ onNext }: Page1Props) {
                           <label style={{ margin: 0, fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase" }}>
                             Transparency
                           </label>
-                          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#68B77A" }}>
+                          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#15803D" }}>
                             {watermarkOpacity}%
                           </span>
                         </div>
@@ -855,7 +888,7 @@ export default function Page1({ onNext }: Page1Props) {
                           max="100"
                           value={watermarkOpacity}
                           onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
-                          style={{ width: "100%", accentColor: "#68B77A", cursor: "pointer", margin: 0 }}
+                          style={{ width: "100%", accentColor: "#15803D", cursor: "pointer", margin: 0 }}
                         />
 
                       </div>
@@ -871,10 +904,10 @@ export default function Page1({ onNext }: Page1Props) {
           <div className="card" style={{ padding: "20px 24px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <span style={{ width: "24px", height: "24px", borderRadius: "50%", background: "linear-gradient(135deg, #059669 0%, #047857 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, boxShadow: "0 4px 12px rgba(5, 150, 105, 0.3)" }}>
+                <span style={{ width: "24px", minWidth: "24px", maxWidth: "24px", height: "24px", minHeight: "24px", maxHeight: "24px", flexShrink: 0, aspectRatio: "1 / 1", borderRadius: "50%", background: "linear-gradient(135deg, #15803D 0%, #166534 100%)", color: "#FFFFFF", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, lineHeight: 1, boxShadow: "0 2px 8px rgba(21, 128, 61, 0.25)" }}>
                   3
                 </span>
-                <label style={{ margin: 0, fontSize: "0.82rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#15803D", background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "6px", padding: "3px 10px", display: "inline-flex", alignItems: "center" }}>
+                <label style={{ margin: 0, fontSize: "0.78rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#334155", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "6px", padding: "4px 10px", display: "inline-flex", alignItems: "center" }}>
                   Select Target Platforms
                 </label>
               </div>
@@ -938,20 +971,19 @@ export default function Page1({ onNext }: Page1Props) {
               transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
               onClick={runAutomation}
               disabled={running || !reelUrl.trim() || platforms.length === 0}
-              className={(!running && reelUrl.trim() && platforms.length > 0) ? "shimmer-btn-bg" : ""}
               style={{
                 width: "100%",
                 height: "46px",
                 borderRadius: "12px",
                 background: (running || !reelUrl.trim() || platforms.length === 0)
                   ? "var(--chip-bg, #F1F5F9)"
-                  : "linear-gradient(135deg, #059669 0%, #0284C7 100%)",
+                  : "linear-gradient(135deg, #15803D 0%, #166534 100%)",
                 color: (running || !reelUrl.trim() || platforms.length === 0)
                   ? "var(--secondary-text, #64748B)"
                   : "#FFFFFF",
                 border: (running || !reelUrl.trim() || platforms.length === 0)
                   ? "1px solid var(--panel-border, #E2E8F0)"
-                  : "1px solid rgba(255, 255, 255, 0.3)",
+                  : "1px solid #166534",
                 fontSize: "0.92rem",
                 fontWeight: 700,
                 cursor: (running || !reelUrl.trim() || platforms.length === 0) ? "not-allowed" : "pointer",
@@ -961,7 +993,8 @@ export default function Page1({ onNext }: Page1Props) {
                 position: "relative",
                 overflow: "hidden",
                 opacity: (running || !reelUrl.trim() || platforms.length === 0) ? 0.75 : 1,
-                transition: "background 0.3s ease, color 0.3s ease, border 0.3s ease, opacity 0.3s ease",
+                boxShadow: (running || !reelUrl.trim() || platforms.length === 0) ? "none" : "0 2px 8px rgba(21, 128, 61, 0.25)",
+                transition: "background 0.3s ease, color 0.3s ease, border 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease",
               }}
             >
               {running ? (
@@ -1170,8 +1203,8 @@ export default function Page1({ onNext }: Page1Props) {
         </div>
 
         {/* Right Column: 40% Sticky Live Video Phone Mockup */}
-        <div style={{ flex: "0 0 350px", position: "sticky", top: "24px" }}>
-          <div className="card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div className="page1-preview-col" style={{ flex: "1 1 350px", maxWidth: "420px", width: "100%", margin: "0 auto", position: "sticky", top: "24px" }}>
+          <div className="card page1-preview-card" style={{ padding: "24px 20px", display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginBottom: "14px" }}>
               <span style={{ fontSize: "0.8rem", fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase", color: "#0F172A" }}>
                 Live Canvas Preview
@@ -1205,8 +1238,10 @@ export default function Page1({ onNext }: Page1Props) {
             
             {/* Dynamic Aspect Ratio Phone Frame (Interactive Drag & Snap Canvas) */}
             <div
+              className="page1-phone-mockup"
               style={{
                 position: "relative",
+                margin: "0 auto",
                 width: aspectRatio === "1:1" ? "260px" : aspectRatio === "16:9" ? "300px" : "240px",
                 height: aspectRatio === "1:1" ? "260px" : aspectRatio === "16:9" ? "168px" : "426px",
                 borderRadius: "22px",
@@ -1651,6 +1686,31 @@ export default function Page1({ onNext }: Page1Props) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 📱 Phone-Only Centering Styles for Live Canvas Preview Video Mockup (<640px) */}
+      <style>{`
+        @media (max-width: 640px) {
+          .page1-preview-col {
+            flex: 1 1 100% !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            position: static !important;
+            margin: 0 auto !important;
+          }
+          .page1-preview-card {
+            width: 100% !important;
+            margin: 0 auto !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+          .page1-phone-mockup {
+            margin: 0 auto !important;
+          }
+          .page1-demo-reel-btn {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

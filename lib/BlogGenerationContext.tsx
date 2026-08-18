@@ -379,12 +379,15 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
   };
 
   const loadBlogFromHistory = (item: BlogHistoryItem) => {
-    setTopic(item.topic);
-    setBlog(item.blog);
-    setPosts(item.posts);
-    setMetaDescription(item.metaDescription);
-    const foundP = BRAND_PERSONAS.find((p) => p.id === item.persona.id);
-    if (foundP) setActivePersona(foundP);
+    if (!item) return;
+    if (item.topic) setTopic(item.topic);
+    if (item.blog) setBlog(item.blog);
+    if (item.posts) setPosts(item.posts);
+    if (item.metaDescription) setMetaDescription(item.metaDescription);
+    if (item.persona?.id) {
+      const foundP = BRAND_PERSONAS.find((p) => p.id === item.persona.id);
+      if (foundP) setActivePersona(foundP);
+    }
   };
 
   const deleteBlogHistoryItem = (id: string) => {

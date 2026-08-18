@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import type { LinkedInPosts, SeoBlog } from "@/lib/types";
 import PawLoader from "@/components/PawLoader";
@@ -7,6 +7,7 @@ import Toast, { type ToastType } from "@/components/Toast";
 import SeoMeter from "@/components/SeoMeter";
 import HistoryDrawer from "@/components/HistoryDrawer";
 import { useBlogGeneration } from "@/lib/BlogGenerationContext";
+import { computeSeoScore } from "@/lib/seoCalculator";
 
 interface Page3Props {
   onBack: () => void;
@@ -496,10 +497,324 @@ function LinkedInIcon() {
   );
 }
 
+function FileTextIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+    </svg>
+  );
+}
+
+function ScrollTextIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M8 21h12a2 2 0 0 0 2-2v-2H10v2a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v3h4" />
+      <path d="M19 17V5a2 2 0 0 0-2-2H4" />
+      <line x1="15" y1="8" x2="9" y2="8" />
+      <line x1="15" y1="12" x2="9" y2="12" />
+    </svg>
+  );
+}
+
 function CheckIcon() {
   return (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
       <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
+function SparkleStarIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  );
+}
+
+function LightningIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  );
+}
+
+function PawPrintIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="#15803D" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M12 12.8c-3.2 0-5.8 1.4-5.8 3.5 0 2.1 2.6 3.5 5.8 3.5s5.8-1.4 5.8-3.5c0-2.1-2.6-3.5-5.8-3.5z" />
+      <circle cx="7" cy="9.2" r="2.2" />
+      <circle cx="10.4" cy="6.2" r="2.2" />
+      <circle cx="13.6" cy="6.2" r="2.2" />
+      <circle cx="17" cy="9.2" r="2.2" />
+    </svg>
+  );
+}
+
+function BarChartSmallIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <line x1="18" y1="20" x2="18" y2="10" />
+      <line x1="12" y1="20" x2="12" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function formatRelativeTime(timestamp: number): string {
+  const diffSec = Math.floor((Date.now() - timestamp) / 1000);
+  if (diffSec < 60) return "Just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHrs = Math.floor(diffMin / 60);
+  if (diffHrs < 24) return `${diffHrs}h ago`;
+  const diffDays = Math.floor(diffHrs / 24);
+  return `${diffDays}d ago`;
+}
+
+function RecentGenerationsStrip({
+  history,
+  onLoadItem,
+  onOpenHistory,
+}: {
+  history: any[];
+  onLoadItem: (item: any) => void;
+  onOpenHistory: () => void;
+}) {
+  if (!history || history.length === 0) {
+    return (
+      <div className="p3-recent-strip-empty" style={{
+        marginTop: "32px",
+        padding: "36px 24px",
+        background: "linear-gradient(135deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.6) 100%)",
+        border: "1.5px dashed #CBD5E1",
+        borderRadius: "18px",
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "12px",
+      }}>
+        <div style={{
+          width: "48px",
+          height: "48px",
+          borderRadius: "14px",
+          background: "#ECFDF5",
+          border: "1px solid #A7F3D0",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#059669",
+        }}>
+          <HistoryIcon />
+        </div>
+        <h4 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+          Ready to Craft Your Next SEO Article
+        </h4>
+        <p style={{ fontSize: "0.86rem", color: "#64748B", margin: 0, maxWidth: "460px", lineHeight: "1.5" }}>
+          Pick a topic idea above or type your own prompt to generate an optimized ~1,200-word blog with live Google SEO scoring.
+        </p>
+      </div>
+    );
+  }
+
+  const recentItems = history.slice(0, 3);
+
+  return (
+    <div className="p3-recent-strip-container" style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <ScrollTextIcon />
+          <h4 style={{ fontSize: "0.96rem", fontWeight: 800, color: "#0F172A", margin: 0 }}>
+            Recent Generations &amp; Saved Drafts
+          </h4>
+          <span style={{
+            background: "#FFF1F2",
+            border: "1px solid #FECDD3",
+            color: "#E11D48",
+            fontSize: "0.72rem",
+            fontWeight: 800,
+            padding: "2px 8px",
+            borderRadius: "999px",
+          }}>
+            {history.length} saved
+          </span>
+        </div>
+
+        {history.length > 3 && (
+          <motion.button
+            type="button"
+            onClick={onOpenHistory}
+            initial="rest"
+            whileHover="hover"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#2563EB",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "2px 6px",
+              borderRadius: "6px",
+            }}
+          >
+            <span>View All ({history.length})</span>
+            <motion.svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+              variants={{
+                rest: { x: 0 },
+                hover: { x: 4 },
+              }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              style={{ display: "inline-block", verticalAlign: "middle" }}
+            >
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </motion.svg>
+          </motion.button>
+        )}
+      </div>
+
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: "14px",
+      }}>
+        {recentItems.map((item) => {
+          const seo = computeSeoScore(item.blog, item.metaDescription);
+          return (
+            <motion.div
+              key={item.id}
+              whileHover={{ y: -3, transition: { duration: 0.18 } }}
+              style={{
+                background: "#FFFFFF",
+                border: "1.5px solid #E2E8F0",
+                borderRadius: "14px",
+                padding: "16px",
+                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <span style={{
+                    background: seo.total >= 85 ? "#ECFDF5" : seo.total >= 70 ? "#FEF3C7" : "#FEF2F2",
+                    border: `1px solid ${seo.color}`,
+                    color: seo.color,
+                    fontSize: "0.72rem",
+                    fontWeight: 800,
+                    padding: "2px 8px",
+                    borderRadius: "6px",
+                  }}>
+                    SEO {seo.total}%
+                  </span>
+
+                  <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>
+                    {formatRelativeTime(item.timestamp)}
+                  </span>
+                </div>
+
+                <h5 style={{
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  color: "#0F172A",
+                  margin: "0 0 6px 0",
+                  lineHeight: "1.35",
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                }}>
+                  {item.blog.title}
+                </h5>
+
+                <p style={{
+                  fontSize: "0.78rem",
+                  color: "#64748B",
+                  margin: 0,
+                  display: "-webkit-box",
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: "vertical",
+                  overflow: "hidden",
+                  lineHeight: "1.4",
+                }}>
+                  {item.topic}
+                </p>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid #F1F5F9" }}>
+                <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+                  ~{item.blog.approxWordCount} words
+                </span>
+
+                <motion.button
+                  type="button"
+                  onClick={() => onLoadItem(item)}
+                  whileHover={{ scale: 1.03, y: -1 }}
+                  whileTap={{ scale: 0.97 }}
+                  style={{
+                    background: "linear-gradient(135deg, #0D9488 0%, #0284C7 100%)",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "6px 14px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 3px 12px rgba(13, 148, 136, 0.25)",
+                  }}
+                >
+                  <FileTextIcon /> Resume &amp; Edit
+                </motion.button>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function StethoscopeIcon() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#2563EB"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}
+    >
+      <path d="M4.8 2.3A.3.3 0 1 0 5 2a.3.3 0 0 0-.2.3M19.2 2.3A.3.3 0 1 0 19 2a.3.3 0 0 0 .2.3" />
+      <path d="M5 2v4a7 7 0 0 0 14 0V2" />
+      <path d="M12 13v3a3 3 0 0 0 3 3h1" />
+      <circle cx="19" cy="19" r="2" fill="#2563EB" />
     </svg>
   );
 }
@@ -566,12 +881,25 @@ function PlusIcon() {
 
 function PawHeadIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
-      <path d="M12 12c-2 0-4 1.5-4 3.5 0 2.2 2.2 4.5 4 5.5 1.8-1 4-3.3 4-5.5 0-2-2-3.5-4-3.5z" />
-      <circle cx="6.5" cy="9.5" r="2.2" />
-      <circle cx="10" cy="5.5" r="2.2" />
-      <circle cx="14" cy="5.5" r="2.2" />
-      <circle cx="17.5" cy="9.5" r="2.2" />
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      style={{
+        display: "inline-block",
+        verticalAlign: "-2px",
+        marginRight: "8px",
+        flexShrink: 0,
+        color: "#15803D",
+      }}
+    >
+      <path d="M12 12.8c-3.2 0-5.8 1.4-5.8 3.5 0 2.1 2.6 3.5 5.8 3.5s5.8-1.4 5.8-3.5c0-2.1-2.6-3.5-5.8-3.5z" />
+      <circle cx="5.4" cy="11.2" r="2.4" />
+      <circle cx="9.8" cy="7.8" r="2.4" />
+      <circle cx="14.2" cy="7.8" r="2.4" />
+      <circle cx="18.6" cy="11.2" r="2.4" />
     </svg>
   );
 }
@@ -675,12 +1003,12 @@ function FunkyCounterLoader({
           {/* Left section: Document Icon + Writing your blog + Topic */}
           <div className="p3-loader-left">
             <div className="p3-loader-doc-icon paw-loader-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="#68B77A" aria-hidden="true">
-                <ellipse cx="12" cy="16.2" rx="5.4" ry="4.6" />
-                <ellipse cx="5.2" cy="8.8" rx="2.1" ry="2.7" />
-                <ellipse cx="10.1" cy="5.4" rx="2" ry="2.6" />
-                <ellipse cx="14.7" cy="5.4" rx="2" ry="2.6" />
-                <ellipse cx="19" cy="8.8" rx="2.1" ry="2.7" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="#15803D" aria-hidden="true" style={{ display: "block" }}>
+                <path d="M12 12.8c-3.2 0-5.8 1.4-5.8 3.5 0 2.1 2.6 3.5 5.8 3.5s5.8-1.4 5.8-3.5c0-2.1-2.6-3.5-5.8-3.5z" />
+                <circle cx="5.4" cy="11.2" r="2.4" />
+                <circle cx="9.8" cy="7.8" r="2.4" />
+                <circle cx="14.2" cy="7.8" r="2.4" />
+                <circle cx="18.6" cy="11.2" r="2.4" />
               </svg>
             </div>
             <div className="p3-loader-title-wrap">
@@ -765,6 +1093,7 @@ function FunkyCounterLoader({
 }
 
 // ── Concept 3: Full Workspace Skeleton Swap Loader Component ───────────────────
+
 function StudioCanvasSkeleton({
   topic,
   isDone,
@@ -772,44 +1101,72 @@ function StudioCanvasSkeleton({
   topic: string;
   isDone: boolean;
 }) {
-  const [count, setCount] = useState(1);
+  const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!isDone) {
-      const timer = setInterval(() => {
-        setCount((prev) => (prev < 95 ? prev + 1 : prev));
-      }, 360);
-      return () => clearInterval(timer);
-    } else {
+    if (isDone) {
+      // Rapid organic completion burst to 100% when backend finishes
       const timer = setInterval(() => {
         setCount((prev) => {
-          if (prev < 100) return prev + 1;
-          clearInterval(timer);
-          return 100;
+          if (prev >= 100) {
+            clearInterval(timer);
+            return 100;
+          }
+          const burst = Math.floor(Math.random() * 4) + 2; // +2, +3, +4, +5
+          return Math.min(100, prev + burst);
         });
-      }, 25);
+      }, 18);
       return () => clearInterval(timer);
+    } else {
+      // Organic randomized progression simulator with soft asymptotic creep (never gets hard-stuck)
+      let timeoutId: NodeJS.Timeout;
+
+      const scheduleNextTick = () => {
+        // Relaxed pacing that scales gracefully (200ms-480ms early, 480ms-900ms near top)
+        const baseDelay = count < 55 ? 200 : count < 85 ? 350 : 550;
+        const jitter = Math.floor(Math.random() * 260) + baseDelay;
+
+        timeoutId = setTimeout(() => {
+          setCount((prev) => {
+            if (prev >= 99) return 99; // Creep up to 99% smoothly
+
+            // Randomized step increments (+0 micro-pause, +1 steady, +2 occasional)
+            const rand = Math.random();
+            let increment = 1;
+            if (prev > 82) {
+              // Slower micro-step near the top
+              increment = rand > 0.65 ? 1 : 0;
+            } else {
+              if (rand > 0.88) increment = 2;
+              else if (rand < 0.15) increment = 0; // Micro-pause
+            }
+
+            return Math.min(99, prev + increment);
+          });
+
+          scheduleNextTick();
+        }, jitter);
+      };
+
+      scheduleNextTick();
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [isDone]);
+  }, [isDone, count > 82]);
 
-  const currentStage = count <= 35 ? 1 : count <= 75 ? 2 : 3;
-
+  const currentStage = count >= 100 || (isDone && count >= 85) ? 3 : count < 30 ? 1 : count < 70 ? 2 : 3;
   const defaultStatusText =
-    count <= 20
+    count >= 100
+      ? "✨ Generation Complete!"
+      : count < 30
       ? "Analyzing search intent & SEO density..."
-      : count <= 35
-      ? "Scanning veterinary care guidelines..."
-      : count <= 55
-      ? "Drafting core editorial section content..."
-      : count <= 75
-      ? "Generating clinical pet care FAQs..."
-      : count <= 88
-      ? "Optimizing keyword placement & meta titles..."
-      : "Finalizing article & cross-platform excerpts...";
+      : count < 70
+      ? "Drafting long-form article & clinical FAQs..."
+      : "Optimizing meta keywords & social excerpts...";
 
   return (
     <div
-      className="p3-workspace text-reveal-entry p3-workspace--expanded"
+      className="p3-workspace text-reveal-entry p3-workspace--expanded p3-skeleton-workspace-grid"
       style={{
         display: "grid",
         gridTemplateColumns: "calc(60% - 10px) calc(40% - 10px)",
@@ -822,175 +1179,382 @@ function StudioCanvasSkeleton({
         alignItems: "start",
       }}
     >
-      {/* Left Column (60% Width): Loading Bar + Blog Document Skeleton */}
+      {/* ── LEFT COLUMN (60% Width): Minimal Stepper + Realistic Article Skeleton ── */}
       <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-          {/* AI Stepper Header Bar (Exclusive to Left Column - Minimal Clean Design) */}
-          <div className="p3-skeleton-topbar" style={{ margin: 0, padding: "14px 18px", borderRadius: "12px", background: "#FFFFFF", border: "1px solid #E2E8F0", boxShadow: "none" }}>
-            {/* Header Title Row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#059669" }} />
-                <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "#0F172A" }}>
-                  AI Editorial Assistant Active
-                </span>
-                <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#047857", background: "#ECFDF5", border: "1px solid #A7F3D0", borderRadius: "6px", padding: "1px 8px" }}>
-                  {topic || "Pet Care Guide"}
-                </span>
+        
+        {/* Premium AI Stepper Header Bar */}
+        <div
+          className="p3-skeleton-topbar"
+          style={{
+            margin: 0,
+            padding: "16px 20px",
+            borderRadius: "14px",
+            background: "linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%)",
+            border: "1px solid rgba(226, 232, 240, 0.8)",
+            boxShadow: "0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 2px 6px -1px rgba(15, 23, 42, 0.02)",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* Header Title Row */}
+          <div className="p3-skeleton-header-row" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+            <div className="p3-skeleton-header-left" style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              {/* Pulsing Multi-Ring Radar Aura Dot */}
+              <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, flexShrink: 0 }}>
+                <motion.span
+                  animate={{ scale: [1, 2, 1], opacity: [0.15, 0.5, 0.15] }}
+                  transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  style={{
+                    position: "absolute",
+                    width: 16,
+                    height: 16,
+                    borderRadius: "50%",
+                    background: "#10B981",
+                  }}
+                />
+                <motion.span
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.8, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+                  style={{
+                    position: "absolute",
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: "#059669",
+                  }}
+                />
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#047857", boxShadow: "0 0 10px #10B981", zIndex: 2 }} />
               </div>
 
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: "0.76rem", color: "#64748B" }}>Progress</span>
-                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#059669", background: "#ECFDF5", border: "1px solid #A7F3D0", borderRadius: "6px", padding: "1px 8px", fontFamily: "var(--font-mono)" }}>
-                  {count}%
-                </span>
-              </div>
-            </div>
+              <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "#0F172A", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>
+                AI Editorial Assistant Active
+              </span>
 
-            {/* 3-Step Active Stage Stepper Pills */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 10 }}>
-              {[
-                { step: 1, title: "1. Research Intent" },
-                { step: 2, title: "2. Draft Article" },
-                { step: 3, title: "3. SEO Optimize" },
-              ].map((st, i) => {
-                const isActive = currentStage === i + 1;
-                const isCompleted = currentStage > i + 1;
-                return (
-                  <div
-                    key={st.step}
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "6px",
-                      background: isActive ? "#ECFDF5" : isCompleted ? "#F0F9FF" : "#F8FAFC",
-                      border: isActive ? "1px solid #A7F3D0" : isCompleted ? "1px solid #BAE6FD" : "1px solid #E2E8F0",
-                      color: isActive ? "#047857" : isCompleted ? "#0369A1" : "#64748B",
-                      fontSize: "0.74rem",
-                      fontWeight: 600,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                    }}
-                  >
-                    <span>{isCompleted ? "✓" : isActive ? "⚡" : i + 1}</span>
-                    <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>{st.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Status & Progress Bar Row */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: "0.78rem", color: "#475569", fontWeight: 500 }}>{defaultStatusText}</span>
-              <span style={{ fontSize: "0.72rem", color: "#64748B" }}>⏱️ ~15s</span>
-            </div>
-
-            {/* Minimal Progress Track */}
-            <div style={{ width: "100%", height: "5px", background: "#F1F5F9", borderRadius: "9999px", overflow: "hidden", border: "1px solid #E2E8F0" }}>
-              <div
+              {/* Topic Badge Pill */}
+              <span
+                className="p3-skeleton-topic-badge"
                 style={{
-                  height: "100%",
-                  width: `${count}%`,
-                  background: "linear-gradient(90deg, #059669 0%, #10B981 100%)",
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  color: "#047857",
+                  background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+                  border: "1px solid #A7F3D0",
                   borderRadius: "9999px",
-                  transition: "width 0.35s ease-out",
+                  padding: "3px 11px",
+                  boxShadow: "0 1px 3px rgba(5,150,105,0.08)",
+                }}
+              >
+                {topic || "Pet Care Guide"}
+              </span>
+            </div>
+
+            {/* Progress Percentage Badge */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "#64748B" }}>Progress</span>
+              <motion.span
+                key={count}
+                initial={{ scale: 1.08 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 450, damping: 25 }}
+                style={{
+                  fontSize: "0.84rem",
+                  fontWeight: 800,
+                  color: "#047857",
+                  background: "#ECFDF5",
+                  border: "1.5px solid #A7F3D0",
+                  borderRadius: "8px",
+                  padding: "2px 10px",
+                  fontFamily: "var(--font-mono)",
+                  fontVariantNumeric: "tabular-nums",
+                  boxShadow: "0 2px 6px rgba(5, 150, 105, 0.1)",
+                }}
+              >
+                {count}%
+              </motion.span>
+            </div>
+          </div>
+
+          {/* 3-Step Stage Stepper Badges */}
+          <div className="p3-skeleton-stepper-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+            {[
+              { step: 1, title: "Research Intent" },
+              { step: 2, title: "Draft Article" },
+              { step: 3, title: "SEO Optimize" },
+            ].map((st, i) => {
+              const isActive = currentStage === i + 1;
+              const isCompleted = currentStage > i + 1;
+              return (
+                <div
+                  key={st.step}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "9px",
+                    background: isActive ? "linear-gradient(135deg, #ECFDF5 0%, #E0F2FE 100%)" : isCompleted ? "#F0F9FF" : "#F8FAFC",
+                    border: isActive ? "1.5px solid #059669" : isCompleted ? "1.5px solid #BAE6FD" : "1px solid #E2E8F0",
+                    color: isActive ? "#047857" : isCompleted ? "#0369A1" : "#64748B",
+                    fontSize: "0.76rem",
+                    fontWeight: isActive ? 700 : 600,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: isActive ? "0 2px 10px rgba(5, 150, 105, 0.15)" : "none",
+                    transition: "all 0.3s ease",
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                    {isCompleted ? (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: "#0369A1" }}>
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    ) : isActive ? (
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, color: "#059669" }}>
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                      </svg>
+                    ) : (
+                      `${i + 1}.`
+                    )}
+                  </span>
+                  <span style={{ textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    {isActive || isCompleted ? `${i + 1}. ${st.title}` : st.title}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Status & Timer Row */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <span style={{ fontSize: "0.78rem", color: "#334155", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
+              </svg>
+              {defaultStatusText}
+            </span>
+            <span style={{ fontSize: "0.72rem", color: "#475569", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 8px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              ~15s
+            </span>
+          </div>
+
+          {/* Glowing Shimmer Multi-Stop Gradient Progress Bar Track */}
+          <div style={{ width: "100%", height: "8px", background: "#F1F5F9", borderRadius: "9999px", overflow: "hidden", border: "1px solid #E2E8F0", position: "relative" }}>
+            <div
+              style={{
+                height: "100%",
+                width: `${count}%`,
+                background: "linear-gradient(90deg, #059669 0%, #10B981 40%, #06B6D4 80%, #3B82F6 100%)",
+                borderRadius: "9999px",
+                transition: "width 0.35s ease-out",
+                boxShadow: "0 0 12px rgba(16, 185, 129, 0.45)",
+                position: "relative",
+                overflow: "hidden",
+              }}
+            >
+              <motion.div
+                animate={{ x: ["-100%", "200%"] }}
+                transition={{ repeat: Infinity, duration: 1.6, ease: "linear" }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  bottom: 0,
+                  width: "40%",
+                  background: "linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%)",
                 }}
               />
             </div>
           </div>
+        </div>
 
-          {/* Left Column Blog Canvas Skeleton Card */}
-          <div
-            className="p3-skeleton-card"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              padding: "24px",
-            }}
-          >
-            {/* Article Header & Title Skeleton */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {/* Realistic Article Document Canvas Skeleton Card */}
+        <div
+          className="p3-skeleton-card"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            padding: "24px",
+          }}
+        >
+          {/* Article Title & Toolbar Header Skeleton */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #F1F5F9", paddingBottom: "14px" }}>
+            <div className="skeleton-shimmer" style={{ width: "72%", height: "24px", borderRadius: "6px" }} />
+            <div style={{ display: "flex", gap: "8px" }}>
+              <div className="skeleton-shimmer" style={{ width: "32px", height: "32px", borderRadius: "8px" }} />
+              <div className="skeleton-shimmer" style={{ width: "32px", height: "32px", borderRadius: "8px" }} />
+              <div className="skeleton-shimmer" style={{ width: "32px", height: "32px", borderRadius: "8px" }} />
+            </div>
+          </div>
+
+          {/* Live SEO Quality Index Summary Box Skeleton */}
+          <div style={{ padding: "16px", background: "#F8FAFC", borderRadius: "12px", border: "1.5px solid #E2E8F0", display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div className="skeleton-shimmer" style={{ width: "110px", height: "16px" }} />
-                <span style={{ fontSize: "0.75rem", color: "#94A3B8" }}>•</span>
-                <div className="skeleton-shimmer" style={{ width: "75px", height: "16px" }} />
+                <div className="skeleton-shimmer" style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
+                <div className="skeleton-shimmer" style={{ width: "150px", height: "16px" }} />
               </div>
-              <div className="skeleton-shimmer" style={{ width: "80%", height: "30px" }} />
+              <div className="skeleton-shimmer" style={{ width: "110px", height: "14px" }} />
             </div>
 
-            {/* Meta Badges Skeleton */}
-            <div style={{ display: "flex", gap: "10px" }}>
-              <div className="skeleton-shimmer" style={{ width: "90px", height: "24px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "110px", height: "24px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "80px", height: "24px", borderRadius: "9999px" }} />
+            {/* 4 SEO Metrics Badges Grid Skeleton */}
+            <div style={{ display: "grid", gridTemplateColumns: "54px 1fr 1fr 1fr", gap: "10px", alignItems: "center" }}>
+              <div className="skeleton-shimmer" style={{ width: "50px", height: "50px", borderRadius: "50%" }} />
+              <div className="skeleton-shimmer" style={{ height: "46px", borderRadius: "10px" }} />
+              <div className="skeleton-shimmer" style={{ height: "46px", borderRadius: "10px" }} />
+              <div className="skeleton-shimmer" style={{ height: "46px", borderRadius: "10px" }} />
             </div>
+          </div>
 
-            {/* Featured Media Cover Image Skeleton */}
-            <div className="skeleton-shimmer" style={{ width: "100%", height: "180px", borderRadius: "12px" }} />
-
-            {/* Key Takeaways Box Skeleton */}
-            <div style={{ padding: "14px 16px", background: "#F8FAFC", borderRadius: "10px", border: "1.5px solid #E2E8F0", display: "flex", flexDirection: "column", gap: "8px" }}>
-              <div className="skeleton-shimmer" style={{ width: "130px", height: "14px" }} />
-              <div className="skeleton-shimmer" style={{ width: "94%", height: "12px" }} />
-              <div className="skeleton-shimmer" style={{ width: "86%", height: "12px" }} />
+          {/* Realistic Article Content Flow (Paragraphs + Headings + Lists) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Intro Paragraph Skeletons (Varied natural widths) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="skeleton-shimmer" style={{ width: "98%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "93%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "88%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "95%", height: "14px" }} />
             </div>
-
-            {/* H2 Subheading & Paragraph Skeletons */}
-            <div className="skeleton-shimmer" style={{ width: "45%", height: "22px", marginTop: "4px" }} />
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div className="skeleton-shimmer" style={{ width: "98%", height: "13px" }} />
-              <div className="skeleton-shimmer" style={{ width: "92%", height: "13px" }} />
-              <div className="skeleton-shimmer" style={{ width: "85%", height: "13px" }} />
-              <div className="skeleton-shimmer" style={{ width: "65%", height: "13px" }} />
+              <div className="skeleton-shimmer" style={{ width: "96%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "91%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "78%", height: "14px" }} />
             </div>
 
-            {/* Keywords Chips Skeleton Row */}
-            <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1.5px solid #F1F5F9", display: "flex", alignItems: "center", gap: "8px" }}>
-              <div className="skeleton-shimmer" style={{ width: "90px", height: "14px" }} />
-              <div className="skeleton-shimmer" style={{ width: "75px", height: "24px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "95px", height: "24px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "80px", height: "24px", borderRadius: "9999px" }} />
+            {/* H2 Heading 1 Skeleton */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+              <div className="skeleton-shimmer" style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
+              <div className="skeleton-shimmer" style={{ width: "58%", height: "20px", borderRadius: "6px" }} />
+            </div>
+
+            {/* Paragraph lines under Heading 1 */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="skeleton-shimmer" style={{ width: "99%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "94%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "90%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "82%", height: "14px" }} />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="skeleton-shimmer" style={{ width: "95%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "92%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "76%", height: "14px" }} />
+            </div>
+
+            {/* H2 Heading 2 Skeleton */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+              <div className="skeleton-shimmer" style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
+              <div className="skeleton-shimmer" style={{ width: "52%", height: "20px", borderRadius: "6px" }} />
+            </div>
+
+            {/* Paragraph lines under Heading 2 */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <div className="skeleton-shimmer" style={{ width: "96%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "93%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "89%", height: "14px" }} />
+              <div className="skeleton-shimmer" style={{ width: "74%", height: "14px" }} />
+            </div>
+
+            {/* H2 Heading 3 Skeleton */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+              <div className="skeleton-shimmer" style={{ width: "16px", height: "16px", borderRadius: "4px" }} />
+              <div className="skeleton-shimmer" style={{ width: "64%", height: "20px", borderRadius: "6px" }} />
+            </div>
+
+            {/* Bullet List Item Skeletons */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", paddingLeft: "12px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "0.8rem", color: "#10B981" }}>•</span>
+                <div className="skeleton-shimmer" style={{ width: "92%", height: "13px" }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "0.8rem", color: "#10B981" }}>•</span>
+                <div className="skeleton-shimmer" style={{ width: "86%", height: "13px" }} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "0.8rem", color: "#10B981" }}>•</span>
+                <div className="skeleton-shimmer" style={{ width: "78%", height: "13px" }} />
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Right Column: Assistant Tools & Meta Skeleton Cards */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
-          {/* Meta Title Card Skeleton */}
-          <div className="p3-skeleton-card" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div className="skeleton-shimmer" style={{ width: "45%", height: "16px" }} />
-            <div className="skeleton-shimmer" style={{ width: "100%", height: "38px", borderRadius: "8px" }} />
+      {/* ── RIGHT COLUMN (40% Width): Realistic Social Engine Skeleton ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
+        
+        {/* Top Tab Navigation Skeleton */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", background: "#F1F5F9", padding: "4px", borderRadius: "12px" }}>
+          <div className="skeleton-shimmer" style={{ height: "36px", borderRadius: "8px", background: "#FFFFFF" }} />
+          <div className="skeleton-shimmer" style={{ height: "36px", borderRadius: "8px" }} />
+        </div>
+
+        {/* Primary Action Button Skeleton (+ Generate Social Posts) */}
+        <div className="skeleton-shimmer" style={{ width: "100%", height: "42px", borderRadius: "10px", background: "linear-gradient(90deg, #059669 0%, #10B981 100%)" }} />
+
+        {/* Content Angle Section Heading & Tag Chips Skeleton */}
+        <div className="p3-skeleton-card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="skeleton-shimmer" style={{ width: "120px", height: "12px" }} />
+          <div style={{ display: "flex", gap: "8px" }}>
+            <div className="skeleton-shimmer" style={{ width: "75px", height: "28px", borderRadius: "9999px" }} />
+            <div className="skeleton-shimmer" style={{ width: "95px", height: "28px", borderRadius: "9999px" }} />
+            <div className="skeleton-shimmer" style={{ width: "85px", height: "28px", borderRadius: "9999px" }} />
+          </div>
+        </div>
+
+        {/* Social Post Content Card 1 Skeleton */}
+        <div className="p3-skeleton-card" style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="skeleton-shimmer" style={{ width: "140px", height: "20px", borderRadius: "6px" }} />
+            <div className="skeleton-shimmer" style={{ width: "60px", height: "16px", borderRadius: "4px" }} />
           </div>
 
-          {/* Meta Description Card Skeleton */}
-          <div className="p3-skeleton-card" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div className="skeleton-shimmer" style={{ width: "55%", height: "16px" }} />
-            <div className="skeleton-shimmer" style={{ width: "100%", height: "64px", borderRadius: "8px" }} />
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div className="skeleton-shimmer" style={{ width: "98%", height: "13px" }} />
+            <div className="skeleton-shimmer" style={{ width: "91%", height: "13px" }} />
+            <div className="skeleton-shimmer" style={{ width: "85%", height: "13px" }} />
+            <div className="skeleton-shimmer" style={{ width: "62%", height: "13px" }} />
           </div>
 
-          {/* SEO Keywords Card Skeleton */}
-          <div className="p3-skeleton-card" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div className="skeleton-shimmer" style={{ width: "40%", height: "16px" }} />
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-              <div className="skeleton-shimmer" style={{ width: "70px", height: "26px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "95px", height: "26px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "80px", height: "26px", borderRadius: "9999px" }} />
-              <div className="skeleton-shimmer" style={{ width: "110px", height: "26px", borderRadius: "9999px" }} />
-            </div>
+          <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+            <div className="skeleton-shimmer" style={{ width: "85px", height: "28px", borderRadius: "6px" }} />
+            <div className="skeleton-shimmer" style={{ width: "70px", height: "28px", borderRadius: "6px" }} />
+          </div>
+        </div>
+
+        {/* Social Post Content Card 2 Skeleton */}
+        <div className="p3-skeleton-card" style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div className="skeleton-shimmer" style={{ width: "160px", height: "20px", borderRadius: "6px" }} />
+            <div className="skeleton-shimmer" style={{ width: "60px", height: "16px", borderRadius: "4px" }} />
           </div>
 
-          {/* Social Media Excerpt Skeleton Card */}
-          <div className="p3-skeleton-card" style={{ padding: "18px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "4px" }}>
-              <div className="skeleton-shimmer" style={{ width: "80px", height: "26px", borderRadius: "6px" }} />
-              <div className="skeleton-shimmer" style={{ width: "80px", height: "26px", borderRadius: "6px" }} />
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div className="skeleton-shimmer" style={{ width: "96%", height: "13px" }} />
             <div className="skeleton-shimmer" style={{ width: "88%", height: "13px" }} />
-            <div className="skeleton-shimmer" style={{ width: "60%", height: "13px" }} />
+            <div className="skeleton-shimmer" style={{ width: "92%", height: "13px" }} />
+            <div className="skeleton-shimmer" style={{ width: "50%", height: "13px" }} />
+          </div>
+
+          <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+            <div className="skeleton-shimmer" style={{ width: "95px", height: "28px", borderRadius: "6px" }} />
           </div>
         </div>
+
+        {/* Social Engine Meta & SEO Tags Skeleton Card */}
+        <div className="p3-skeleton-card" style={{ padding: "18px", display: "flex", flexDirection: "column", gap: "12px" }}>
+          <div className="skeleton-shimmer" style={{ width: "130px", height: "14px" }} />
+          <div className="skeleton-shimmer" style={{ width: "100%", height: "36px", borderRadius: "8px" }} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "4px" }}>
+            <div className="skeleton-shimmer" style={{ width: "65px", height: "22px", borderRadius: "9999px" }} />
+            <div className="skeleton-shimmer" style={{ width: "80px", height: "22px", borderRadius: "9999px" }} />
+            <div className="skeleton-shimmer" style={{ width: "75px", height: "22px", borderRadius: "9999px" }} />
+            <div className="skeleton-shimmer" style={{ width: "90px", height: "22px", borderRadius: "9999px" }} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1001,10 +1565,12 @@ function StudioCanvasEditor({
   blog,
   onSave,
   onCancel,
+  onDiscardRequest,
 }: {
   blog: SeoBlog;
   onSave: (updated: SeoBlog) => void;
   onCancel: () => void;
+  onDiscardRequest?: () => void;
 }) {
   const [draft, setDraft] = useState<SeoBlog>(() => JSON.parse(JSON.stringify(blog)));
   const [isDirty, setIsDirty] = useState(false);
@@ -1029,11 +1595,9 @@ function StudioCanvasEditor({
 
   const handleExit = () => {
     if (isDirty) {
-      if (
-        window.confirm(
-          "You have unsaved changes in the Studio Canvas. Are you sure you want to discard your edits?"
-        )
-      ) {
+      if (onDiscardRequest) {
+        onDiscardRequest();
+      } else {
         onCancel();
       }
     } else {
@@ -1092,7 +1656,9 @@ function StudioCanvasEditor({
 
       {/* AI Quick Tone Polisher Toolbar */}
       <div className="p3-tone-polisher-bar">
-        <span className="p3-tone-label">✨ AI Tone Quick-Polish:</span>
+        <span className="p3-tone-label" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+          <SparkleStarIcon /> AI Tone Quick-Polish:
+        </span>
         <div className="p3-tone-btn-group">
           <button
             type="button"
@@ -1101,7 +1667,13 @@ function StudioCanvasEditor({
             onClick={(e) => handlePolishTone("punchier", e)}
             title="Make intro paragraph punchier & concise"
           >
-            {isPolishingPreset === "punchier" ? <span className="p3-spinner p3-spinner--sm" /> : "⚡ Punchier & Concise"}
+            {isPolishingPreset === "punchier" ? (
+              <span className="p3-spinner p3-spinner--sm" />
+            ) : (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <LightningIcon /> Punchier &amp; Concise
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -1110,7 +1682,13 @@ function StudioCanvasEditor({
             onClick={(e) => handlePolishTone("warm", e)}
             title="Add empathetic pet parent warmth"
           >
-            {isPolishingPreset === "warm" ? <span className="p3-spinner p3-spinner--sm" /> : "🐾 Warmer Pet Voice"}
+            {isPolishingPreset === "warm" ? (
+              <span className="p3-spinner p3-spinner--sm" />
+            ) : (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <PawPrintIcon /> Warmer Pet Voice
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -1119,7 +1697,13 @@ function StudioCanvasEditor({
             onClick={(e) => handlePolishTone("stats", e)}
             title="Add veterinary statistical data point"
           >
-            {isPolishingPreset === "stats" ? <span className="p3-spinner p3-spinner--sm" /> : "📊 Add Statistics"}
+            {isPolishingPreset === "stats" ? (
+              <span className="p3-spinner p3-spinner--sm" />
+            ) : (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <BarChartSmallIcon /> Add Statistics
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -1543,7 +2127,9 @@ function BlogRenderer({
 
       {blog.vetCta && (
         <div className="p3-quote-card">
-          <div className="p3-quote-icon">🩺</div>
+          <div className="p3-quote-icon">
+            <StethoscopeIcon />
+          </div>
           <p className="p3-quote-text">
             Get help from a CuddlyTails AI vet{" "}
             <a
@@ -1625,9 +2211,19 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     generateLinkedInPosts,
     resetBlogState,
     blogHistory,
+    loadBlogFromHistory,
   } = useBlogGeneration();
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  const [isTransitioningNewBlog, setIsTransitioningNewBlog] = useState(false);
+  const [transitionPhase, setTransitionPhase] = useState<"idle" | "expanding" | "revealing">("idle");
+  const newBlogBtnRef = useRef<HTMLButtonElement>(null);
+  const [circleOrigin, setCircleOrigin] = useState<{ x: number; y: number }>({ x: 800, y: 100 });
 
   const [suggestions, setSuggestions] = useState<string[]>([
     "Raw Food vs Kibble: Pros & Cons",
@@ -1653,6 +2249,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
   const [isSuggesting, setIsSuggesting] = useState(false);
 
   const handleSuggestTopic = () => {
+    if (loading) return;
     const nextTopic = globalTopicEngine.getNextTopic();
     setTopic(nextTopic);
     setPlaceholderTopic(RANDOM_PLACEHOLDERS[Math.floor(Math.random() * RANDOM_PLACEHOLDERS.length)]);
@@ -1662,6 +2259,14 @@ export default function Page3({ onBack, isActive }: Page3Props) {
   };
 
   const [activeTab, setActiveTab] = useState<keyof LinkedInPosts>("safeBet");
+  const [sparkleBurst, setSparkleBurst] = useState(false);
+
+  const handleGenerateSocialPosts = (e: React.MouseEvent) => {
+    setSparkleBurst(true);
+    setTimeout(() => setSparkleBurst(false), 850);
+    triggerMicroConfetti(e);
+    generateLinkedInPosts();
+  };
   const [asideTab, setAsideTab] = useState<"social" | "meta">("social");
   const [highlightedKeyword, setHighlightedKeyword] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -1669,6 +2274,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
   const [metaCopied, setMetaCopied] = useState(false);
   const [allPostsCopied, setAllPostsCopied] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [toastInfo, setToastInfo] = useState<{ message: string; type: ToastType } | null>(null);
@@ -1746,17 +2352,17 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     ];
 
     for (const v of variations) {
-      if (v.length >= 150 && v.length <= 160) return v;
+      if (v.length >= 140 && v.length <= 160) return v;
     }
 
     let base = variations[0];
     for (const v of variations) {
-      if (Math.abs(v.length - 155) < Math.abs(base.length - 155)) {
+      if (Math.abs(v.length - 150) < Math.abs(base.length - 150)) {
         base = v;
       }
     }
 
-    if (base.length < 150) {
+    if (base.length < 140) {
       const pads = [
         " Read our complete guide.",
         " Read our full guide today.",
@@ -1765,7 +2371,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       ];
       for (const p of pads) {
         const padded = base.replace(/\.$/, "") + p;
-        if (padded.length >= 150 && padded.length <= 160) return padded;
+        if (padded.length >= 140 && padded.length <= 160) return padded;
       }
     }
 
@@ -1777,7 +2383,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
         base.replace(" to support your pet's health and well-being.", ".")
       ];
       for (const t of trims) {
-        if (t.length >= 150 && t.length <= 160) return t;
+        if (t.length >= 140 && t.length <= 160) return t;
       }
     }
 
@@ -1808,8 +2414,67 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleNewBlog = () => {
-    resetBlogState();
+  const [targetCircleScale, setTargetCircleScale] = useState(100);
+
+  const handleNewBlog = (e?: React.MouseEvent<HTMLElement>) => {
+    if (isTransitioningNewBlog) return;
+
+    let originX = 0;
+    let originY = 0;
+
+    // Measure exact center coordinates of the + New Blog button element
+    const btn = (e && (e.currentTarget || e.target as HTMLElement)) || newBlogBtnRef.current || (typeof document !== "undefined" ? document.querySelector(".p3-new-blog-btn") : null);
+    
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      originX = rect.left + rect.width / 2;
+      originY = rect.top + rect.height / 2;
+    }
+
+    if (!originX || !originY) {
+      const fallbackBtn = typeof document !== "undefined" ? document.querySelector(".p3-new-blog-btn") : null;
+      if (fallbackBtn) {
+        const rect = fallbackBtn.getBoundingClientRect();
+        originX = rect.left + rect.width / 2;
+        originY = rect.top + rect.height / 2;
+      } else {
+        originX = typeof window !== "undefined" ? window.innerWidth - 120 : 800;
+        originY = 80;
+      }
+    }
+
+    // Calculate maximum distance to the farthest corner of the viewport from (originX, originY)
+    const W = typeof window !== "undefined" ? window.innerWidth : 1200;
+    const H = typeof window !== "undefined" ? window.innerHeight : 800;
+
+    const distTopLeft = Math.hypot(originX, originY);
+    const distTopRight = Math.hypot(W - originX, originY);
+    const distBottomLeft = Math.hypot(originX, H - originY);
+    const distBottomRight = Math.hypot(W - originX, H - originY);
+    const maxRadius = Math.max(distTopLeft, distTopRight, distBottomLeft, distBottomRight);
+
+    // Initial circle diameter is 20px (radius 10px). Calculate target scale to cover farthest corner + 8% margin
+    const computedScale = Math.ceil((maxRadius / 10) * 1.08);
+
+    setCircleOrigin({ x: originX, y: originY });
+    setTargetCircleScale(computedScale);
+
+    requestAnimationFrame(() => {
+      setIsTransitioningNewBlog(true);
+      setTransitionPhase("expanding");
+    });
+
+    // Phase 1: Smooth 600ms green wave expansion from button center covering 100% of screen
+    setTimeout(() => {
+      resetBlogState();
+      setTransitionPhase("revealing");
+    }, 600);
+
+    // Phase 2: Smooth 320ms reveal of the fresh New Blog page (920ms total)
+    setTimeout(() => {
+      setIsTransitioningNewBlog(false);
+      setTransitionPhase("idle");
+    }, 920);
   };
 
   const copyActivePost = async (e?: React.MouseEvent) => {
@@ -1838,11 +2503,13 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     const faqBlock = b.faqs.map((f) => `**${f.question}**\n\n${f.answer}`).join("\n\n");
     const metaBlock = activeMeta ? `**Meta Description:** ${activeMeta}` : "";
 
+    const ctaText = b.vetCta || "Get help from a CuddlyTails AI vet [here](https://onelink.to/gf7wz3).";
+
     return [
       `# ${b.title}`,
       b.intro.join("\n\n"),
       sectionBlocks,
-      b.vetCta,
+      ctaText,
       `### Conclusion`,
       b.conclusion.join("\n\n"),
       `### Frequently Asked Questions`,
@@ -1853,7 +2520,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       .join("\n\n");
   };
 
-  const formatHtmlParagraphs = (paragraphsInput: any, itemStyle = "font-size: 14px; color: #334155; line-height: 1.75; margin-bottom: 14px; text-align: justify;"): string => {
+  const formatHtmlParagraphs = (paragraphsInput: any, itemStyle = "font-size: 11pt; font-weight: normal; color: #000000; text-decoration: none; font-style: normal; line-height: 1.15; margin-top: 0; margin-bottom: 10pt; font-family: Arial, sans-serif;"): string => {
     if (!paragraphsInput) return "";
     const arr = Array.isArray(paragraphsInput)
       ? paragraphsInput
@@ -1876,43 +2543,49 @@ export default function Page3({ onBack, isActive }: Page3Props) {
 
   const getBlogHtml = (b: SeoBlog) => {
     const activeMeta = (metaOption === "opt1" ? metaDescription : metaDescriptionAlt) || metaDescription || metaDescriptionAlt || "";
-    const introHtml = formatHtmlParagraphs(b.intro, "font-size: 11pt; line-height: 1.6; color: #334155; margin-bottom: 12px;");
+    const pStyle = "font-size: 11pt; font-weight: normal; color: #000000; text-decoration: none; font-style: normal; line-height: 1.15; margin-top: 0; margin-bottom: 10pt; font-family: Arial, sans-serif;";
+    const h1Style = "font-size: 20pt; font-weight: bold; color: #000000; text-decoration: none; font-style: normal; margin-top: 0; margin-bottom: 12pt; font-family: Arial, sans-serif;";
+    const h2Style = "font-size: 15pt; font-weight: bold; color: #000000; text-decoration: none; font-style: normal; margin-top: 16pt; margin-bottom: 8pt; font-family: Arial, sans-serif;";
+    const h3Style = "font-size: 13pt; font-weight: bold; color: #000000; text-decoration: none; font-style: normal; margin-top: 12pt; margin-bottom: 6pt; font-family: Arial, sans-serif;";
+    const liStyle = "font-size: 11pt; font-weight: normal; color: #000000; text-decoration: none; font-style: normal; margin-bottom: 4pt; font-family: Arial, sans-serif;";
+
+    const introHtml = formatHtmlParagraphs(b.intro, pStyle);
 
     const sectionHtml = (b.sections || [])
       .map((s) => {
         const headingText = String(s.heading || "").replace(/<[^>]*>/g, "").trim();
-        const pBlock = formatHtmlParagraphs(s.paragraphs, "font-size: 11pt; line-height: 1.6; color: #334155; margin-bottom: 12px;");
+        const pBlock = formatHtmlParagraphs(s.paragraphs, pStyle);
         const bBlock =
           (s.bullets?.length ?? 0) > 0
-            ? `<ul style="margin-bottom: 12px; padding-left: 20px; color: #334155;">${s.bullets!.map((item) => `<li style="font-size: 11pt; margin-bottom: 4px;">${item.replace(/<[^>]*>/g, "")}</li>`).join("")}</ul>`
+            ? `<ul style="margin-bottom: 10pt; padding-left: 20pt; color: #000000; text-decoration: none; font-style: normal;">${s.bullets!.map((item) => `<li style="${liStyle}">${item.replace(/<[^>]*>/g, "")}</li>`).join("")}</ul>`
             : "";
         const stBlock = (s.subtopics ?? [])
           .map(
             (st) =>
-              `<h3 style="font-size: 13pt; font-weight: bold; color: #16A34A; margin-top: 14px; margin-bottom: 6px;">${st.subheading.replace(/<[^>]*>/g, "")}</h3>${formatHtmlParagraphs(st.paragraphs, "font-size: 11pt; line-height: 1.6; color: #334155; margin-bottom: 12px;")}`
+              `<h3 style="${h3Style}">${st.subheading.replace(/<[^>]*>/g, "")}</h3>${formatHtmlParagraphs(st.paragraphs, pStyle)}`
           )
           .join("");
 
-        return `<h2 style="font-size: 15pt; font-weight: bold; color: #166534; margin-top: 20px; margin-bottom: 10px;">${headingText}</h2>${pBlock}${bBlock}${stBlock}`;
+        return `<h2 style="${h2Style}">${headingText}</h2>${pBlock}${bBlock}${stBlock}`;
       })
       .join("");
 
-    const ctaHtml = `<p style="font-size: 11pt; margin-top: 16px;">Get help from a CuddlyTails AI vet <a href="https://onelink.to/gf7wz3" style="color: #2D8A4E; font-weight: bold; text-decoration: underline;">here</a>.</p>`;
+    const ctaHtml = `<p style="${pStyle}">Get help from a CuddlyTails AI vet <a href="https://onelink.to/gf7wz3" style="color: #2563EB; font-weight: normal; text-decoration: underline; font-style: normal;">here</a>.</p>`;
 
     const conclusionHtml = (b.conclusion?.length ?? 0) > 0
-      ? `<h2 style="font-size: 15pt; font-weight: bold; color: #166534; margin-top: 20px; margin-bottom: 10px;">Conclusion</h2>${formatHtmlParagraphs(b.conclusion, "font-size: 11pt; line-height: 1.6; color: #334155; margin-bottom: 12px;")}`
+      ? `<h2 style="${h2Style}">Conclusion</h2>${formatHtmlParagraphs(b.conclusion, pStyle)}`
       : "";
 
     const faqHtml = (b.faqs?.length ?? 0) > 0
-      ? `<h2 style="font-size: 15pt; font-weight: bold; color: #166534; margin-top: 20px; margin-bottom: 10px;">Frequently Asked Questions</h2>` +
-        b.faqs.map((f) => `<p style="font-size: 11pt; margin-bottom: 4px;"><b>${f.question.replace(/<[^>]*>/g, "")}</b></p><p style="font-size: 11pt; margin-bottom: 12px; color: #334155;">${f.answer.replace(/<[^>]*>/g, "")}</p>`).join("")
+      ? `<h2 style="${h2Style}">Frequently Asked Questions</h2>` +
+        b.faqs.map((f) => `<p style="font-size: 11pt; font-weight: bold; color: #000000; text-decoration: none; font-style: normal; margin-top: 8pt; margin-bottom: 3pt; font-family: Arial, sans-serif;">${f.question.replace(/<[^>]*>/g, "")}</p><p style="${pStyle}">${f.answer.replace(/<[^>]*>/g, "")}</p>`).join("")
       : "";
 
     const metaHtml = activeMeta
-      ? `<p style="font-size: 11pt; margin-top: 16px; color: #64748B;"><b>Meta Description:</b> ${activeMeta.replace(/<[^>]*>/g, "")}</p>`
+      ? `<p style="${pStyle}"><b>Meta Description:</b> ${activeMeta.replace(/<[^>]*>/g, "")}</p>`
       : "";
 
-    return `<h1 style="font-size: 20pt; font-weight: bold; color: #0F172A; border-bottom: 2px solid #2D8A4E; padding-bottom: 8px; margin-bottom: 16px;">${(b.title || "").replace(/<[^>]*>/g, "")}</h1>${introHtml}${sectionHtml}${ctaHtml}${conclusionHtml}${faqHtml}${metaHtml}`;
+    return `<div style="font-family: Arial, sans-serif; color: #000000; text-decoration: none; font-style: normal;"><h1 style="${h1Style}">${(b.title || "").replace(/<[^>]*>/g, "")}</h1>${introHtml}${sectionHtml}${ctaHtml}${conclusionHtml}${faqHtml}${metaHtml}</div>`;
   };
 
   const exportAsText = (b: SeoBlog, e?: React.MouseEvent) => {
@@ -2179,7 +2852,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     }
   };
 
-  const isCompactWorkspace = Boolean(blog);
+  const isCompactWorkspace = Boolean(blog || loading || loaderMounted);
 
   return (
     <div className={`p3-root ${isCompactWorkspace ? "p3-root--compact" : ""}`} style={{ width: "100%", maxWidth: "100%", minWidth: 0, boxSizing: "border-box", display: "flex", flexDirection: "column", alignItems: "stretch" }}>
@@ -2209,22 +2882,39 @@ export default function Page3({ onBack, isActive }: Page3Props) {
           type="button"
           onClick={() => setIsHistoryOpen(true)}
           style={{
-            background: "rgba(104, 183, 122, 0.12)",
-            border: "1px solid rgba(104, 183, 122, 0.3)",
-            color: "#68B77A",
+            background: "#F1F5F9",
+            border: "1px solid #CBD5E1",
+            color: "#334155",
             padding: "8px 14px",
             borderRadius: "10px",
             fontSize: "0.85rem",
             fontWeight: 600,
-            display: "flex",
+            display: "inline-flex",
             alignItems: "center",
-            gap: "6px",
+            justifyContent: "center",
+            gap: "5px",
+            lineHeight: 1,
             cursor: "pointer",
             whiteSpace: "nowrap",
             marginTop: "12px",
+            transition: "all 0.2s ease",
+            boxShadow: "0 1px 3px rgba(15, 23, 42, 0.05)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "#E2E8F0";
+            e.currentTarget.style.borderColor = "#94A3B8";
+            e.currentTarget.style.color = "#0F172A";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "#F1F5F9";
+            e.currentTarget.style.borderColor = "#CBD5E1";
+            e.currentTarget.style.color = "#334155";
           }}
         >
-          <HistoryIcon /> History ({blogHistory.length})
+          <HistoryIcon />
+          <span style={{ display: "inline-block", lineHeight: "1" }}>
+            History <strong style={{ color: "#E2776B", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>({blogHistory.length})</strong>
+          </span>
         </button>
       </div>
 
@@ -2249,6 +2939,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
             placeholder={placeholderTopic}
             value={topic}
             maxLength={charMax}
+            disabled={loading}
             onChange={(e) => setTopic(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
@@ -2261,14 +2952,69 @@ export default function Page3({ onBack, isActive }: Page3Props) {
           />
 
           <span className="p3-input-char-count">{topic.length} / {charMax}</span>
+
+          {/* Interactive Animated Clear Cross Button */}
+          <AnimatePresence>
+            {topic.length > 0 && !loading && (
+              <motion.button
+                type="button"
+                initial={{ scale: 0, opacity: 0, rotate: -90 }}
+                animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                exit={{ scale: 0, opacity: 0, rotate: 90 }}
+                whileHover={{ scale: 1.18, rotate: 90, backgroundColor: "#EF4444", color: "#FFFFFF", borderColor: "#EF4444" }}
+                whileTap={{ scale: 0.88, rotate: 180 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                onClick={() => {
+                  setTopic("");
+                  document.getElementById("p3-topic-input")?.focus();
+                }}
+                title="Clear topic input"
+                aria-label="Clear topic input"
+                style={{
+                  width: "22px",
+                  minWidth: "22px",
+                  maxWidth: "22px",
+                  height: "22px",
+                  minHeight: "22px",
+                  maxHeight: "22px",
+                  aspectRatio: "1 / 1",
+                  borderRadius: "50%",
+                  border: "1px solid #CBD5E1",
+                  background: "#F1F5F9",
+                  color: "#64748B",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  marginRight: "4px",
+                  padding: 0,
+                  boxShadow: "0 1px 3px rgba(15,23,42,0.08)",
+                  transition: "background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease",
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </motion.button>
+            )}
+          </AnimatePresence>
+
           <span className="p3-input-divider" aria-hidden="true" />
 
           <button
             type="button"
             className={`p3-input-idea-btn ${isSuggesting ? "p3-idea-pop spin-anim" : ""}`}
             onClick={handleSuggestTopic}
-            title="Suggest a new topic idea"
+            disabled={loading}
+            title={loading ? "Generating Blog..." : "Suggest a new topic idea"}
             aria-label="Suggest a topic"
+            style={{
+              opacity: loading ? 0.45 : 1,
+              cursor: loading ? "not-allowed" : "pointer",
+              pointerEvents: loading ? "none" : "auto",
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#68B77A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", minWidth: 20, minHeight: 20 }}>
               <path
@@ -2301,6 +3047,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
               alignItems: "center",
               justifyContent: "center",
               cursor: (loading || !topic.trim()) ? "not-allowed" : "pointer",
+              pointerEvents: loading ? "none" : "auto",
               boxShadow: (loading || !topic.trim()) ? "none" : "0 3px 12px rgba(104, 183, 122, 0.45)",
               transition: "all 0.2s ease",
               flexShrink: 0,
@@ -2354,10 +3101,17 @@ export default function Page3({ onBack, isActive }: Page3Props) {
 
           {isCompactWorkspace && (
             <button
+              ref={newBlogBtnRef}
               type="button"
               className="p3-new-blog-btn"
-              onClick={handleNewBlog}
-              title="Start a new blog topic"
+              disabled={loading}
+              onClick={(e) => !loading && handleNewBlog(e)}
+              title={loading ? "Generating Blog..." : "Start a new blog topic"}
+              style={{
+                opacity: loading ? 0.5 : 1,
+                cursor: loading ? "not-allowed" : "pointer",
+                pointerEvents: loading ? "none" : "auto",
+              }}
             >
               <PlusIcon />
               <span>New Blog</span>
@@ -2377,14 +3131,17 @@ export default function Page3({ onBack, isActive }: Page3Props) {
               <button
                 type="button"
                 onClick={shuffleIdeas}
-                title="Shuffle Pet Topic Ideas"
+                disabled={loading}
+                title={loading ? "Generating Blog..." : "Shuffle Pet Topic Ideas"}
                 aria-label="Shuffle Pet Topic Ideas"
                 className="p3-shuffle-btn-interactive"
                 style={{
                   background: "#C6F6D5",
                   border: "1.5px solid #2D8A4E",
                   color: "#1E6B37",
-                  cursor: "pointer",
+                  cursor: loading ? "not-allowed" : "pointer",
+                  opacity: loading ? 0.45 : 1,
+                  pointerEvents: loading ? "none" : "auto",
                   padding: "4px 10px",
                   display: "inline-flex",
                   alignItems: "center",
@@ -2420,9 +3177,17 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                   key={chipText}
                   type="button"
                   className={`p3-chip-btn${topic === chipText ? " active" : ""}`}
+                  disabled={loading}
                   onClick={() => {
-                    setTopic(chipText);
-                    document.getElementById("p3-topic-input")?.focus();
+                    if (!loading) {
+                      setTopic(chipText);
+                      document.getElementById("p3-topic-input")?.focus();
+                    }
+                  }}
+                  style={{
+                    opacity: loading ? 0.45 : 1,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    pointerEvents: loading ? "none" : "auto",
                   }}
                 >
                   {chipText}
@@ -2435,6 +3200,18 @@ export default function Page3({ onBack, isActive }: Page3Props) {
 
       {/* ── Error ────────────────────────────────────────────── */}
       {error && <p className="p3-error">{error}</p>}
+
+      {/* ── Initial Empty State Recent Generations Quick-Resume Strip ───── */}
+      {!blog && !loading && (
+        <RecentGenerationsStrip
+          history={blogHistory}
+          onLoadItem={(item) => {
+            loadBlogFromHistory(item);
+            setShowWorkspace(true);
+          }}
+          onOpenHistory={() => setIsHistoryOpen(true)}
+        />
+      )}
 
       {/* ── Concept 3: Inline Full Workspace Skeleton Swap Loader ── */}
       {loaderMounted && (!blog || loading) && (
@@ -2612,14 +3389,78 @@ export default function Page3({ onBack, isActive }: Page3Props) {
               {asideTab === "social" ? (
                 <>
 
-                  <button
+                  <motion.button
                     id="p3-gen-posts-btn"
-                    className="p3-btn p3-btn--teal p3-btn--full"
-                    onClick={generateLinkedInPosts}
+                    type="button"
+                    className="p3-btn p3-btn--full"
+                    onClick={handleGenerateSocialPosts}
                     disabled={postsLoading}
+                    whileHover={postsLoading ? undefined : { scale: 1.015, y: -1 }}
+                    whileTap={postsLoading ? undefined : { scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    style={{
+                      height: "42px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(135deg, #2D8A4E 0%, #1E6B37 100%)",
+                      color: "#FFFFFF",
+                      border: "1px solid #1E6B37",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      cursor: postsLoading ? "not-allowed" : "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      position: "relative",
+                      overflow: "visible",
+                      opacity: postsLoading ? 0.82 : 1,
+                      boxShadow: postsLoading ? "none" : "0 2px 8px rgba(45, 138, 78, 0.2)",
+                      transition: "opacity 0.2s ease, background 0.2s ease, box-shadow 0.2s ease",
+                    }}
                   >
-                    {postsLoading ? <span className="p3-spinner" /> : "+ Generate Social Posts"}
-                  </button>
+                    {sparkleBurst && (
+                      <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 20 }}>
+                        {[...Array(12)].map((_, i) => {
+                          const angle = (i / 12) * 360;
+                          const rad = (angle * Math.PI) / 180;
+                          const distance = 42 + (i % 3) * 12;
+                          const x = Math.cos(rad) * distance;
+                          const y = Math.sin(rad) * distance;
+                          const symbols = ["✨", "✦", "❇️", "⭐", "•"];
+                          const symbol = symbols[i % symbols.length];
+                          return (
+                            <motion.span
+                              key={i}
+                              initial={{ opacity: 1, scale: 0.2, x: 0, y: 0 }}
+                              animate={{ opacity: 0, scale: 1.3, x, y }}
+                              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                              style={{
+                                position: "absolute",
+                                left: "50%",
+                                top: "50%",
+                                fontSize: i % 2 === 0 ? "13px" : "9px",
+                                color: i % 3 === 0 ? "#34D399" : i % 2 === 0 ? "#10B981" : "#F59E0B",
+                                textShadow: "0 0 6px rgba(16, 185, 129, 0.8)",
+                                pointerEvents: "none",
+                              }}
+                            >
+                              {symbol}
+                            </motion.span>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {postsLoading ? (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "8px", color: "#FFFFFF", fontWeight: 700 }}>
+                        <span className="p3-spinner" style={{ width: "16px", height: "16px", borderColor: "rgba(255, 255, 255, 0.35)", borderTopColor: "#FFFFFF" }} /> Generating Posts...
+                      </span>
+                    ) : (
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: 700 }}>
+                        Generate Social Posts
+                      </span>
+                    )}
+                  </motion.button>
 
                   <hr className="p3-aside-divider" />
                   <p className="p3-aside-style-label">CONTENT ANGLE</p>
@@ -2696,18 +3537,18 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                         className="p3-meta-textarea"
                         value={metaDescription}
                         onChange={(e) => setMetaDescription(e.target.value)}
-                        placeholder="SEO-friendly meta description (150–160 characters)..."
+                        placeholder="SEO-friendly meta description (140–160 characters)..."
                         rows={4}
                       />
                       <div className="p3-meta-footer">
                         <span
                           className={`p3-meta-count ${
-                            metaDescription.length >= 150 && metaDescription.length <= 160
+                            metaDescription.length >= 140 && metaDescription.length <= 160
                               ? "p3-meta-count--optimal"
                               : ""
                           }`}
                         >
-                          {metaDescription.length} / 160 chars (Optimal: 150–160)
+                          {metaDescription.length} / 160 chars (Optimal: 140–160)
                         </span>
                       </div>
                     </div>
@@ -2737,18 +3578,18 @@ export default function Page3({ onBack, isActive }: Page3Props) {
                         className="p3-meta-textarea"
                         value={metaDescriptionAlt}
                         onChange={(e) => setMetaDescriptionAlt(e.target.value)}
-                        placeholder="Alternative SEO-friendly meta description (150–160 characters)..."
+                        placeholder="Alternative SEO-friendly meta description (140–160 characters)..."
                         rows={4}
                       />
                       <div className="p3-meta-footer">
                         <span
                           className={`p3-meta-count ${
-                            metaDescriptionAlt.length >= 150 && metaDescriptionAlt.length <= 160
+                            metaDescriptionAlt.length >= 140 && metaDescriptionAlt.length <= 160
                               ? "p3-meta-count--optimal"
                               : ""
                           }`}
                         >
-                          {metaDescriptionAlt.length} / 160 chars (Optimal: 150–160)
+                          {metaDescriptionAlt.length} / 160 chars (Optimal: 140–160)
                         </span>
                       </div>
                     </div>
@@ -2769,96 +3610,256 @@ export default function Page3({ onBack, isActive }: Page3Props) {
       )}
 
       {/* ── Studio Focus Canvas Modal ───────────────── */}
-      {isFocusMode && blog && (
-        <div
-          className="p3-focus-backdrop"
-          onClick={() => {
-            if (isEditing) {
-              if (
-                window.confirm(
-                  "You have unsaved changes in the Studio Canvas. Are you sure you want to exit without saving?"
-                )
-              ) {
-                setIsEditing(false);
-                setIsFocusMode(false);
-              }
-            } else {
-              setIsFocusMode(false);
-            }
-          }}
-        >
-          <div className="p3-focus-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="p3-focus-header">
-              <div className="p3-focus-left">
-                <span className="p3-focus-title-text" title={blog.title}>{blog.title}</span>
-                <span className="p3-dash-badge p3-dash-badge--purple">~{blog.approxWordCount} words</span>
-                {isEditing && (
-                  <span className="p3-dash-badge p3-dash-badge--seo" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-                    <EditPenIcon />
-                    Studio Canvas Active
-                  </span>
-                )}
-              </div>
-              <div className="p3-focus-actions">
-                {!isEditing ? (
-                  <div className="p3-action-toolbar">
-                    <button
-                      className="p3-toolbar-btn p3-toolbar-btn--edit"
-                      onClick={() => setIsEditing(true)}
-                      title="Edit Blog in Studio Canvas"
-                    >
-                      <EditPenIcon />
-                    </button>
-
-                    <span className="p3-toolbar-sep" />
-
-                    <button
-                      className={`p3-toolbar-btn p3-toolbar-btn--copy ${blogCopied ? "copied-pop" : ""}`}
-                      onClick={(e) => copyBlogToClipboard(blog, e)}
-                      title={blogCopied ? "Copied to clipboard!" : "Copy formatted blog content"}
-                    >
-                      {blogCopied ? <CheckIcon /> : <CopyIcon />}
-                    </button>
-
-                    <span className="p3-toolbar-sep" />
-
-                    <button
-                      className="p3-toolbar-btn p3-toolbar-btn--export"
-                      onClick={(e) => exportAsText(blog, e)}
-                      title="Export markdown (.md) file"
-                    >
-                      <ExportIcon />
-                    </button>
-
-                    <span className="p3-toolbar-sep" />
-
-                    <button
-                      className="p3-toolbar-btn p3-toolbar-btn--close"
-                      onClick={() => setIsFocusMode(false)}
-                      title="Exit Studio Canvas"
-                    >
-                      <CloseXIcon />
-                    </button>
+      {isMounted && createPortal(
+        <AnimatePresence>
+          {isFocusMode && blog && (
+            <motion.div
+              key="studio-focus-modal"
+              className="p3-focus-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: "easeOut" }}
+              onClick={() => {
+                if (isEditing) {
+                  setShowUnsavedConfirm(true);
+                } else {
+                  setIsFocusMode(false);
+                }
+              }}
+            >
+              <motion.div
+                className="p3-focus-modal"
+                initial={{ scale: 0.82, opacity: 0, y: 35, borderRadius: "24px" }}
+                animate={{ scale: 1, opacity: 1, y: 0, borderRadius: "14px" }}
+                exit={{ scale: 0.88, opacity: 0, y: 25 }}
+                transition={{ type: "spring", stiffness: 360, damping: 28 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p3-focus-header">
+                  <div className="p3-focus-left">
+                    <span className="p3-focus-title-text" title={blog.title}>{blog.title}</span>
+                    <span className="p3-dash-badge p3-dash-badge--purple">~{blog.approxWordCount} words</span>
+                    {isEditing && (
+                      <span className="p3-dash-badge p3-dash-badge--seo" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <EditPenIcon />
+                        Studio Canvas Active
+                      </span>
+                    )}
                   </div>
-                ) : null}
+                  <div className="p3-focus-actions">
+                    {!isEditing ? (
+                      <div className="p3-action-toolbar">
+                        <button
+                          className="p3-toolbar-btn p3-toolbar-btn--edit"
+                          onClick={() => setIsEditing(true)}
+                          title="Edit Blog in Studio Canvas"
+                        >
+                          <EditPenIcon />
+                        </button>
+
+                        <span className="p3-toolbar-sep" />
+
+                        <button
+                          className={`p3-toolbar-btn p3-toolbar-btn--copy ${blogCopied ? "copied-pop" : ""}`}
+                          onClick={(e) => copyBlogToClipboard(blog, e)}
+                          title={blogCopied ? "Copied to clipboard!" : "Copy formatted blog content"}
+                        >
+                          {blogCopied ? <CheckIcon /> : <CopyIcon />}
+                        </button>
+
+                        <span className="p3-toolbar-sep" />
+
+                        <button
+                          className="p3-toolbar-btn p3-toolbar-btn--export"
+                          onClick={(e) => exportAsText(blog, e)}
+                          title="Export markdown (.md) file"
+                        >
+                          <ExportIcon />
+                        </button>
+
+                        <span className="p3-toolbar-sep" />
+
+                        <button
+                          className="p3-toolbar-btn p3-toolbar-btn--close"
+                          onClick={() => setIsFocusMode(false)}
+                          title="Exit Studio Canvas"
+                        >
+                          <CloseXIcon />
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="p3-focus-content">
+                  {isEditing ? (
+                    <StudioCanvasEditor
+                      blog={blog}
+                      onSave={handleUpdateBlog}
+                      onCancel={() => {
+                        setIsEditing(false);
+                        setIsFocusMode(false);
+                      }}
+                      onDiscardRequest={() => setShowUnsavedConfirm(true)}
+                    />
+                  ) : (
+                    <BlogRenderer blog={blog} />
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ── Custom Branded Unsaved Changes Confirmation Modal ── */}
+      {showUnsavedConfirm && isMounted && createPortal(
+        <AnimatePresence>
+          <motion.div
+            key="unsaved-confirm-overlay"
+            className="p3-modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(15, 23, 42, 0.65)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              zIndex: 99999999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "16px",
+            }}
+            onClick={() => setShowUnsavedConfirm(false)}
+          >
+            <motion.div
+              className="p3-unsaved-dialog"
+              initial={{ opacity: 0, scale: 0.9, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 12 }}
+              transition={{ type: "spring", stiffness: 380, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%",
+                maxWidth: "440px",
+                background: "#FFFFFF",
+                border: "1px solid #E2E8F0",
+                borderRadius: "16px",
+                boxShadow: "0 25px 60px rgba(15, 23, 42, 0.25)",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+                <div style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "12px",
+                  background: "#FEF2F2",
+                  border: "1px solid #FECDD3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#DC2626",
+                  flexShrink: 0
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A", margin: "0 0 4px 0" }}>
+                    Unsaved Studio Changes
+                  </h4>
+                  <p style={{ fontSize: "0.85rem", color: "#64748B", margin: 0, lineHeight: "1.5" }}>
+                    You have unsaved changes in the Studio Canvas. Are you sure you want to exit without saving?
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="p3-focus-content">
-              {isEditing ? (
-                <StudioCanvasEditor
-                  blog={blog}
-                  onSave={handleUpdateBlog}
-                  onCancel={() => {
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "10px", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowUnsavedConfirm(false)}
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    background: "#F8FAFC",
+                    border: "1px solid #CBD5E1",
+                    color: "#334155",
+                    fontSize: "0.84rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Keep Editing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUnsavedConfirm(false);
                     setIsEditing(false);
                     setIsFocusMode(false);
                   }}
-                />
-              ) : (
-                <BlogRenderer blog={blog} />
-              )}
-            </div>
-          </div>
-        </div>
+                  style={{
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    background: "linear-gradient(135deg, #EF4444 0%, #DC2626 100%)",
+                    border: "none",
+                    color: "#FFFFFF",
+                    fontSize: "0.84rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 10px rgba(239, 68, 68, 0.35)",
+                  }}
+                >
+                  Discard Changes
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* ── Dynamic Green Circular Wave Page Transition Overlay (+ New Blog) ── */}
+      {isTransitioningNewBlog && typeof document !== "undefined" && createPortal(
+        <motion.div
+          key="p3-circular-wipe-overlay"
+          style={{
+            position: "fixed",
+            left: `${circleOrigin.x}px`,
+            top: `${circleOrigin.y}px`,
+            width: "20px",
+            height: "20px",
+            transform: "translate(-50%, -50%)",
+            borderRadius: "50%",
+            background: "#2D8A4E", // Existing green accent color
+            zIndex: 9999999,
+            pointerEvents: "none",
+            willChange: "transform, opacity",
+          }}
+          initial={{ scale: 1, opacity: 1 }}
+          animate={
+            transitionPhase === "expanding"
+              ? { scale: targetCircleScale, opacity: 1 }
+              : { scale: targetCircleScale, opacity: 0 }
+          }
+          transition={{
+            duration: transitionPhase === "expanding" ? 0.6 : 0.32,
+            ease: [0.4, 0, 0.2, 1],
+          }}
+        />,
+        document.body
       )}
 
     </div>
