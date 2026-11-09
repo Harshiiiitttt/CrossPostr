@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import { fetchGeminiWithCascade } from "../../lib/geminiCascade";
 
 const STOP_WORDS = new Set([
   "the", "is", "a", "an", "and", "or", "in", "on", "at", "to", "for", "with", "by", "from", "of",
@@ -109,45 +110,34 @@ Return ONLY valid JSON:
   "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12"
 }`;
 
-      const visionModels = ["gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-flash-latest"];
-      for (const model of visionModels) {
-        try {
-          const vRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      { inlineData: { mimeType: imgData.mimeType, data: imgData.base64 } },
-                      { text: prompt }
-                    ]
-                  }
-                ],
-                generationConfig: {
-                  responseMimeType: "application/json",
-                  maxOutputTokens: 1000,
-                  temperature: 0.6
-                }
-              })
-            }
-          );
-
-          if (vRes.ok) {
-            const vData = await vRes.json();
-            const rawText = vData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            const match = rawText.match(/\{[\s\S]*\}/);
-            if (match) {
-              const parsed = JSON.parse(match[0]);
-              if (parsed.line1) line1 = parsed.line1.trim();
-              if (parsed.hashtags) hashtags = parsed.hashtags.trim();
-              break;
+      try {
+        const { data: vData } = await fetchGeminiWithCascade({
+          apiKey,
+          timeoutMs: 15000,
+          body: {
+            contents: [
+              {
+                parts: [
+                  { inlineData: { mimeType: imgData.mimeType, data: imgData.base64 } },
+                  { text: prompt }
+                ]
+              }
+            ],
+            generationConfig: {
+              responseMimeType: "application/json",
+              maxOutputTokens: 2048,
+              temperature: 0.6
             }
           }
-        } catch (err) {}
-      }
+        });
+        const rawText = vData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (parsed.line1) line1 = parsed.line1.trim();
+          if (parsed.hashtags) hashtags = parsed.hashtags.trim();
+        }
+      } catch (err) {}
     }
   }
 
@@ -164,31 +154,24 @@ JSON response:
   "hashtags": "#tag1 #tag2 #tag3 #tag4 #tag5 #tag6 #tag7 #tag8 #tag9 #tag10 #tag11 #tag12"
 }`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              maxOutputTokens: 350,
-              temperature: 0.7,
-            },
-          }),
-        }
-      );
-
-      if (res.ok) {
-        const data = await res.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        const match = rawText.match(/\{[\s\S]*\}/);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          if (parsed.line1) line1 = parsed.line1.trim();
-          if (parsed.hashtags) hashtags = parsed.hashtags.trim();
-        }
+      const { data } = await fetchGeminiWithCascade({
+        apiKey,
+        timeoutMs: 15000,
+        body: {
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            maxOutputTokens: 2048,
+            temperature: 0.7,
+          },
+        },
+      });
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      const match = rawText.match(/\{[\s\S]*\}/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.line1) line1 = parsed.line1.trim();
+        if (parsed.hashtags) hashtags = parsed.hashtags.trim();
       }
     } catch (err) {}
   }

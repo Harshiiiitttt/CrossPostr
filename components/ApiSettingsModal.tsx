@@ -191,7 +191,7 @@ export default function ApiSettingsModal({ isOpen, onClose, onSignOut }: ApiSett
                     placeholder="ig_access_token_..."
                     value={creds.instagramToken || ""}
                     onChange={(e) => setCreds({ ...creds, instagramToken: e.target.value })}
-                    style={{ width: "100%", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "8px 34px 8px 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
+                    style={{ width: "100%", height: "36px", lineHeight: "36px", margin: 0, boxSizing: "border-box", background: "var(--input-bg)", border: "1px solid var(--panel-border)", borderRadius: "8px", padding: "0 34px 0 12px", color: "var(--heading-white)", fontSize: "0.8rem", outline: "none" }}
                   />
                   {creds.instagramToken && (
                     <button

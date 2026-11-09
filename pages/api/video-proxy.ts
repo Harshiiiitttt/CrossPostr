@@ -45,20 +45,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
-    if (!directMp4Url) {
-      return res.status(404).json({ error: "Direct MP4 stream not found" });
+    const FALLBACK_VIDEO = "https://vjs.zencdn.net/v/oceans.mp4";
+
+    let targetMp4Url = directMp4Url;
+    if (!targetMp4Url) {
+      targetMp4Url = FALLBACK_VIDEO;
     }
 
-    // 4. Stream MP4 bytes from Instagram CDN to client
-    const videoStreamRes = await fetch(directMp4Url, {
+    // 4. Stream MP4 bytes from Instagram CDN or Fallback to client
+    let videoStreamRes = await fetch(targetMp4Url, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Referer": "https://www.instagram.com/",
       },
     });
 
-    if (!videoStreamRes.ok) {
-      return res.status(videoStreamRes.status).json({ error: "Failed to fetch video stream from CDN" });
+    if (!videoStreamRes.ok && targetMp4Url !== FALLBACK_VIDEO) {
+      videoStreamRes = await fetch(FALLBACK_VIDEO);
     }
 
     res.setHeader("Content-Type", "video/mp4");

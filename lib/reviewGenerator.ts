@@ -1,15 +1,11 @@
 import type { PetCareReview } from "./types";
+import { fetchGeminiWithCascade } from "./geminiCascade";
 
 const BRAND = "CuddlyTails";
 
 const SYSTEM_PROMPT = `You are an expert copywriter specializing in authentic, user-generated
-content. Return ONLY valid JSON matching the requested schema. Do not include markdown fences
-or preamble text.`;
-
-const REFERENCE_EXAMPLE = `"We found Jake through CuddlyTails when we needed someone to watch
-our Labrador, Max, for a weekend. He kept us updated with photos and messages, which made it so
-much easier to enjoy our trip. Max looked happy the entire time and came home relaxed. We'll
-definitely be booking with Jake again!"`;
+pet-care testimonials. Return ONLY valid JSON matching the requested schema. Do not include markdown
+fences or preamble text.`;
 
 export interface ReviewGenOptions {
   serviceType?: string;
@@ -18,68 +14,172 @@ export interface ReviewGenOptions {
   reviewLength?: "detailed" | "short";
 }
 
-function buildPrompt(options?: ReviewGenOptions): string {
-  const serviceType = options?.serviceType || "Pet Sitting / Dog Care";
+const REVIEWER_POOL = [
+  "Hannah R.", "Carlos V.", "Priya K.", "Nathan W.", "Olivia S.", "Ethan P.",
+  "Chloe B.", "Julian M.", "Maya T.", "Liam D.", "Sophia G.", "Noah F.",
+  "Claire H.", "Mateo J.", "Rachel N.", "lucas C.", "Amara L.", "Daniel K.",
+  "Megan S.", "Trevor B.", "Elena R.", "twyla W.", "Owen H.", "Vanessa P.",
+  "abigail T.", "zoe M.", "Brandon Y.", "Sienna C.", "gavin R.", "Tessa L.",
+].map((n) => n.charAt(0).toUpperCase() + n.slice(1));
+
+const PROVIDER_POOL = [
+  "Liam", "Maya", "Noah", "Zoe", "Caleb", "Sienna", "Julian", "Aria",
+  "Owen", "Tessa", "Mateo", "Clara", "Isaac", "Nora", "Leo", "camila",
+  "Miles", "stella", "Ezra", "Hazel", "Asher", "Ruby", "Cole", "Sadie",
+  "jonah", "eva", "Devon", "Paige", "Micah", "Brooke",
+].map((n) => n.charAt(0).toUpperCase() + n.slice(1));
+
+const DOG_POOL: Array<{ name: string; breed: string }> = [
+  { name: "Cooper", breed: "Australian Shepherd" },
+  { name: "Milo", breed: "Cavalier King Charles Spaniel" },
+  { name: "Daisy", breed: "Mini Bernedoodle" },
+  { name: "Loki", breed: "Siberian Husky" },
+  { name: "Waffles", breed: "Pembroke Welsh Corgi" },
+  { name: "Rosie", breed: "Beagle" },
+  { name: "Ziggy", breed: "Miniature Schnauzer" },
+  { name: "Koda", breed: "Shiba Inu" },
+  { name: "Penny", breed: "Dachshund" },
+  { name: "Theo", breed: "Boxer" },
+  { name: "Willow", breed: "Border Collie" },
+  { name: "Otis", breed: "Pug" },
+  { name: "Nala", breed: "Vizsla" },
+  { name: "Finn", breed: "Irish Setter" },
+  { name: "Pippa", breed: "Cocker Spaniel" },
+  { name: "Archie", breed: "Goldendoodle" },
+  { name: "Bruno", breed: "Bernese Mountain Dog" },
+  { name: "pepper", breed: "Boston Terrier" },
+  { name: "Monty", breed: "Basset Hound" },
+  { name: "Hazel", breed: "Havanese" },
+  { name: "Jasper", breed: "Whippet" },
+  { name: "Olive", breed: "Cavapoo" },
+  { name: "Remy", breed: "Samoyed" },
+  { name: "Scout", breed: "Dalmatian" },
+].map((d) => ({ name: d.name.charAt(0).toUpperCase() + d.name.slice(1), breed: d.breed }));
+
+const SERVICE_SCENARIOS: Record<string, string[]> = {
+  "In-Home Boarding & Sitting": [
+    "a 4-day out-of-state family wedding where the dog stayed comfortably in the sitter's quiet home",
+    "a week-long anniversary trip where the sitter kept the dog's exact bedtime and mealtime routine",
+    "a weekend conference where the sitter welcomed the dog into a cozy, fenced-yard home environment",
+    "a holiday family visit where the sitter provided constant companionship and playtime indoors",
+    "a 5-day business trip where the dog bonded immediately with the sitter and felt right at home",
+  ],
+  "Dog Walking & Exercise": [
+    "a midday energetic 45-minute park walk with GPS route tracking and water breaks during a busy workday",
+    "structured leash walking and sniff-time along quiet neighborhood trails to burn off high puppy energy",
+    "consistent weekday afternoon walks that transformed a restless dog's daily routine",
+    "a brisk morning trail walk with real-time photo check-ins while the owner was stuck on back-to-back calls",
+    "a customized pace walk avoiding crowded sidewalks for a shy dog who loves outdoor exploration",
+  ],
+  "Pet Grooming & Spa": [
+    "a full de-shedding bath, gentle blow-dry, ear cleaning, and nail trim that left the coat silky soft",
+    "a stress-free puppy spa session with hypoallergenicoat shampoo and patient paw trimming",
+    "a thorough coat detangling and sanitary trim for a fluffy dog who is usually nervous around clippers",
+    "a soothing oatmeal skin-relief bath and blueberry facial that left the dog smelling fresh for weeks",
+    "a summer coat tidy-up, paw pad balm treatment, and gentle brushing handled with zero stress",
+  ],
+  "Overnight Care & House Sitting": [
+    "staying overnight in the owner's home to keep a routine-loving dog comfortable in their own bed",
+    "a 3-night house-sitting stay keeping up with evening walks, mail collection, and morning cuddles",
+    "overnight pet sitting where the sitter followed a detailed feeding and evening wind-down checklist",
+    "a long weekend house-sit where the dog didn't experience a single moment of kennel stress",
+    "multi-night in-home care with late-night potty breaks and morning photo updates from the living room",
+  ],
+  "Last-Minute Emergency Care": [
+    "an unexpected hospital visit where a vetted sitter stepped in within two hours of booking",
+    "a sudden cancelled flight at the airport that required an urgent evening walk and dinner feeding",
+    "a last-minute family emergency out of town when the original sitter cancelled the night before",
+    "an urgent late-evening work crisis where a reliable caregiver arrived right on time to save the day",
+    "a surprise same-day travel delay where immediate pet care was arranged seamlessly in minutes",
+  ],
+};
+
+const globalRecentMemory = globalThis as unknown as {
+  __recentDogNames?: string[];
+  __recentProviderNames?: string[];
+};
+
+function pickFreshCast() {
+  const recentDogs = globalRecentMemory.__recentDogNames ?? (globalRecentMemory.__recentDogNames = []);
+  const recentProviders = globalRecentMemory.__recentProviderNames ?? (globalRecentMemory.__recentProviderNames = []);
+
+  const availableDogs = DOG_POOL.filter((d) => !recentDogs.includes(d.name));
+  const dogSource = availableDogs.length >= 3 ? availableDogs : DOG_POOL;
+  const shuffledDogs = [...dogSource].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  const availableProviders = PROVIDER_POOL.filter((p) => !recentProviders.includes(p));
+  const providerSource = availableProviders.length >= 3 ? availableProviders : PROVIDER_POOL;
+  const shuffledProviders = [...providerSource].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  const shuffledReviewers = [...REVIEWER_POOL].sort(() => Math.random() - 0.5).slice(0, 3);
+
+  shuffledDogs.forEach((d) => recentDogs.push(d.name));
+  if (recentDogs.length > 15) recentDogs.splice(0, recentDogs.length - 15);
+
+  shuffledProviders.forEach((p) => recentProviders.push(p));
+  if (recentProviders.length > 15) recentProviders.splice(0, recentProviders.length - 15);
+
+  return [0, 1, 2].map((i) => ({
+    reviewerName: shuffledReviewers[i],
+    providerName: shuffledProviders[i],
+    dogName: shuffledDogs[i].name,
+    dogBreed: shuffledDogs[i].breed,
+  }));
+}
+
+function pickScenarios(serviceType: string): string[] {
+  const pool =
+    SERVICE_SCENARIOS[serviceType] ||
+    Object.values(SERVICE_SCENARIOS).flat();
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, 3);
+}
+
+function buildPrompt(
+  options: ReviewGenOptions | undefined,
+  cast: ReturnType<typeof pickFreshCast>,
+  scenarios: string[]
+): string {
+  const serviceType = options?.serviceType || "In-Home Boarding & Sitting";
   const location = options?.location ? ` in ${options.location}` : "";
-  const persona = options?.persona || "Authentic & Grateful Pet Parent";
+  const persona = options?.persona || "Enthusiastic Pet Parent";
   const reviewLength = options?.reviewLength || "detailed";
 
-  const lengthInstruction = reviewLength === "short"
-    ? "Length constraint: Short Testimonial format. Each review MUST be punchy and concise (1-2 sentences maximum), focusing on immediate relief and high satisfaction."
-    : "Length constraint: Detailed Story format. Tell a 3-4 sentence story about a specific situation with slice-of-life details (quirks, last-minute flight, photo updates).";
+  const lengthInstruction =
+    reviewLength === "short"
+      ? "Short Testimonial format: Each review MUST be punchy and concise (1–2 sentences, ~25–40 words), focusing on immediate relief and satisfaction."
+      : "Detailed Story format: Each review MUST be a rich 3–4 sentence story (~55–80 words) with specific slice-of-life details matching the assigned scenario, service type, and persona.";
 
-  return `Your task is to generate exactly THREE highly realistic pet-care reviews. Analyze the
-typical style of detailed, story-driven reviews on platforms like Rover.com and replicate that
-genuine, personal tone.
+  return `Generate exactly THREE realistic, distinct 5-star pet-care reviews tailored to these exact filter settings:
 
-TARGET PARAMETERS:
-- Service Type: ${serviceType}${location}
-- Persona / Tone Angle: ${persona}
-- Format & Length: ${lengthInstruction}
+FILTER PARAMETERS:
+- Service Type: "${serviceType}"${location}
+- Customer Persona / Voice: "${persona}"
+- Review Length Format: ${lengthInstruction}
 
-Here is a baseline reference example of the tone you must match:
-${REFERENCE_EXAMPLE}
+MANDATORY CHARACTER & SCENARIO ASSIGNMENTS (Use these exact names, breeds, and distinct storylines):
+- Review 1:
+  • Reviewer Name: "${cast[0].reviewerName}"
+  • Sitter/Walker/Groomer Name: "${cast[0].providerName}"
+  • Dog Name & Breed: "${cast[0].dogName}" (${cast[0].dogBreed})
+  • Specific Story Scenario: ${scenarios[0]}${location}
+- Review 2:
+  • Reviewer Name: "${cast[1].reviewerName}"
+  • Sitter/Walker/Groomer Name: "${cast[1].providerName}"
+  • Dog Name & Breed: "${cast[1].dogName}" (${cast[1].dogBreed})
+  • Specific Story Scenario: ${scenarios[1]}${location}
+- Review 3:
+  • Reviewer Name: "${cast[2].reviewerName}"
+  • Sitter/Walker/Groomer Name: "${cast[2].providerName}"
+  • Dog Name & Breed: "${cast[2].dogName}" (${cast[2].dogBreed})
+  • Specific Story Scenario: ${scenarios[2]}${location}
 
-CRUCIAL REQUIREMENTS FOR EVERY REVIEW:
-1. Narrative/Format: ${lengthInstruction}
-2. Character Names & Dog Breed: You must explicitly include a realistic name for the Dog, the Dog Breed (e.g. Golden Retriever, French Bulldog, German Shepherd, Rescue Mix, Labradoodle), and a realistic name for the Service Provider (the sitter/walker).
-3. The Brand Rule: You must mention the brand name "${BRAND}" EXACTLY ONCE in the text of each
-   review. Do not mention it more than once per review so it sounds organic, not like an ad.
-4. Tone: Reflect the requested persona (${persona}). Authentic, relieved, and grateful. Use natural phrasing and everyday language.
-5. Rating: All three reviews are 5-star testimonials, so "rating" must be 5 for all three.
-6. Make the three reviews distinct from each other - different situations, different dogs,
-   different providers - do not reuse the reference example's names or scenario.
+CRUCIAL RULES:
+1. Every review MUST unmistakably reflect the selected Service Type ("${serviceType}") and Customer Persona ("${persona}")${location ? ` and naturally reference ${options!.location}` : ""}.
+2. Mention the brand name "${BRAND}" EXACTLY ONCE in each review's text.
+3. Never reuse generic filler across the 3 reviews—each review must sound written by a different person with a distinct voice and storyline.
+4. All three ratings must be 5.
 
-Return ONLY valid JSON matching this exact schema. Do not include markdown fences (\`\`\`json)
-or preamble text.
-{
-  "reviews": [
-    {
-      "reviewerName": "string",
-      "providerName": "string",
-      "dogName": "string",
-      "dogBreed": "string",
-      "reviewText": "string",
-      "rating": 5
-    },
-    {
-      "reviewerName": "string",
-      "providerName": "string",
-      "dogName": "string",
-      "dogBreed": "string",
-      "reviewText": "string",
-      "rating": 5
-    },
-    {
-      "reviewerName": "string",
-      "providerName": "string",
-      "dogName": "string",
-      "dogBreed": "string",
-      "reviewText": "string",
-      "rating": 5
-    }
-  ]
-}`;
+Return ONLY valid JSON matching the schema.`;
 }
 
 const RESPONSE_SCHEMA = {
@@ -106,131 +206,114 @@ const RESPONSE_SCHEMA = {
   required: ["reviews"],
 };
 
-function isTransientStatus(status: number): boolean {
-  return status === 429 || status === 503;
-}
+function ensureSingleBrandMention(review: PetCareReview): PetCareReview {
+  let text = (review.reviewText || "").trim();
+  const regex = new RegExp(BRAND, "gi");
+  const matches = text.match(regex) ?? [];
 
-function formatGeminiError(lastErr: string): string {
-  if (lastErr.includes("429") || lastErr.includes("RESOURCE_EXHAUSTED") || lastErr.includes("quota")) {
-    return "Gemini API rate limit reached (Quota Exceeded on Free Tier). Please wait 30 seconds before retrying, or update your GEMINI_API_KEY in .env.";
-  }
-  try {
-    const parsed = JSON.parse(lastErr);
-    if (parsed.error?.message) {
-      return `Gemini API Error: ${parsed.error.message}`;
+  if (matches.length === 0) {
+    // Insert CuddlyTails naturally after providerName or in first sentence
+    if (review.providerName && text.includes(review.providerName)) {
+      text = text.replace(review.providerName, `${review.providerName} on ${BRAND}`);
+    } else {
+      text = `Booking through ${BRAND} was the best decision—${text.charAt(0).toLowerCase()}${text.slice(1)}`;
     }
-  } catch {
-    // ignore
+  } else if (matches.length > 1) {
+    let seen = 0;
+    text = text.replace(regex, (m) => {
+      seen++;
+      return seen === 1 ? m : "the app";
+    });
   }
-  return `Gemini API busy: ${lastErr || "Please try again in a moment."}`;
+
+  return {
+    ...review,
+    rating: 5,
+    reviewText: text,
+  };
 }
 
 async function callGemini(prompt: string): Promise<PetCareReview[]> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
-  let lastErr = "";
+  const { data } = await fetchGeminiWithCascade({
+    apiKey,
+    timeoutMs: 14000,
+    body: {
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+        maxOutputTokens: 4096,
+        temperature: 0.95,
+      },
+    },
+  });
 
-  for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: RESPONSE_SCHEMA,
-              maxOutputTokens: 2048,
-              temperature: 0.9,
-            },
-          }),
-        }
-      );
+  const candidate = data.candidates?.[0];
 
-      if (!res.ok) {
-        lastErr = await res.text();
-        if (isTransientStatus(res.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
-          continue;
-        }
-        break;
-      }
-
-      const data = await res.json();
-      const candidate = data.candidates?.[0];
-
-      if (candidate?.finishReason === "MAX_TOKENS") {
-        throw new Error("Gemini truncated the review response before finishing the JSON.");
-      }
-
-      const raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
-      const parsed = JSON.parse(raw) as { reviews: PetCareReview[] };
-      return parsed.reviews;
-    }
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    throw new Error("Gemini truncated the review response before finishing the JSON.");
   }
 
-  throw new Error(formatGeminiError(lastErr));
+  const raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+  const parsed = JSON.parse(raw) as { reviews: PetCareReview[] };
+  return (parsed.reviews || []).map(ensureSingleBrandMention);
 }
 
-function countBrandMentions(text: string): number {
-  return (text.match(new RegExp(BRAND, "gi")) ?? []).length;
-}
+function getDynamicFallbackReviews(
+  options: ReviewGenOptions | undefined,
+  cast: ReturnType<typeof pickFreshCast>,
+  scenarios: string[]
+): PetCareReview[] {
+  const service = options?.serviceType || "In-Home Boarding & Sitting";
+  const loc = options?.location ? ` in ${options.location}` : "";
+  const persona = options?.persona || "Enthusiastic Pet Parent";
+  const isShort = options?.reviewLength === "short";
 
-/** Every review must mention the brand exactly once - validate and retry rather than
- *  trusting the prompt alone, since the model can drift (0 mentions or 2+). */
-function getMockReviews(options?: ReviewGenOptions): PetCareReview[] {
-  const service = options?.serviceType || "Dog Walking & Pet Care";
-  const location = options?.location ? ` in ${options.location}` : "";
-  return [
-    {
-      reviewerName: "Sarah M.",
-      providerName: "Marcus",
-      dogName: "Buster",
-      dogBreed: "French Bulldog",
-      reviewText: `When my last-minute flight got delayed, I was frantic about finding ${service.toLowerCase()}${location}. Luckily I found Marcus through CuddlyTails, and he handled Buster with so much love and care. Marcus sent me photo updates showing Buster happily trotting along, which instantly eased all my anxiety.`,
-      rating: 5,
-    },
-    {
-      reviewerName: "David L.",
-      providerName: "Elena",
-      dogName: "Bella",
-      dogBreed: "Rescue Mix",
-      reviewText: `I had an emergency work meeting and booked Elena on CuddlyTails for ${service.toLowerCase()}${location}. She saved the day by stepping in to take my reactive Rescue Mix, Bella, for a calm afternoon stroll. She sent detailed logs and pictures afterward—Elena is a total lifesaver!`,
-      rating: 5,
-    },
-    {
-      reviewerName: "Jessica T.",
-      providerName: "Kevin",
-      dogName: "Barnaby",
-      dogBreed: "Golden Retriever",
-      reviewText: `My Golden Retriever Barnaby gets separation anxiety, so finding Kevin on CuddlyTails was a complete miracle. Kevin showed up right on time, gave Barnaby belly rubs, and sent photos that brought tears of relief to my eyes. I'm so grateful for such incredible pet care.`,
-      rating: 5,
-    },
-  ];
-}
-
-async function generateValidatedReviews(options?: ReviewGenOptions): Promise<PetCareReview[]> {
-  try {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const reviews = await callGemini(buildPrompt(options));
-
-      const shapeOk = Array.isArray(reviews) && reviews.length === 3;
-      const brandOk = shapeOk && reviews.every((r) => countBrandMentions(r.reviewText) === 1);
-
-      if (shapeOk && brandOk) return reviews;
+  return cast.map((c, idx) => {
+    const scenario = scenarios[idx] || "a weekend care session";
+    if (isShort) {
+      const shortTemplates = [
+        `Found ${c.providerName} on ${BRAND} for ${service.toLowerCase()}${loc}, and ${c.dogName} (${c.dogBreed}) had the best time! Constant photo updates gave me total peace of mind.`,
+        `As a ${persona.toLowerCase()}, booking ${c.providerName} through ${BRAND}${loc} for ${c.dogName} was effortless and reassuring. Truly five-star ${service.toLowerCase()}!`,
+        `${c.providerName} on ${BRAND} took incredible care of my ${c.dogBreed}, ${c.dogName}${loc}. Punctual, gentle, and kept me updated the entire time!`,
+      ];
+      return {
+        ...c,
+        rating: 5,
+        reviewText: shortTemplates[idx % shortTemplates.length],
+      };
     }
-  } catch (err) {
-    console.warn("Gemini call failed, using fallback mock review generator:", (err as Error).message);
-    return getMockReviews(options);
-  }
-  return getMockReviews(options);
+
+    const detailedTemplates = [
+      `We needed ${service.toLowerCase()}${loc} during ${scenario}, and connecting with ${c.providerName} on ${BRAND} was a blessing. My ${c.dogBreed}, ${c.dogName}, immediately warmed up to ${c.providerName}'s calm and attentive energy. Getting photo updates and detailed check-ins throughout the booking completely eased my mind, and ${c.dogName} came back happy and relaxed.`,
+      `Speaking from the perspective of a ${persona.toLowerCase()}, I'm always selective about ${service.toLowerCase()}${loc}. Booking ${c.providerName} through ${BRAND} for ${scenario} exceeded every expectation for my ${c.dogBreed}, ${c.dogName}. ${c.providerName} followed every instruction to the letter and sent thoughtful updates that made all the difference.`,
+      `During ${scenario}${loc}, ${c.providerName} on ${BRAND} provided phenomenal ${service.toLowerCase()} for our ${c.dogBreed}, ${c.dogName}. From arriving right on schedule to paying close attention to ${c.dogName}'s quirks, ${c.providerName} went above and beyond. We already have our next session queued up!`,
+    ];
+
+    return {
+      ...c,
+      rating: 5,
+      reviewText: detailedTemplates[idx % detailedTemplates.length],
+    };
+  });
 }
 
 export async function generateReviews(options?: ReviewGenOptions): Promise<PetCareReview[]> {
-  return generateValidatedReviews(options);
+  const cast = pickFreshCast();
+  const scenarios = pickScenarios(options?.serviceType || "In-Home Boarding & Sitting");
+
+  try {
+    const reviews = await callGemini(buildPrompt(options, cast, scenarios));
+    if (Array.isArray(reviews) && reviews.length === 3) {
+      return reviews;
+    }
+  } catch (err) {
+    console.warn("Gemini call failed, using dynamic filter-aware review generator:", (err as Error).message);
+  }
+
+  return getDynamicFallbackReviews(options, cast, scenarios);
 }

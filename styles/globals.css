@@ -230,17 +230,27 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
 .sidebar-top-controls {
   position: relative;
   width: 100%;
+  padding-bottom: 14px;
   margin-bottom: 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border-bottom: 1px solid #E2E8F0;
   z-index: 25;
 }
 
 .sidebar-top-left-controls {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+}
+
+.sidebar-controls-divider {
+  width: 1px;
+  height: 18px;
+  background: #CBD5E1;
+  display: inline-block;
+  opacity: 0.8;
 }
 
 .sidebar-toggle-btn {
@@ -400,10 +410,10 @@ button, a, input, select, textarea, label, [role="button"], summary, .step-item,
 
 /* ── Brand ───────────────────────────────────────────── */
 .brand-mark {
-  font-family: var(--font-brand);
-  font-weight: 400;
-  font-size: 1.22rem;
-  letter-spacing: 0.02em;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
   color: var(--text);
   margin-top: 36px;
   margin-bottom: 0;
@@ -1757,7 +1767,7 @@ a:focus-visible {
   }
 }
 
-/* ── Hero API Platform Cards 2x2 Grid ───────────────── */
+/* ── Hero API Platform Cards & Page Responsive Styles ── */
 .hero-api-grid {
   display: grid !important;
   grid-template-columns: repeat(2, 1fr) !important;
@@ -1767,9 +1777,66 @@ a:focus-visible {
   margin-right: auto !important;
 }
 
+.hero-page-header {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid #E2E8F0;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.hero-main-container {
+  width: 100%;
+  max-width: 1040px;
+  padding: 48px 24px 72px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.hero-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+  color: #0F172A;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin: 0 0 12px 0;
+}
+
+.hero-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
 @media (max-width: 768px) {
   .hero-api-grid {
     grid-template-columns: 1fr !important;
+  }
+  .hero-page-header {
+    padding: 10px 16px !important;
+  }
+  .hero-main-container {
+    padding: 24px 16px 48px !important;
+  }
+  .hero-title {
+    font-size: 1.6rem !important;
+  }
+  .hero-demo-label {
+    display: none !important;
+  }
+  .hero-card-header {
+    flex-wrap: wrap;
   }
 }
 .p3-panel {
@@ -3955,7 +4022,7 @@ a:focus-visible {
   z-index: 2;
 }
 
-/* ── Page 3 Workspace Skeleton Shimmer Effects ──────────── */
+/* ── Page 3 Workspace Skeleton Shimmer & Slow Card Shine ──────────── */
 @keyframes skeletonShimmerSweep {
   0% {
     background-position: -200% 0;
@@ -3965,21 +4032,35 @@ a:focus-visible {
   }
 }
 
+@keyframes skeletonCardShineSweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  60%, 100% {
+    transform: translateX(100%);
+  }
+}
+
 .skeleton-shimmer {
   background: linear-gradient(
     90deg,
-    #F1F5F9 0%,
-    #E2E8F0 25%,
-    #ECFDF5 50%,
-    #E2E8F0 75%,
-    #F1F5F9 100%
+    #E2E8F0 0%,
+    #F1F5F9 25%,
+    #D1FAE5 50%,
+    #F1F5F9 75%,
+    #E2E8F0 100%
   ) !important;
   background-size: 200% 100% !important;
-  animation: skeletonShimmerSweep 2.4s infinite cubic-bezier(0.4, 0, 0.2, 1) !important;
+  animation: skeletonShimmerSweep 2.6s infinite cubic-bezier(0.4, 0, 0.2, 1) !important;
   border-radius: 8px !important;
 }
 
-.p3-skeleton-card {
+.p3-skeleton-card,
+.p3-skeleton-topbar,
+.p2-skeleton-card,
+.skeleton-card-shine {
+  position: relative !important;
+  overflow: hidden !important;
   background: #FFFFFF !important;
   border: 1px solid #E2E8F0 !important;
   border-radius: 14px !important;
@@ -3988,12 +4069,29 @@ a:focus-visible {
   transition: all 0.3s ease !important;
 }
 
-.p3-skeleton-topbar {
-  background: #FFFFFF !important;
-  border: 1px solid #E0ECE5 !important;
-  border-radius: 14px !important;
-  padding: 14px 20px !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.03) !important;
+/* Left-to-right slow card shining sheen beam */
+.p3-skeleton-card::before,
+.p3-skeleton-topbar::before,
+.p2-skeleton-card::before,
+.skeleton-card-shine::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.75) 40%,
+    rgba(16, 185, 129, 0.22) 50%,
+    rgba(255, 255, 255, 0.75) 60%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  transform: translateX(-100%) !important;
+  animation: skeletonCardShineSweep 2.8s infinite cubic-bezier(0.4, 0, 0.2, 1) !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
 }
 
 /* ═══════════════════════════════════════════════════════════

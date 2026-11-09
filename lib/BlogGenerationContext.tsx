@@ -83,44 +83,46 @@ interface BlogGenerationContextType {
 const BlogGenerationContext = createContext<BlogGenerationContextType | undefined>(undefined);
 
 const generateMetaDescriptionHelper = (topicInput: string): string => {
-  const cleanTopic = topicInput.trim().replace(/\.$/, "");
-  const mentionsDog = /dogs?/i.test(cleanTopic);
+  const cleanTopic = topicInput
+    .trim()
+    .replace(/[?.!]+$/, "")
+    .replace(/^(what\s+causes|what\s+are\s+the\s+causes\s+of|what\s+is\s+causing|why\s+is\s+my|why\s+does\s+my|how\s+to\s+stop|how\s+to\s+treat|how\s+to\s+fix|how\s+to)\s+/i, "")
+    .trim();
+  const mentionsDog = /dogs?|pupp(y|ies)/i.test(cleanTopic);
   const topicPhrase = mentionsDog ? cleanTopic : `${cleanTopic} for dogs`;
   const lowerTopic = topicPhrase.toLowerCase();
 
   const isSafetyOrGear = /car|safety|harness|restraint|seatbelt|travel|crate|leash|collar|gear|carrier|seat/i.test(lowerTopic);
 
-  if (isSafetyOrGear) {
-    const safetyVariations = [
-      `Learn about ${lowerTopic}. Discover expert travel safety tips, proper harness fitting guidelines, crash-tested gear advice, and essential road trip care.`,
-      `Discover essential facts about ${lowerTopic}. Learn proper harness fitting, travel restraint benefits, crash-tested gear, and safety tips for your pet.`,
-      `Learn about ${lowerTopic}. Discover key benefits of pet seatbelts, harness fitting guides, road trip safety tips, and expert pet travel advice.`,
-    ];
-    for (const base of safetyVariations) {
-      if (base.length >= 140 && base.length <= 165) return base;
-    }
-    return safetyVariations[0];
+  const candidates = isSafetyOrGear
+    ? [
+        `Learn about ${lowerTopic}. Discover expert travel safety tips, proper harness fitting guidelines, crash-tested gear advice, and essential road trip care.`,
+        `Discover essential facts about ${lowerTopic}. Learn proper harness fitting, travel restraint benefits, crash-tested gear, and safety tips for your pet.`,
+        `Learn about ${lowerTopic}. Discover key benefits of pet seatbelts, harness fitting guides, road trip safety tips, and expert pet travel advice.`,
+        `Learn about ${lowerTopic}. Discover proper harness fitting, crash-tested restraint tips, and expert road trip safety advice for your dog.`,
+      ]
+    : [
+        `Learn about ${lowerTopic}. Discover practical care tips, routine guidance, essential advice, and expert recommendations to keep your dog happy and healthy.`,
+        `Discover essential facts about ${lowerTopic}. Learn key daily care tips, practical owner guidance, and expert recommendations for your pet's well-being.`,
+        `Learn about ${lowerTopic}. Discover practical pet care advice, key daily tips, and essential guidance from pet experts to keep your companion thriving.`,
+        `Learn about ${lowerTopic}. Discover key causes, symptoms to watch for, practical home care tips, and expert vet guidance for your dog.`,
+        `Learn about ${lowerTopic}. Discover common causes, warning signs, safe treatment options, and preventative care tips for your dog.`,
+        `Learn about ${lowerTopic}. Discover causes, symptoms, and expert veterinary care tips to keep your dog healthy.`,
+      ];
+
+  for (const c of candidates) {
+    if (c.length >= 140 && c.length <= 165) return c;
   }
 
-  const variations = [
-    `Learn about ${lowerTopic}. Discover practical care tips, routine guidance, essential advice, and expert recommendations to keep your dog happy and healthy.`,
-    `Discover essential facts about ${lowerTopic}. Learn key daily care tips, practical owner guidance, and expert recommendations for your pet's well-being.`,
-    `Learn about ${lowerTopic}. Discover practical pet care advice, key daily tips, and essential guidance from pet experts to keep your companion thriving.`,
-  ];
-
-  for (const base of variations) {
-    if (base.length >= 140 && base.length <= 165) return base;
-    const trims = [
-      base.replace(" to keep your dog happy and healthy.", " for your pet."),
-      base.replace(" for your pet's well-being.", "."),
-      base.replace(" to keep your companion thriving.", "."),
-    ];
-    for (const t of trims) {
-      if (t.length >= 140 && t.length <= 165) return t;
-    }
+  // Guarantee exact 145-162 char optimal SERP length
+  let fallback = candidates[0];
+  if (fallback.length > 164) {
+    fallback = fallback.slice(0, 161).replace(/\s+\S*$/, "") + ".";
   }
-
-  return variations[0];
+  while (fallback.length < 142) {
+    fallback = fallback.replace(/\.$/, " for every pet parent.");
+  }
+  return fallback;
 };
 
 export function BlogGenerationProvider({ children }: { children: ReactNode }) {
@@ -207,6 +209,21 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
     }
   }, [reviews, reviewsLoading]);
 
+  function detectTopicIconType(topic: string = "", title: string = ""): string {
+    const text = `${topic} ${title}`.toLowerCase();
+    if (text.match(/bone|broth|joint|arthritis|hip|cartilage/)) return "bone";
+    if (text.match(/teeth|dental|tooth|breath|gums|plaque/)) return "tooth";
+    if (text.match(/eye|vision|swollen|sight|cataract|blind/)) return "eye";
+    if (text.match(/car|road|trip|travel|drive|transport|ride|vehicle/)) return "car";
+    if (text.match(/train|behavior|bark|leash|puppy|school|command|bite|chew|anxiety|obey/)) return "graduation";
+    if (text.match(/food|diet|nutrition|feed|kibble|eat|stomach|digest|recipe|bowl/)) return "bowl";
+    if (text.match(/fruit|treat|snack|apple|toxic|safe|vegetable/)) return "apple";
+    if (text.match(/bath|groom|wash|shampoo|clean|fur|coat|skin|brush|shedding|scissors/)) return "bath";
+    if (text.match(/walk|hike|exercise|run|outdoor|park|activity|footstep/)) return "footstep";
+    if (text.match(/health|disease|hereditary|vet|medical|shield|illness|cure|vaccine|sick|doctor|infection|flea|tick|bloat|gdv|emergency/)) return "shield";
+    return "paw";
+  }
+
   const saveBlogToHistory = (
     newBlog: SeoBlog,
     activeTopic: string,
@@ -222,6 +239,7 @@ export function BlogGenerationProvider({ children }: { children: ReactNode }) {
       posts: newPosts,
       metaDescription: newMeta,
       persona: { id: persona.id, name: persona.name, icon: persona.icon },
+      iconType: detectTopicIconType(activeTopic, newBlog.title),
     };
 
     setBlogHistory((prev) => {

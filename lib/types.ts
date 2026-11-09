@@ -123,6 +123,7 @@ export interface BlogHistoryItem {
     name: string;
     icon: string;
   };
+  iconType?: string;
 }
 
 export interface ReviewHistoryItem {

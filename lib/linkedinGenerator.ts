@@ -1,4 +1,5 @@
 import type { SeoBlog, LinkedInPosts } from "./types";
+import { fetchGeminiWithCascade } from "./geminiCascade";
 
 const LINK_EMOJI = "🔗";
 
@@ -92,75 +93,33 @@ function ensureLinkEmoji(text: string): string {
   return trimmed;
 }
 
-function isTransientStatus(status: number): boolean {
-  return status === 429 || status === 503;
-}
-
-function formatGeminiError(lastErr: string): string {
-  if (lastErr.includes("429") || lastErr.includes("RESOURCE_EXHAUSTED") || lastErr.includes("quota")) {
-    return "Gemini API rate limit reached (Quota Exceeded on Free Tier). Please wait 30 seconds before retrying, or update your GEMINI_API_KEY in .env.";
-  }
-  try {
-    const parsed = JSON.parse(lastErr);
-    if (parsed.error?.message) {
-      return `Gemini API Error: ${parsed.error.message}`;
-    }
-  } catch {
-    // ignore
-  }
-  return `Gemini API busy: ${lastErr || "Please try again in a moment."}`;
-}
-
 async function callGemini(prompt: string): Promise<LinkedInPosts> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-3.5-flash", "gemini-3.7-flash", "gemini-flash-latest", "gemini-flash-lite-latest"];
-  let lastErr = "";
+  const { data } = await fetchGeminiWithCascade({
+    apiKey,
+    body: {
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: RESPONSE_SCHEMA,
+        maxOutputTokens: 8192,
+        temperature: 0.8,
+      },
+    },
+  });
 
-  for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: RESPONSE_SCHEMA,
-              maxOutputTokens: 8192,
-              temperature: 0.8,
-            },
-          }),
-        }
-      );
+  const candidate = data.candidates?.[0];
 
-      if (!res.ok) {
-        lastErr = await res.text();
-        if (isTransientStatus(res.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
-          continue;
-        }
-        break;
-      }
-
-      const data = await res.json();
-      const candidate = data.candidates?.[0];
-
-      if (candidate?.finishReason === "MAX_TOKENS") {
-        throw new Error("Gemini truncated the LinkedIn response before finishing the JSON.");
-      }
-
-      let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
-      raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
-      return JSON.parse(raw) as LinkedInPosts;
-    }
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    throw new Error("Gemini truncated the LinkedIn response before finishing the JSON.");
   }
 
-  throw new Error(formatGeminiError(lastErr));
+  let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+  raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
+  return JSON.parse(raw) as LinkedInPosts;
 }
 
 /** Generates 3 LinkedIn post variations (Safe Bet, Clean-Label Teardown, Micro-Story) from a

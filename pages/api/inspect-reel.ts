@@ -11,6 +11,7 @@ export async function resolveInstagramMetadata(reelUrl: string): Promise<{
   ownerUsername: string;
   caption: string;
   imageUrl?: string;
+  videoUrl?: string;
   resolution: string;
   isAuthorized: boolean;
 }> {
@@ -18,12 +19,20 @@ export async function resolveInstagramMetadata(reelUrl: string): Promise<{
   const reelId = parseReelId(trimmed);
 
   if (!trimmed) {
-    return { reelId: "Dbvr1SfMiwC", ownerUsername: "cuddlytails", caption: "", resolution: "1080x1920 HD", isAuthorized: true };
+    return {
+      reelId: "Dbvr1SfMiwC",
+      ownerUsername: "cuddlytails",
+      caption: "",
+      resolution: "1080x1920 HD",
+      isAuthorized: true,
+      videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-playful-dog-in-the-grass-42795-large.mp4",
+    };
   }
 
   let ownerUsername = "";
   let caption = "";
   let imageUrl = "";
+  let videoUrl = "";
 
   // 1. Check if username handle is in URL structure: instagram.com/USERNAME/reel/SHORTCODE/
   const pathMatch = trimmed.match(/instagram\.com\/([a-zA-Z0-9_\.]+)\/(?:reel|p)\/([a-zA-Z0-9_-]+)/i);
@@ -47,6 +56,13 @@ export async function resolveInstagramMetadata(reelUrl: string): Promise<{
                        html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
       if (imgMatch) {
         imageUrl = imgMatch[1].replace(/&amp;/g, "&");
+      }
+
+      // 2b. Extract og:video / og:video:secure_url
+      const vMatch = html.match(/<meta\s+property="og:video(?::secure_url)?"\s+content="([^"]+)"/i) ||
+                     html.match(/<meta\s+content="([^"]+)"\s+property="og:video(?::secure_url)?"/i);
+      if (vMatch) {
+        videoUrl = vMatch[1].replace(/&amp;/g, "&");
       }
 
       // 3. Check for URL redirect / canonical handle pattern in HTML: instagram.com/HANDLE/reel/
@@ -110,6 +126,7 @@ export async function resolveInstagramMetadata(reelUrl: string): Promise<{
     ownerUsername: ownerUsername || "cuddlytails",
     caption: caption || "",
     imageUrl: imageUrl || undefined,
+    videoUrl: `/api/video-proxy?url=${encodeURIComponent(trimmed || "https://www.instagram.com/reel/C3x9K2pP1oL/")}`,
     resolution: "1080x1920 HD",
     isAuthorized: true
   };

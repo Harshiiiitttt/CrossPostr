@@ -295,6 +295,22 @@ function ArrowUpIcon() {
   );
 }
 
+function UserBadgeIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function getProviderRoleLabel(serviceType: string): string {
+  if (/walk/i.test(serviceType)) return "Walker";
+  if (/groom|spa/i.test(serviceType)) return "Groomer";
+  if (/emergency/i.test(serviceType)) return "Caregiver";
+  return "Sitter";
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function Page2({ onNext, onBack }: Page2Props) {
@@ -326,6 +342,18 @@ export default function Page2({ onNext, onBack }: Page2Props) {
   const [customPersonaText, setCustomPersonaText] = useState<string>("");
   const [reviewLength, setReviewLength] = useState<"detailed" | "short">("detailed");
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [loadingTick, setLoadingTick] = useState<number>(0);
+
+  useEffect(() => {
+    if (!reviewsLoading) {
+      setLoadingTick(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingTick((prev) => (prev + 1) % 4);
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [reviewsLoading]);
 
   const handleGenerate = () => {
     const activePersona = isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona;
@@ -1034,8 +1062,18 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#059669", boxShadow: "0 0 8px #059669", zIndex: 1 }} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span>Crafting 3 Authentic Reviews...</span>
+                <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#0F172A", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <span>
+                    {[
+                      "Assigning 3 unique dog breeds & caregiver profiles...",
+                      `Tailoring distinct storylines for ${serviceType}...`,
+                      `Applying ${isCustomPersona ? (customPersonaText.trim() || "Custom Persona") : persona} voice...`,
+                      "Verifying organic CuddlyTails brand mention...",
+                    ][loadingTick]}
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "0.7rem", fontWeight: 700, color: "#047857", background: "#D1FAE5", border: "1px solid #6EE7B7", padding: "2px 8px", borderRadius: "999px" }}>
+                    <ZapIcon /> Gemini Flash Cascade
+                  </span>
                 </div>
 
                 {/* Multi-Color Parameter Badges */}
@@ -1331,36 +1369,25 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                       </div>
                     </div>
 
-                    {/* Harmonized Neutral Badges */}
+                    {/* Harmonized SVG Badges */}
                     <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px", margin: "6px 0 10px 0" }}>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 9px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        🐕 {r.dogName} {r.dogBreed ? `(${r.dogBreed})` : ""}
+                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 10px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <PawIcon /> {r.dogName} {r.dogBreed ? `(${r.dogBreed})` : ""}
                       </span>
-                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 9px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                        👤 Walker: {r.providerName}
+                      <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#334155", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 10px", borderRadius: "9999px", display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                        <UserBadgeIcon /> {getProviderRoleLabel(serviceType)}: {r.providerName}
                       </span>
                     </div>
 
                     <p className="p2-review-text" style={{ fontSize: "0.89rem", color: "#334155", lineHeight: "1.68", letterSpacing: "-0.01em" }}>{r.reviewText}</p>
                   </div>
 
-                  {/* Tactile Scale Pop Copy Button with Dark Shade of Green */}
-                  <motion.button
+                  {/* Clean Static Copy Button (No scale/pop animations) */}
+                  <button
                     id={`p2-copy-btn-${i}`}
-                    className={`p2-copy-btn ${copiedIndex === i ? "copied-pop" : ""}`}
+                    type="button"
+                    className="p2-copy-btn"
                     onClick={() => copySingleReview(r.reviewText, i)}
-                    whileHover={{ scale: 1.04 }}
-                    animate={
-                      copiedIndex === i
-                        ? { scale: [1, 0.88, 1], backgroundColor: "#15803D", borderColor: "#166534", color: "#FFFFFF" }
-                        : { scale: 1, backgroundColor: "#ECFDF5", borderColor: "#A7F3D0", color: "#047857" }
-                    }
-                    transition={{
-                      scale: { duration: 0.38, times: [0, 0.4, 1], ease: [0.25, 1, 0.5, 1] },
-                      backgroundColor: { duration: 0.25, ease: "easeOut" },
-                      borderColor: { duration: 0.25, ease: "easeOut" },
-                      color: { duration: 0.25, ease: "easeOut" },
-                    }}
                     style={{
                       height: "30px",
                       minWidth: "78px",
@@ -1373,9 +1400,13 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "5px",
+                      background: copiedIndex === i ? "#15803D" : "#ECFDF5",
+                      border: `1px solid ${copiedIndex === i ? "#166534" : "#A7F3D0"}`,
+                      color: copiedIndex === i ? "#FFFFFF" : "#047857",
                       boxShadow: copiedIndex === i ? "0 3px 12px rgba(21, 128, 61, 0.35)" : "0 1px 3px rgba(4, 120, 87, 0.08)",
                       whiteSpace: "nowrap",
                       lineHeight: 1,
+                      transition: "none",
                     }}
                   >
                     {copiedIndex === i ? (
@@ -1387,7 +1418,7 @@ export default function Page2({ onNext, onBack }: Page2Props) {
                         <CopyIcon /> Copy
                       </>
                     )}
-                  </motion.button>
+                  </button>
                 </motion.div>
               );
             })}

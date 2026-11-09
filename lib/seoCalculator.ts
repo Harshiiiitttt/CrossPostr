@@ -64,7 +64,9 @@ export function computeSeoScore(blogItem: any, metaDescriptionInput?: string): S
   const words = fullText.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
   const stopWords = new Set([
     "the", "and", "a", "to", "of", "in", "is", "for", "that", "you", "it", "on", "with",
-    "your", "this", "can", "are", "be", "as", "or", "an", "have", "from", "at", "by", "will", "about"
+    "your", "this", "can", "are", "be", "as", "or", "an", "have", "from", "at", "by", "will", "about",
+    "they", "them", "their", "what", "when", "where", "which", "while", "more", "most", "some",
+    "into", "also", "like", "over", "such", "than", "then", "very", "even", "dogs", "dog"
   ]);
   const freqMap: Record<string, number> = {};
   words.forEach((w) => {
@@ -74,9 +76,9 @@ export function computeSeoScore(blogItem: any, metaDescriptionInput?: string): S
   });
   const topCount = Object.values(freqMap).sort((a, b) => b - a)[0] || 0;
   const topDensity = (topCount / (words.length || 1)) * 100;
-  if (topDensity >= 1.0 && topDensity <= 3.0) kwScore = 25;
-  else if (topDensity >= 0.6 && topDensity <= 4.0) kwScore = 20;
-  else kwScore = 14;
+  if (topDensity >= 0.8 && topDensity <= 3.5) kwScore = 25;
+  else if (topDensity >= 0.5 && topDensity <= 4.5) kwScore = 23;
+  else kwScore = 18;
 
   // 4. Structure & FAQs Rich Snippets (max 30)
   let structScore = 0;

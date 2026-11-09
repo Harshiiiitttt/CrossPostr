@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProgressBar from "@/components/ProgressBar";
 import PawLoader from "@/components/PawLoader";
@@ -308,11 +308,32 @@ export default function Page1({ onNext }: Page1Props) {
     }
   };
 
-  const [inspectedMeta, setInspectedMeta] = useState<{ reelId: string; ownerUsername: string; imageUrl?: string; rawCaption?: string; resolution: string } | null>(null);
+  const [inspectedMeta, setInspectedMeta] = useState<{ reelId: string; ownerUsername: string; imageUrl?: string; videoUrl?: string; rawCaption?: string; resolution: string } | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const [isGeneratingCaption, setIsGeneratingCaption] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    setVideoError(false);
+  }, [inspectedMeta]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    if (isPlaying) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  }, [isPlaying, inspectedMeta, videoError]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = isMuted;
+  }, [isMuted]);
 
   const handleCopyCaption = () => {
     if (!customCaption.trim()) return;
@@ -349,7 +370,14 @@ export default function Page1({ onNext }: Page1Props) {
         .then((data) => {
           if (isMounted && data.reelId) {
             const username = data.ownerUsername || "cuddlytails";
-            setInspectedMeta({ reelId: data.reelId, ownerUsername: username, imageUrl: data.imageUrl, rawCaption: data.caption, resolution: data.resolution || "1080x1920 HD" });
+            setInspectedMeta({
+              reelId: data.reelId,
+              ownerUsername: username,
+              imageUrl: data.imageUrl,
+              videoUrl: data.videoUrl || "https://assets.mixkit.co/videos/preview/mixkit-playful-dog-in-the-grass-42795-large.mp4",
+              rawCaption: data.caption,
+              resolution: data.resolution || "1080x1920 HD"
+            });
             
             // Generate visually accurate caption analyzing actual video cover frame with Gemini Vision
             if (isMounted) setIsGeneratingCaption(true);
@@ -1255,27 +1283,54 @@ export default function Page1({ onNext }: Page1Props) {
                 transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
-              {/* Actual Instagram Reel Cover Frame (100% Full Uncropped View) */}
+              {/* Dynamic Canvas Reel Cover Frame */}
               {inspectedMeta?.imageUrl ? (
-                <motion.img
+                <img
                   key={inspectedMeta.imageUrl}
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
                   src={inspectedMeta.imageUrl}
-                  alt="Reel Video Preview"
+                  alt="Reel Cover Frame"
                   style={{
                     position: "absolute",
                     inset: 0,
                     width: "100%",
                     height: "100%",
-                    objectFit: "contain",
-                    background: "#000",
+                    objectFit: "cover",
+                    background: "#0F172A",
                     zIndex: 1,
-                    opacity: isPlaying ? 1 : 0.85,
                   }}
                 />
-              ) : null}
+              ) : (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "12px",
+                    color: "#94A3B8",
+                    zIndex: 1,
+                  }}
+                >
+                  <div style={{
+                    width: "44px",
+                    height: "44px",
+                    borderRadius: "50%",
+                    background: "rgba(104, 183, 122, 0.15)",
+                    border: "1px solid #68B77A",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#68B77A",
+                    fontSize: "0.9rem",
+                  }}>
+                    ▶
+                  </div>
+                  <span style={{ fontSize: "0.76rem", fontWeight: 600 }}>Paste Reel Link to Preview</span>
+                </div>
+              )}
 
               {/* Inspecting Reel Video Fetching Loading Overlay */}
               <AnimatePresence>
@@ -1582,9 +1637,10 @@ export default function Page1({ onNext }: Page1Props) {
                 <AnimatePresence>
                   {isGeneratingCaption && (
                     <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
+                      initial={{ opacity: 0, scale: 0.98 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.2 }}
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -1592,29 +1648,45 @@ export default function Page1({ onNext }: Page1Props) {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "8px",
-                        background: "rgba(0, 0, 0, 0.35)",
-                        backdropFilter: "blur(3px)",
+                        gap: "10px",
+                        background: "rgba(255, 255, 255, 0.88)",
+                        backdropFilter: "blur(8px)",
                         borderRadius: "12px",
                         zIndex: 20,
                         pointerEvents: "none",
+                        border: "1.5px solid #A7F3D0",
+                        boxShadow: "inset 0 0 20px rgba(16, 185, 129, 0.06)",
                       }}
                     >
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                      <div
                         style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "50%",
-                          border: "3px solid rgba(104, 183, 122, 0.2)",
-                          borderTopColor: "#68B77A",
-                          boxShadow: "0 0 12px rgba(104, 183, 122, 0.4)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+                          border: "1px solid #6EE7B7",
+                          color: "#047857",
+                          fontSize: "0.82rem",
+                          fontWeight: 800,
+                          padding: "8px 18px",
+                          borderRadius: "999px",
+                          boxShadow: "0 4px 14px rgba(5, 150, 105, 0.15)",
                         }}
-                      />
-                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#68B77A", letterSpacing: "0.02em" }}>
-                        Generating AI Caption...
-                      </span>
+                      >
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+                          style={{
+                            width: "14px",
+                            height: "14px",
+                            borderRadius: "50%",
+                            border: "2px solid rgba(4, 120, 87, 0.2)",
+                            borderTopColor: "#047857",
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span>Crafting AI Caption...</span>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

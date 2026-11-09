@@ -1,4 +1,5 @@
 import type { SeoBlog } from "./types";
+import { fetchGeminiWithCascade } from "./geminiCascade";
 
 const VET_CTA = "Get help from a CuddlyTails AI vet here.";
 
@@ -35,75 +36,102 @@ RHYTHM & SCHEMA RULES:
 - Sections with lists (Signs, Treatment, Prevention, When to See a Vet) follow this three-part rhythm: (1) short setup sentence, (2) 4-6 specific bullet points in simple words, (3) short closing sentence.
 - The mandatory vet CTA string immediately follows before the conclusion.`;
 
+function parseQuestionTopic(rawTopic: string): {
+  rawTopic: string;
+  coreSubject: string;
+  isQuestion: boolean;
+} {
+  const trimmed = rawTopic.trim();
+  const isQuestion =
+    /\?$/.test(trimmed) ||
+    /^(what|why|how|when|where|which|who|can|could|should|would|is|are|does|do|will|may|might)\b/i.test(trimmed);
+
+  const withoutQ = trimmed.replace(/[?.!]+$/, "").trim();
+
+  let core = withoutQ
+    .replace(
+      /^(what\s+causes|what\s+are\s+the\s+causes\s+of|what\s+is\s+causing|what\s+is\s+the\s+cause\s+of|what\s+to\s+do\s+if|what\s+to\s+do\s+when|what\s+happens\s+if|what\s+happens\s+when|what\s+does\s+it\s+mean\s+when|what\s+are|what\s+is)\s+/i,
+      ""
+    )
+    .replace(
+      /^(why\s+is\s+my|why\s+are\s+my|why\s+does\s+my|why\s+do\s+my|why\s+is\s+a|why\s+does\s+a|why\s+do|why\s+are|why\s+is)\s+/i,
+      ""
+    )
+    .replace(
+      /^(how\s+to\s+stop|how\s+to\s+prevent|how\s+to\s+treat|how\s+to\s+fix|how\s+to\s+manage|how\s+to\s+deal\s+with|how\s+to\s+help|how\s+do\s+i\s+stop|how\s+do\s+i\s+treat|how\s+do\s+i\s+fix|how\s+can\s+i|how\s+often\s+should\s+i|how\s+long\s+does|how\s+to|how\s+do|how\s+does|how\s+is|how\s+are)\s+/i,
+      ""
+    )
+    .replace(
+      /^(can\s+i\s+give\s+my|can\s+my|can\s+a|can|should\s+i|should\s+my|is\s+it\s+safe\s+for|is\s+it\s+normal\s+for|is\s+my|are\s+my|does\s+my|do\s+my)\s+/i,
+      ""
+    )
+    .replace(
+      /^(managing|understanding|dealing\s+with|preventing|curing|fixing|caring\s+for|handling)\s+/i,
+      ""
+    )
+    .trim();
+
+  if (!core || core.length < 3) {
+    core = withoutQ;
+  } else {
+    core = core.charAt(0).toUpperCase() + core.slice(1);
+  }
+
+  return { rawTopic: trimmed, coreSubject: core, isQuestion };
+}
+
 function buildPrompt(topic: string): string {
+  const { rawTopic, coreSubject, isQuestion } = parseQuestionTopic(topic);
+
+  const questionDirective = isQuestion
+    ? `\n### QUESTION-BASED TOPIC HANDLING (CRITICAL)
+The user entered their topic as a question: "${rawTopic}" (Core subject: "${coreSubject}").
+1. **Direct Answer First:** In the very first paragraph of the introduction, directly and clearly answer the question "${rawTopic}" in plain, reassuring language (ideal for a Google Featured Snippet).
+2. **Natural Section Headings:** Do NOT awkwardly paste the full question "${rawTopic}" into every H2 heading. Instead, structure the 6-7 H2 headings naturally around "${coreSubject}" and the intent of the question (for example: what "${coreSubject}" looks like, the main causes/triggers behind it, symptoms to watch for, treatment & home care, and when to see a vet).
+3. ** Title:** You may keep the title as a polished, compelling version of the question (50-65 characters) or an answer-driven title directly addressing "${coreSubject}".\n`
+    : "";
+
   return `### CRITICAL: TOPIC ACCURACY & SINGLE SOURCE OF TRUTH
 The user's requested input topic is:
-"${topic}"
-
+"${rawTopic}" (Core Subject: "${coreSubject}")
+${questionDirective}
 This topic is the SINGLE SOURCE OF TRUTH for the entire article.
-Before generating the article, internally identify exactly what "${topic}" is about and what information a user searching for that topic expects.
-Every single part of the article—title, intro, headings, subtopics, paragraphs, bullet points, conclusion, and FAQs—MUST be directly related to "${topic}".
+Every single part of the article—title, intro, headings, subtopics, paragraphs, bullet points, conclusion, and FAQs—MUST be directly related to "${rawTopic}" and "${coreSubject}".
 
 ### STRICT ANTI-TOPIC-DRIFT RULE
 Do NOT replace or drift the requested topic with:
 * A different dog-health condition
 * A loosely related dog-care subject
-* A previously generated topic
-* A generic dog-care topic
-* A travel, training, nutrition, grooming, or safety topic UNLESS it is directly relevant to "${topic}".
-
-For example, if the topic is "Anal Gland Care & Expressions Explained", discuss anal glands, location, impaction, expression, vet care, and prevention. Do NOT turn it into an article about car safety, harnesses, road trips, or grooming unless requested.
+* A travel, training, nutrition, grooming, or safety topic UNLESS it is directly relevant to "${coreSubject}".
 
 ### NO FORCED KEYWORD STUFFING
-* Use the primary topic naturally throughout the article.
-* Never force the exact topic phrase into a sentence simply for SEO.
-* Do not create unnatural headings unless the content is genuinely about that subject.
-* Prioritize semantic relevance and readability over keyword repetition.
-
-### CONTENT RELEVANCE RULE
-* Every section must answer a question or provide information that a reader searching for "${topic}" would reasonably expect.
-* Before including any section, internally ask: "Would someone who searched for '${topic}' expect to find this information?" If the answer is no, do not include that section.
-
-### TITLE AND META DESCRIPTION
-* The title must accurately describe the requested topic.
-* The meta description must accurately describe the actual content of the article.
-* Never create a title or meta description about one subject while the body discusses another.
-
-### FINAL SELF-CHECK DIRECTIVE
-Before returning the article, internally verify:
-1. Does the entire article answer the requested topic ("${topic}")?
-2. Are the majority of headings directly related to "${topic}"?
-3. Are the paragraphs actually discussing "${topic}"?
-4. Are the FAQs strictly relevant to "${topic}"?
-5. Does the conclusion discuss the same topic ("${topic}")?
-6. Did any unrelated subject accidentally replace the requested topic?
-7. Did I force the keyword into unnatural or unrelated sentences?
-
-If any answer indicates topic drift, rewrite the affected sections internally before returning the JSON.
-The generated article MUST be about "${topic}" first and SEO-optimized second. Never sacrifice topical accuracy for keyword placement.
+* Use the primary topic and "${coreSubject}" naturally throughout the article.
+* Never force a full question sentence verbatim into the middle of a sentence where a noun phrase belongs.
+* Prioritize semantic relevance and natural readability.
 
 ${STRUCTURE_GUIDE}
 
-Blog Length & Budget Requirements (STRICT CEILING):
-- Target word count: 1,150 to 1,300 words total (across intro + all sections + conclusion).
-- ABSOLUTE MAXIMUM CEILING: DO NOT EXCEED 1,400 WORDS UNDER ANY CIRCUMSTANCES.
-- Keep paragraphs concise, clear, and punchy (2-4 sentences max per paragraph). Do not write overly verbose explanations.
+Blog Length & Depth Requirements (CRITICAL FOR 96+ A+ SEO SCORE):
+- Target body word count: 1,080 to 1,250 words across intro + all sections + conclusion (so that together with the ~200 words of FAQs, the complete article totals 1,280 to 1,480 words).
+- ABSOLUTE MAXIMUM CEILING: DO NOT EXCEED 1,480 TOTAL WORDS (strictly under 1,500 words max).
+- Every section MUST include 2 to 3 detailed, informative paragraphs (3–4 full sentences per paragraph, ~55–65 words per paragraph).
+- Include 3 detailed H3 "subtopics" (each with 2 paragraphs) in the Causes / Breakdown section.
+- Include 5 descriptive bullet points (15–20 words per bullet) in the Signs, Treatment/Prevention, and Vet Care sections.
 - Word budget guide:
-  - Intro: ~100-120 words.
-  - What Is It?: ~150-180 words.
-  - How Does It Affect Your Dog?: ~150-180 words.
-  - Signs to Watch For: ~150-180 words.
-  - Causes (subtopics): ~250-300 words.
-  - Treatment & Prevention: ~200-240 words.
-  - When Should You See a Vet?: ~120-150 words.
-  - Final Thoughts (Conclusion): ~100-120 words.
+  - Intro (2 paragraphs): ~120–140 words.
+  - Section 1 (What Is It / Overview): ~150–170 words.
+  - Section 2 (How It Affects Your Dog): ~150–170 words.
+  - Section 3 (Signs & Symptoms to Watch For + 5 bullets): ~170–190 words.
+  - Section 4 (Primary Causes & Risk Factors + 3 H3 subtopics): ~240–270 words.
+  - Section 5 (Treatment, Home Care & Prevention + 5 bullets): ~180–210 words.
+  - Section 6 (When Should You See a Vet? + bullets): ~130–150 words.
+  - Final Thoughts (Conclusion, 2 full paragraphs): ~100–120 words.
 
 SEO Requirements:
-- Catchy, SEO-friendly title (50-60 characters, no generic "A Comprehensive Guide" or "Ultimate Guide").
+- Catchy, SEO-friendly title (50-65 characters, no generic "A Comprehensive Guide" or "Ultimate Guide").
 - Clear H2 and H3 headings matching the structure.
-- Natural keyword placement without topic drift.
+- Natural keyword placement (aim for ~1.5%–2.5% natural keyword density) without topic drift.
 - Featured-snippet-friendly explanations.
-- 5 FAQs included separately via FAQ prompt.
 
 Additional requirements:
 - No HTML tags anywhere. Plain text only.
@@ -111,12 +139,12 @@ Additional requirements:
 }
 
 function buildFaqPrompt(topic: string, title: string): string {
-  return `Write exactly 5 simple, SEO-friendly FAQs for a blog titled "${title}" strictly about "${topic}".
+  return `Write exactly 5 comprehensive, SEO-friendly FAQs for a blog titled "${title}" strictly about "${topic}".
 Requirements:
 - Every single FAQ question and answer MUST be 100% directly relevant to "${topic}".
 - Do NOT introduce unrelated topics (e.g. car travel, harnesses, grooming, or unrelated health conditions) unless "${topic}" is explicitly about that.
 - Phrased in simple, everyday language as a worried dog owner searching for "${topic}" would actually ask online.
-- Answers must be 1-2 clear, reassuring sentences in plain English (Grade 6-8 reading level).
+- Answers must be 2–3 thorough, reassuring sentences in plain English (roughly 40–55 words per answer, Grade 6-8 reading level).
 - Cover 5 distinct, non-overlapping questions specific to "${topic}".
 Return JSON matching the schema exactly.`;
 }
@@ -125,7 +153,12 @@ const RESPONSE_SCHEMA = {
   type: "OBJECT",
   properties: {
     title: { type: "STRING" },
-    intro: { type: "ARRAY", items: { type: "STRING" } },
+    intro: {
+      type: "ARRAY",
+      minItems: 2,
+      maxItems: 3,
+      items: { type: "STRING" },
+    },
     sections: {
       type: "ARRAY",
       minItems: 6,
@@ -134,16 +167,22 @@ const RESPONSE_SCHEMA = {
         type: "OBJECT",
         properties: {
           heading: { type: "STRING" },
-          paragraphs: { type: "ARRAY", items: { type: "STRING" } },
+          paragraphs: {
+            type: "ARRAY",
+            minItems: 2,
+            maxItems: 3,
+            items: { type: "STRING" },
+          },
           bullets: {
             type: "ARRAY",
-            minItems: 4,
+            minItems: 5,
             maxItems: 6,
             items: { type: "STRING" },
           },
           subtopics: {
             type: "ARRAY",
-            minItems: 2,
+            minItems: 3,
+            maxItems: 4,
             items: {
               type: "OBJECT",
               properties: {
@@ -159,7 +198,7 @@ const RESPONSE_SCHEMA = {
             },
           },
         },
-        required: ["heading"],
+        required: ["heading", "paragraphs"],
       },
     },
     vetCta: { type: "STRING" },
@@ -193,77 +232,36 @@ const FAQ_SCHEMA = {
   required: ["faqs"],
 };
 
-function isTransientStatus(status: number): boolean {
-  return status === 429 || status === 503;
-}
-
-function formatGeminiError(lastErr: string): string {
-  if (lastErr.includes("429") || lastErr.includes("RESOURCE_EXHAUSTED") || lastErr.includes("quota")) {
-    return "Gemini API rate limit reached (Quota Exceeded on Free Tier). Please wait 30 seconds before retrying, or update your GEMINI_API_KEY in .env.";
-  }
-  try {
-    const parsed = JSON.parse(lastErr);
-    if (parsed.error?.message) {
-      return `Gemini API Error: ${parsed.error.message}`;
-    }
-  } catch {
-    // ignore parse error
-  }
-  return `Gemini API busy: ${lastErr || "Please try again in a moment."}`;
-}
-
 async function callGemini<T>(prompt: string, schema: object, maxOutputTokens: number): Promise<T> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("GEMINI_API_KEY is not set - see init.md.");
 
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro"];
-  let lastErr = "";
+  const { data } = await fetchGeminiWithCascade({
+    apiKey,
+    timeoutMs: 18000,
+    body: {
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: schema,
+        maxOutputTokens: Math.max(maxOutputTokens, 8192),
+        temperature: 0.7,
+      },
+    },
+  });
 
-  for (const model of models) {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              responseMimeType: "application/json",
-              responseSchema: schema,
-              maxOutputTokens,
-              temperature: 0.7,
-            },
-          }),
-        }
-      );
+  const candidate = data.candidates?.[0];
 
-      if (!res.ok) {
-        lastErr = await res.text();
-        if (isTransientStatus(res.status)) {
-          await new Promise((resolve) => setTimeout(resolve, 1500 * (attempt + 1)));
-          continue;
-        }
-        break;
-      }
-
-      const data = await res.json();
-      const candidate = data.candidates?.[0];
-
-      if (candidate?.finishReason === "MAX_TOKENS") {
-        throw new Error(
-          "Gemini truncated the response before finishing the JSON. Try a narrower topic."
-        );
-      }
-
-      let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
-      raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
-      return JSON.parse(raw) as T;
-    }
+  if (candidate?.finishReason === "MAX_TOKENS") {
+    throw new Error(
+      "Gemini truncated the response before finishing the JSON. Try a narrower topic."
+    );
   }
 
-  throw new Error(formatGeminiError(lastErr));
+  let raw: string = candidate?.content?.parts?.[0]?.text ?? "{}";
+  raw = raw.replace(/<b>(.*?)<\/b>/gi, "$1").replace(/<strong>(.*?)<\/strong>/gi, "$1");
+  return JSON.parse(raw) as T;
 }
 
 async function generateFaqs(
@@ -286,7 +284,7 @@ function bodyWordCount(body: Omit<SeoBlog, "approxWordCount" | "faqs">): number 
 }
 
 function hasSuspiciouslyShortFragment(body: Omit<SeoBlog, "approxWordCount" | "faqs">): boolean {
-  const isFragment = (line: string) => line.trim().split(/\s+/).length < 5;
+  const isFragment = (line: string) => line.trim().split(/\s+/).length < 3;
   const introBad = body.intro.some(isFragment);
   const conclusionBad = body.conclusion.some(isFragment);
   const sectionsBad = body.sections.some((s) => {
@@ -299,19 +297,58 @@ function hasSuspiciouslyShortFragment(body: Omit<SeoBlog, "approxWordCount" | "f
 
 function trimBodyToMaxWords(
   body: Omit<SeoBlog, "approxWordCount" | "faqs">,
-  maxWords: number = 1380
+  maxWords: number = 1260
 ): Omit<SeoBlog, "approxWordCount" | "faqs"> {
   let currentWords = bodyWordCount(body);
   if (currentWords <= maxWords) return body;
 
   const trimmed = JSON.parse(JSON.stringify(body)) as Omit<SeoBlog, "approxWordCount" | "faqs">;
 
+  // Pass 1: Remove 3rd paragraphs in sections that have > 2 paragraphs
   for (let s = trimmed.sections.length - 1; s >= 0; s--) {
     const sec = trimmed.sections[s];
+    if (sec.paragraphs && sec.paragraphs.length > 2) {
+      while (sec.paragraphs.length > 2 && currentWords > maxWords) {
+        const wordsInP = sec.paragraphs[sec.paragraphs.length - 1].trim().split(/\s+/).length;
+        if (currentWords - wordsInP >= 1000) {
+          sec.paragraphs.pop();
+          currentWords = bodyWordCount(trimmed);
+        } else {
+          break;
+        }
+      }
+      if (currentWords <= maxWords) return trimmed;
+    }
+  }
+
+  // Pass 2: Remove 2nd paragraphs in sections that also have bullets or subtopics
+  for (let s = trimmed.sections.length - 1; s >= 0; s--) {
+    const sec = trimmed.sections[s];
+    const hasExtras = (sec.bullets && sec.bullets.length > 0) || (sec.subtopics && sec.subtopics.length > 0);
+    if (hasExtras && sec.paragraphs && sec.paragraphs.length > 1) {
+      const wordsInP = sec.paragraphs[sec.paragraphs.length - 1].trim().split(/\s+/).length;
+      if (currentWords - wordsInP >= 1000) {
+        sec.paragraphs.pop();
+        currentWords = bodyWordCount(trimmed);
+        if (currentWords <= maxWords) return trimmed;
+      }
+    }
+  }
+
+  // Pass 3: Trim extra bullets beyond 4 or extra paragraphs down to 1
+  for (let s = trimmed.sections.length - 1; s >= 0; s--) {
+    const sec = trimmed.sections[s];
+    if (sec.bullets && sec.bullets.length > 4) {
+      while (sec.bullets.length > 4 && currentWords > maxWords) {
+        sec.bullets.pop();
+        currentWords = bodyWordCount(trimmed);
+      }
+      if (currentWords <= maxWords) return trimmed;
+    }
     if (sec.paragraphs && sec.paragraphs.length > 1) {
       for (let p = sec.paragraphs.length - 1; p >= 1; p--) {
         const wordsInP = sec.paragraphs[p].trim().split(/\s+/).length;
-        if (currentWords - wordsInP >= 1100) {
+        if (currentWords - wordsInP >= 1000) {
           sec.paragraphs.splice(p, 1);
           currentWords = bodyWordCount(trimmed);
           if (currentWords <= maxWords) return trimmed;
@@ -323,36 +360,32 @@ function trimBodyToMaxWords(
   return trimmed;
 }
 
-/** The schema's minItems/maxItems on "sections" is a hint, not a hard guarantee from the
- *  model - so validate the actual shape after generation and retry with a sharper warning
- *  if it over-generated (extra top-level headings), badly overshot the word target, or
- *  self-closed the JSON mid-sentence leaving a truncated fragment. */
+/** Validates the generated blog structure without forcing unnecessary multi-pass retries on
+ *  concise, direct answers to question-based topics. */
 async function generateBody(topic: string): Promise<Omit<SeoBlog, "approxWordCount" | "faqs">> {
   let lastBody: Omit<SeoBlog, "approxWordCount" | "faqs"> | null = null;
 
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < 2; attempt++) {
     const promptText: string =
       attempt === 0
         ? buildPrompt(topic)
-        : `${buildPrompt(topic)}\n\nYour previous attempt produced ${lastBody!.sections.length} ` +
-          `top-level sections and roughly ${bodyWordCount(lastBody!)} words. ` +
-          `Fix this: ensure exactly 6-7 H2 sections, target 1,150–1,300 words total (STRICT MAXIMUM 1,400 WORDS MAX), ` +
-          `keep content informative and concise without artificial filler, keep every paragraph complete, ` +
-          `explain any medical terms immediately in plain language, and avoid repeating information across sections.`;
+        : `${buildPrompt(topic)}\n\nIMPORTANT: Your previous draft was only ${bodyWordCount(lastBody!)} words across ${lastBody!.sections.length} sections, which is too short. ` +
+          `Expand the depth significantly to reach 1,100–1,250 words in the body: write 2–3 full paragraphs per section (3–4 detailed sentences each), include 3 H3 subtopics in the Causes section (each with 2 detailed paragraphs), and provide 5 thorough bullet points in the Signs and Treatment sections.`;
 
     const attemptBody = await callGemini<Omit<SeoBlog, "approxWordCount" | "faqs">>(promptText, RESPONSE_SCHEMA, 8192);
     lastBody = attemptBody;
 
     const words = bodyWordCount(attemptBody);
     const sectionsOk = attemptBody.sections.length >= 6 && attemptBody.sections.length <= 7;
-    const wordsOk = words >= 1050 && words <= 1380; // buffer around ~1,200 words target (strict max 1,400)
+    const wordsOk = words >= 980;
     const notTruncated = !hasSuspiciouslyShortFragment(attemptBody);
 
-    if (sectionsOk && wordsOk && notTruncated) return attemptBody;
+    if (sectionsOk && wordsOk && notTruncated) {
+      return words > 1260 ? trimBodyToMaxWords(attemptBody, 1260) : attemptBody;
+    }
   }
 
-  // Last resort: trim last attempt to strictly fit under 1,380 words maximum
-  return trimBodyToMaxWords(lastBody!, 1380);
+  return trimBodyToMaxWords(lastBody!, 1260);
 }
 
 function countWords(blog: Omit<SeoBlog, "approxWordCount">): number {
@@ -368,7 +401,11 @@ function countWords(blog: Omit<SeoBlog, "approxWordCount">): number {
     })
     .join(" ");
 
-  const full = `${blog.title} ${introText} ${sectionText} ${blog.vetCta} ${conclusionText}`;
+  const faqText = (blog.faqs ?? [])
+    .flatMap((f) => [f.question, f.answer])
+    .join(" ");
+
+  const full = `${blog.title} ${introText} ${sectionText} ${blog.vetCta} ${conclusionText} ${faqText}`;
   return full.trim().split(/\s+/).length;
 }
 
@@ -387,12 +424,9 @@ function stripInlineCtaDuplicates(
 }
 
 function sanitizeTopic(topic: string): { nounPhrase: string; displayTopic: string } {
-  const trimmed = topic.trim().replace(/\?+$/, "");
+  const { coreSubject } = parseQuestionTopic(topic);
 
-  // Clean lead words like "Managing ", "Understanding ", "Dealing With ", "Why Is My ", etc.
-  let clean = trimmed
-    .replace(/^(managing|understanding|dealing with|preventing|curing|fixing|caring for|handling|how to manage|how to deal with|how to fix|how to stop)\s+/i, "")
-    .replace(/^(why|how|what|when|where|is|are|can|does|do)\s+(is|are|does|do|my|a|the)?\s*/i, "")
+  let clean = coreSubject
     .replace(/\b(gaining weight|gain weight)\b/i, "Weight Gain")
     .replace(/\b(losing weight|lose weight)\b/i, "Weight Loss")
     .replace(/\b(vomiting|throwing up)\b/i, "Vomiting")
@@ -726,14 +760,26 @@ export async function generateBlog(topic: string): Promise<SeoBlog> {
   if (!topic.trim()) throw new Error("Please provide a blog topic.");
 
   try {
-    let body = await generateBody(topic);
-    body = stripInlineCtaDuplicates(body);
+    const { coreSubject } = parseQuestionTopic(topic);
+    const [rawBody, faqs] = await Promise.all([
+      generateBody(topic),
+      generateFaqs(topic, coreSubject),
+    ]);
+
+    let body = stripInlineCtaDuplicates(rawBody);
 
     if (!body.vetCta || !body.vetCta.includes(VET_CTA)) {
       body.vetCta = VET_CTA;
     }
 
-    const faqs = await generateFaqs(topic, body.title);
+    const faqWords = faqs
+      .flatMap((f) => [f.question, f.answer])
+      .join(" ")
+      .trim()
+      .split(/\s+/).length;
+
+    const maxBodyBudget = Math.max(1050, 1480 - faqWords);
+    body = trimBodyToMaxWords(body, maxBodyBudget);
 
     const result: Omit<SeoBlog, "approxWordCount"> = { ...body, faqs };
     return { ...result, approxWordCount: countWords(result) };

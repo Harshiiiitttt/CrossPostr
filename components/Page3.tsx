@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import type { LinkedInPosts, SeoBlog } from "@/lib/types";
@@ -576,15 +576,588 @@ function formatRelativeTime(timestamp: number): string {
   return `${diffDays}d ago`;
 }
 
+function CarTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M14 16H9m10 0h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-1.5a2 2 0 0 1-1.6-.8L15 6H9L7.1 9.2A2 2 0 0 1 5.5 10H4a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1" />
+      <circle cx="6.5" cy="16.5" r="2.5" />
+      <circle cx="17.5" cy="16.5" r="2.5" />
+    </svg>
+  );
+}
+
+function EyeTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function HealthShieldIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <line x1="12" y1="8" x2="12" y2="14" />
+      <line x1="9" y1="11" x2="15" y2="11" />
+    </svg>
+  );
+}
+
+function BoneTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M17 10c.7-.7 1.6-1 2.5-.7 1.2.4 1.8 1.7 1.5 2.9-.3.9-1.1 1.5-2 1.6l-10 4c-.9.3-1.9 0-2.5-.7-1.2-.4-1.8-1.7-1.5-2.9.3-.9 1.1-1.5 2-1.6l10-4z" />
+      <circle cx="17.5" cy="8.5" r="2" />
+      <circle cx="19.5" cy="11.5" r="2" />
+      <circle cx="4.5" cy="15.5" r="2" />
+      <circle cx="6.5" cy="12.5" r="2" />
+    </svg>
+  );
+}
+
+function BowlTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9z" />
+      <path d="M7 8V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v3" />
+    </svg>
+  );
+}
+
+function ToothTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M12 2C8.5 2 6 4.5 6 7c0 3.5 1.5 7.5 3 11 1 2 2 4 3 4s2-2 3-4c1.5-3.5 3-7.5 3-11 0-2.5-2.5-5-6-5z" />
+    </svg>
+  );
+}
+
+function GraduationTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+      <path d="M6 12v5c3 3 9 3 12 0v-5" />
+    </svg>
+  );
+}
+
+function BathTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z" />
+      <path d="M6 12V5a2 2 0 0 1 2-2h3" />
+    </svg>
+  );
+}
+
+function FootstepTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1" />
+      <path d="M16 8l-4-4-4 4" />
+      <line x1="12" y1="4" x2="12" y2="16" />
+    </svg>
+  );
+}
+
+function AppleTopicIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <path d="M12 20.5C6.5 20.5 4 16 4 11.5c0-4 3-7.5 7-7.5 1.5 0 2.5.5 3 .5s1.5-.5 3-.5c4 0 7 3.5 7 7.5 0 4.5-2.5 9-8 9z" />
+      <path d="M12 4c.5-1.5 2-2.5 3.5-2.5" />
+    </svg>
+  );
+}
+
+function PawTopicBadgeIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: "block", margin: "auto", flexShrink: 0 }}>
+      <ellipse cx="12" cy="16.2" rx="5.4" ry="4.6" />
+      <ellipse cx="5.2" cy="8.8" rx="2.1" ry="2.7" />
+      <ellipse cx="10.1" cy="5.4" rx="2" ry="2.6" />
+      <ellipse cx="14.7" cy="5.4" rx="2" ry="2.6" />
+      <ellipse cx="19" cy="8.8" rx="2.1" ry="2.7" />
+    </svg>
+  );
+}
+
+function getTopicSvgIcon(topic: string = "", title: string = "", iconType?: string) {
+  if (iconType) {
+    switch (iconType) {
+      case "bone": return <BoneTopicIcon />;
+      case "tooth": return <ToothTopicIcon />;
+      case "eye": return <EyeTopicIcon />;
+      case "car": return <CarTopicIcon />;
+      case "graduation": return <GraduationTopicIcon />;
+      case "bowl": return <BowlTopicIcon />;
+      case "apple": return <AppleTopicIcon />;
+      case "bath": return <BathTopicIcon />;
+      case "footstep": return <FootstepTopicIcon />;
+      case "shield": return <HealthShieldIcon />;
+      case "paw": return <PawTopicBadgeIcon />;
+    }
+  }
+
+  const text = `${topic} ${title}`.toLowerCase();
+
+  // 1. Bone / Broth / Joints / Arthritis
+  if (text.match(/bone|broth|joint|arthritis|hip|cartilage/)) {
+    return <BoneTopicIcon />;
+  }
+
+  // 2. Dental / Teeth / Breath
+  if (text.match(/teeth|dental|tooth|breath|gums|plaque/)) {
+    return <ToothTopicIcon />;
+  }
+
+  // 3. Eyes / Vision / Swollen
+  if (text.match(/eye|vision|swollen|sight|cataract|blind/)) {
+    return <EyeTopicIcon />;
+  }
+
+  // 4. Car / Travel / Road Trip / Transport
+  if (text.match(/car|road|trip|travel|drive|transport|ride|vehicle/)) {
+    return <CarTopicIcon />;
+  }
+
+  // 5. Training / Behavior / Puppy / Leash / Bark
+  if (text.match(/train|behavior|bark|leash|puppy|school|command|bite|chew|anxiety|obey/)) {
+    return <GraduationTopicIcon />;
+  }
+
+  // 6. Food / Nutrition / Diet / Bowl / Kibble / Eat
+  if (text.match(/food|diet|nutrition|feed|kibble|eat|stomach|digest|recipe|bowl/)) {
+    return <BowlTopicIcon />;
+  }
+
+  // 7. Safe Fruits / Treats / Snacks / Apple
+  if (text.match(/fruit|treat|snack|apple|toxic|safe|vegetable/)) {
+    return <AppleTopicIcon />;
+  }
+
+  // 8. Bath / Grooming / Shampoo / Fur / Wash
+  if (text.match(/bath|groom|wash|shampoo|clean|fur|coat|skin|brush|shedding|scissors/)) {
+    return <BathTopicIcon />;
+  }
+
+  // 9. Walking / Hiking / Exercise / Outdoor
+  if (text.match(/walk|hike|exercise|run|outdoor|park|activity|footstep/)) {
+    return <FootstepTopicIcon />;
+  }
+
+  // 10. Medical / Vet / Health / Emergency / Disease / Shield
+  if (text.match(/health|disease|hereditary|vet|medical|shield|illness|cure|vaccine|sick|doctor|infection|flea|tick|bloat|gdv|emergency/)) {
+    return <HealthShieldIcon />;
+  }
+
+  // Default fallback
+  return <PawTopicBadgeIcon />;
+}
+
+function TrashIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
+
+function AlertTriangleIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "middle", flexShrink: 0 }}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" style={{ display: "inline-block", verticalAlign: "-1px", marginRight: "3px" }}>
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function BlogCardItem({
+  item,
+  onLoadItem,
+  onDeleteItem,
+}: {
+  item: any;
+  onLoadItem: (item: any) => void;
+  onDeleteItem?: (id: string) => void;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const seo = computeSeoScore(item.blog, item.metaDescription);
+  const topicSvg = getTopicSvgIcon(item.topic, item.blog?.title, item.iconType);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+        setConfirmDelete(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(item.blog?.title || item.topic || "");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {}
+    setMenuOpen(false);
+    setConfirmDelete(false);
+  };
+
+  const handleConfirmDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDeleteItem) {
+      onDeleteItem(item.id);
+    }
+    setMenuOpen(false);
+    setConfirmDelete(false);
+  };
+
+  return (
+    <motion.div
+      key={item.id}
+      ref={cardRef}
+      whileHover={{ y: -3, transition: { duration: 0.18 } }}
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E8F0",
+        borderRadius: "16px",
+        padding: "18px",
+        boxShadow: "0 2px 10px rgba(15, 23, 42, 0.04)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        gap: "16px",
+        position: "relative",
+      }}
+    >
+      <div>
+        {/* Top Badge & Time Row */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
+          <span
+            style={{
+              background: seo.total >= 85 ? "#ECFDF5" : seo.total >= 70 ? "#FEF3C7" : "#FEF2F2",
+              border: `1px solid ${seo.color}`,
+              color: seo.color,
+              fontSize: "0.74rem",
+              fontWeight: 800,
+              padding: "3px 10px",
+              borderRadius: "999px",
+              display: "inline-flex",
+              alignItems: "center",
+            }}
+          >
+            {seo.total >= 85 && <StarIcon />}
+            SEO {seo.total}%
+          </span>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", position: "relative" }}>
+            <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+              {formatRelativeTime(item.timestamp)}
+            </span>
+
+            {/* 3-Dots Context Menu Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen(!menuOpen);
+                setConfirmDelete(false);
+              }}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#64748B",
+                fontSize: "1.1rem",
+                lineHeight: 1,
+                cursor: "pointer",
+                padding: "2px 4px",
+                borderRadius: "4px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              title="Draft options"
+            >
+              ⋮
+            </button>
+
+            {/* Dropdown Menu with Inline Confirmation */}
+            <AnimatePresence>
+              {menuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 4px)",
+                    right: 0,
+                    zIndex: 50,
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "10px",
+                    boxShadow: "0 10px 25px rgba(15, 23, 42, 0.12)",
+                    padding: "6px",
+                    minWidth: confirmDelete ? "165px" : "140px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  {!confirmDelete ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={handleCopy}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          color: "#0F172A",
+                          fontSize: "0.76rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          textAlign: "left",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <CopyIcon /> {copied ? "Copied" : "Copy Title"}
+                      </button>
+
+                      {onDeleteItem && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(true);
+                          }}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: "6px 10px",
+                            borderRadius: "6px",
+                            color: "#DC2626",
+                            fontSize: "0.76rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            textAlign: "left",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <TrashIcon /> Delete Draft
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "2px" }}>
+                      <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#991B1B" }}>
+                        Delete this draft?
+                      </span>
+
+                      <div style={{ display: "flex", gap: "4px" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setConfirmDelete(false);
+                          }}
+                          style={{
+                            flex: 1,
+                            background: "#F1F5F9",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "5px 8px",
+                            fontSize: "0.72rem",
+                            fontWeight: 600,
+                            color: "#475569",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleConfirmDelete}
+                          style={{
+                            flex: 1,
+                            background: "#DC2626",
+                            border: "none",
+                            borderRadius: "6px",
+                            padding: "5px 8px",
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                            color: "#FFFFFF",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Middle Topic SVG Icon + Title & Subtitle */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px" }}>
+          <div
+            style={{
+              width: "42px",
+              minWidth: "42px",
+              height: "42px",
+              borderRadius: "50%",
+              background: "#E8F5E9",
+              border: "1px solid #C8E6C9",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#1B5E20",
+              flexShrink: 0,
+              overflow: "hidden",
+              boxSizing: "border-box",
+              padding: 0,
+            }}
+          >
+            {topicSvg}
+          </div>
+
+          <div>
+            <h5
+              style={{
+                fontSize: "0.92rem",
+                fontWeight: 800,
+                color: "#0F172A",
+                margin: "0 0 4px 0",
+                lineHeight: "1.35",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {item.blog.title}
+            </h5>
+
+            <p
+              style={{
+                fontSize: "0.78rem",
+                color: "#64748B",
+                margin: 0,
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                lineHeight: "1.35",
+              }}
+            >
+              {item.topic}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer Section */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "12px", borderTop: "1px dashed #E2E8F0" }}>
+        <span style={{ fontSize: "0.78rem", color: "#475569", fontWeight: 700 }}>
+          ~{item.blog.approxWordCount} words
+        </span>
+
+        <motion.button
+          type="button"
+          onClick={() => onLoadItem(item)}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          style={{
+            background: "#059669",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: "10px",
+            padding: "8px 16px",
+            fontSize: "0.82rem",
+            fontWeight: 800,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 2px 8px rgba(5, 150, 105, 0.25)",
+          }}
+        >
+          <FileTextIcon /> Resume &amp; Edit
+        </motion.button>
+      </div>
+    </motion.div>
+  );
+}
+
 function RecentGenerationsStrip({
   history,
   onLoadItem,
   onOpenHistory,
+  onDeleteItem,
 }: {
   history: any[];
   onLoadItem: (item: any) => void;
   onOpenHistory: () => void;
+  onDeleteItem?: (id: string) => void;
 }) {
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+
+  const filteredItems = useMemo(() => {
+    if (!history) return [];
+    if (activeCategory === "all") return history;
+    return history.filter((item) => {
+      const text = `${item.topic} ${item.blog?.title || ""}`.toLowerCase();
+      const type = item.iconType || "";
+      if (activeCategory === "health") {
+        return type === "shield" || type === "eye" || type === "tooth" || text.match(/health|disease|hereditary|vet|medical|eye|teeth|illness|cure|vaccine|sick|doctor|infection|flea|tick/);
+      }
+      if (activeCategory === "food") {
+        return type === "bowl" || type === "bone" || type === "apple" || text.match(/food|diet|nutrition|feed|kibble|eat|stomach|digest|recipe|bone|broth|joint|fruit|treat|snack/);
+      }
+      if (activeCategory === "travel") {
+        return type === "car" || text.match(/car|road|trip|travel|drive|transport|ride|vehicle/);
+      }
+      if (activeCategory === "training") {
+        return type === "graduation" || type === "footstep" || text.match(/train|behavior|bark|leash|puppy|school|command|bite|chew|anxiety|obey|walk|hike|exercise/);
+      }
+      return true;
+    });
+  }, [history, activeCategory]);
+
   if (!history || history.length === 0) {
     return (
       <div className="p3-recent-strip-empty" style={{
@@ -623,10 +1196,11 @@ function RecentGenerationsStrip({
     );
   }
 
-  const recentItems = history.slice(0, 3);
+  const recentItems = filteredItems.slice(0, 4);
 
   return (
     <div className="p3-recent-strip-container" style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Title Header Row */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <ScrollTextIcon />
@@ -646,7 +1220,7 @@ function RecentGenerationsStrip({
           </span>
         </div>
 
-        {history.length > 3 && (
+        {history.length > 4 && (
           <motion.button
             type="button"
             onClick={onOpenHistory}
@@ -691,107 +1265,100 @@ function RecentGenerationsStrip({
         )}
       </div>
 
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-        gap: "14px",
-      }}>
-        {recentItems.map((item) => {
-          const seo = computeSeoScore(item.blog, item.metaDescription);
+      {/* 🌟 Topic Category Filter Tabs */}
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        {[
+          {
+            id: "all",
+            label: "All",
+            count: history.length,
+            activeBg: "#059669",
+            activeColor: "#FFFFFF",
+            inactiveBg: "#F1F5F9",
+            inactiveBorder: "#E2E8F0",
+            inactiveColor: "#475569",
+          },
+          {
+            id: "health",
+            label: "Health & Vet",
+            activeBg: "#0D9488",
+            activeColor: "#FFFFFF",
+            inactiveBg: "#E6FFFA",
+            inactiveBorder: "#99F6E4",
+            inactiveColor: "#0F766E",
+          },
+          {
+            id: "food",
+            label: "Diet & Food",
+            activeBg: "#D97706",
+            activeColor: "#FFFFFF",
+            inactiveBg: "#FEF3C7",
+            inactiveBorder: "#FDE68A",
+            inactiveColor: "#B45309",
+          },
+          {
+            id: "travel",
+            label: "Travel & Trips",
+            activeBg: "#2563EB",
+            activeColor: "#FFFFFF",
+            inactiveBg: "#E0F2FE",
+            inactiveBorder: "#BAE6FD",
+            inactiveColor: "#0369A1",
+          },
+          {
+            id: "training",
+            label: "Training & Care",
+            activeBg: "#7C3AED",
+            activeColor: "#FFFFFF",
+            inactiveBg: "#F3E8FF",
+            inactiveBorder: "#DDD6FE",
+            inactiveColor: "#6D28D9",
+          },
+        ].map((tab) => {
+          const isActive = activeCategory === tab.id;
           return (
-            <motion.div
-              key={item.id}
-              whileHover={{ y: -3, transition: { duration: 0.18 } }}
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveCategory(tab.id)}
               style={{
-                background: "#FFFFFF",
-                border: "1.5px solid #E2E8F0",
-                borderRadius: "14px",
-                padding: "16px",
-                boxShadow: "0 4px 16px rgba(15, 23, 42, 0.05)",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                gap: "12px",
+                background: isActive ? tab.activeBg : tab.inactiveBg,
+                color: isActive ? tab.activeColor : tab.inactiveColor,
+                border: `1px solid ${isActive ? tab.activeBg : tab.inactiveBorder}`,
+                borderRadius: "999px",
+                padding: "6px 14px",
+                fontSize: "0.78rem",
+                fontWeight: isActive ? 800 : 600,
+                cursor: "pointer",
+                transition: "all 0.18s ease",
+                boxShadow: isActive ? `0 2px 8px ${tab.activeBg}40` : "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                lineHeight: 1,
               }}
             >
-              <div>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                  <span style={{
-                    background: seo.total >= 85 ? "#ECFDF5" : seo.total >= 70 ? "#FEF3C7" : "#FEF2F2",
-                    border: `1px solid ${seo.color}`,
-                    color: seo.color,
-                    fontSize: "0.72rem",
-                    fontWeight: 800,
-                    padding: "2px 8px",
-                    borderRadius: "6px",
-                  }}>
-                    SEO {seo.total}%
-                  </span>
-
-                  <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>
-                    {formatRelativeTime(item.timestamp)}
-                  </span>
-                </div>
-
-                <h5 style={{
-                  fontSize: "0.9rem",
-                  fontWeight: 700,
-                  color: "#0F172A",
-                  margin: "0 0 6px 0",
-                  lineHeight: "1.35",
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                }}>
-                  {item.blog.title}
-                </h5>
-
-                <p style={{
-                  fontSize: "0.78rem",
-                  color: "#64748B",
-                  margin: 0,
-                  display: "-webkit-box",
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: "vertical",
-                  overflow: "hidden",
-                  lineHeight: "1.4",
-                }}>
-                  {item.topic}
-                </p>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "8px", borderTop: "1px solid #F1F5F9" }}>
-                <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
-                  ~{item.blog.approxWordCount} words
-                </span>
-
-                <motion.button
-                  type="button"
-                  onClick={() => onLoadItem(item)}
-                  whileHover={{ scale: 1.03, y: -1 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    background: "linear-gradient(135deg, #0D9488 0%, #0284C7 100%)",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "6px 14px",
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 3px 12px rgba(13, 148, 136, 0.25)",
-                  }}
-                >
-                  <FileTextIcon /> Resume &amp; Edit
-                </motion.button>
-              </div>
-            </motion.div>
+              <span>{tab.label}</span>
+              {tab.count !== undefined && <span style={{ marginLeft: "4px", opacity: 0.85 }}>({tab.count})</span>}
+            </button>
           );
         })}
+      </div>
+
+      {/* History Cards Grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+        gap: "14px",
+      }}>
+        {recentItems.map((item: any) => (
+          <BlogCardItem
+            key={item.id}
+            item={item}
+            onLoadItem={onLoadItem}
+            onDeleteItem={onDeleteItem}
+          />
+        ))}
       </div>
     </div>
   );
@@ -1157,12 +1724,20 @@ function StudioCanvasSkeleton({
   const currentStage = count >= 100 || (isDone && count >= 85) ? 3 : count < 30 ? 1 : count < 70 ? 2 : 3;
   const defaultStatusText =
     count >= 100
-      ? "✨ Generation Complete!"
-      : count < 30
-      ? "Analyzing search intent & SEO density..."
+      ? "Generation Complete"
+      : count < 18
+      ? "Parsing search intent & core canine subject..."
+      : count < 35
+      ? "Structuring 6 H2 headings & Featured Snippet opening..."
+      : count < 52
+      ? "Drafting veterinary-grade sections & 3 H3 subtopics..."
       : count < 70
-      ? "Drafting long-form article & clinical FAQs..."
-      : "Optimizing meta keywords & social excerpts...";
+      ? "Generating 5 schema-ready FAQs in parallel..."
+      : count < 85
+      ? "Calibrating 1,450-word budget & keyword density..."
+      : count < 96
+      ? "Polishing SERP meta description & readability..."
+      : "Finalizing Grade A+ SEO article layout...";
 
   return (
     <div
@@ -1323,20 +1898,28 @@ function StudioCanvasSkeleton({
           </div>
 
           {/* Status & Timer Row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", flexWrap: "wrap", marginBottom: 8 }}>
             <span style={{ fontSize: "0.78rem", color: "#334155", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z" />
               </svg>
               {defaultStatusText}
             </span>
-            <span style={{ fontSize: "0.72rem", color: "#475569", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 8px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              ~15s
-            </span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <span style={{ fontSize: "0.7rem", color: "#047857", background: "#ECFDF5", border: "1px solid #A7F3D0", padding: "2px 8px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 700 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                Gemini Flash Cascade
+              </span>
+              <span style={{ fontSize: "0.72rem", color: "#475569", background: "#F1F5F9", border: "1px solid #E2E8F0", padding: "2px 8px", borderRadius: "6px", display: "inline-flex", alignItems: "center", gap: "4px", fontWeight: 600 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                ~15s
+              </span>
+            </div>
           </div>
 
           {/* Glowing Shimmer Multi-Stop Gradient Progress Bar Track */}
@@ -2065,6 +2648,43 @@ function BlogRenderer({
   blog: SeoBlog;
   highlightedKeyword?: string | null;
 }) {
+  const [schemaCopied, setSchemaCopied] = useState(false);
+  const [allFaqsOpen, setAllFaqsOpen] = useState(false);
+  const [activeSectionIdx, setActiveSectionIdx] = useState<number | "faqs" | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const wordCount = blog.approxWordCount || 1350;
+  const readingMinutes = Math.max(4, Math.ceil(wordCount / 220));
+
+  const scrollToSection = (targetId: string, idx: number | "faqs") => {
+    setActiveSectionIdx(idx);
+    const root = containerRef.current;
+    if (!root) return;
+    const el = root.querySelector(`[data-toc-id="${targetId}"]`) as HTMLElement | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const copyFaqSchemaJsonLd = async () => {
+    const schemaObj = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: (blog.faqs || []).map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: f.answer,
+        },
+      })),
+    };
+    const scriptTag = `<script type="application/ld+json">\n${JSON.stringify(schemaObj, null, 2)}\n</script>`;
+    await navigator.clipboard.writeText(scriptTag);
+    setSchemaCopied(true);
+    setTimeout(() => setSchemaCopied(false), 2000);
+  };
+
   const renderText = (text: string) => {
     if (!highlightedKeyword || !highlightedKeyword.trim()) return text;
     const kw = highlightedKeyword.trim();
@@ -2087,7 +2707,183 @@ function BlogRenderer({
   };
 
   return (
-    <div className="p3-blog-body">
+    <div ref={containerRef} className="p3-blog-body">
+      {/* ── Editorial Metadata & Reading Bar (SVG-only) ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "8px",
+          padding: "10px 14px",
+          marginBottom: "12px",
+          borderRadius: "10px",
+          background: "linear-gradient(135deg, #F8FAFC 0%, #F0FDF4 100%)",
+          border: "1px solid #E2E8F0",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              color: "#047857",
+              background: "#ECFDF5",
+              border: "1px solid #A7F3D0",
+              padding: "3px 10px",
+              borderRadius: "999px",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            {readingMinutes} min read
+          </span>
+
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              color: "#0369A1",
+              background: "#E0F2FE",
+              border: "1px solid #BAE6FD",
+              padding: "3px 10px",
+              borderRadius: "999px",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            {wordCount.toLocaleString()} words
+          </span>
+
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              color: "#6D28D9",
+              background: "#F3E8FF",
+              border: "1px solid #DDD6FE",
+              padding: "3px 10px",
+              borderRadius: "999px",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              <polyline points="9 12 11 14 15 10" />
+            </svg>
+            Featured Snippet Ready
+          </span>
+        </div>
+
+        <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#64748B", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6" />
+            <line x1="8" y1="12" x2="21" y2="12" />
+            <line x1="8" y1="18" x2="21" y2="18" />
+            <line x1="3" y1="6" x2="3.01" y2="6" />
+            <line x1="3" y1="12" x2="3.01" y2="12" />
+            <line x1="3" y1="18" x2="3.01" y2="18" />
+          </svg>
+          {blog.sections.length} H2 Sections + {blog.faqs.length} FAQs
+        </span>
+      </div>
+
+      {/* ── Interactive Table of Contents Jump Bar ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          overflowX: "auto",
+          paddingBottom: "8px",
+          marginBottom: "16px",
+          borderBottom: "1px solid #E2E8F0",
+          scrollbarWidth: "thin",
+        }}
+      >
+        <span
+          style={{
+            fontSize: "0.7rem",
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            color: "#64748B",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            flexShrink: 0,
+            paddingRight: "4px",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+          </svg>
+          Jump to:
+        </span>
+        {blog.sections.map((s, idx) => {
+          const cleanLabel = s.heading.replace(/^\d+\.\s*/, "");
+          const shortLabel = cleanLabel.length > 26 ? `${cleanLabel.slice(0, 24)}…` : cleanLabel;
+          const isActive = activeSectionIdx === idx;
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => scrollToSection(`sec-${idx}`, idx)}
+              title={s.heading}
+              style={{
+                flexShrink: 0,
+                padding: "4px 10px",
+                borderRadius: "999px",
+                fontSize: "0.73rem",
+                fontWeight: 600,
+                cursor: "pointer",
+                border: isActive ? "1px solid #059669" : "1px solid #CBD5E1",
+                background: isActive ? "#ECFDF5" : "#FFFFFF",
+                color: isActive ? "#047857" : "#334155",
+                transition: "all 0.15s ease",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {idx + 1}. {shortLabel}
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          onClick={() => scrollToSection("sec-faqs", "faqs")}
+          style={{
+            flexShrink: 0,
+            padding: "4px 10px",
+            borderRadius: "999px",
+            fontSize: "0.73rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            border: activeSectionIdx === "faqs" ? "1px solid #059669" : "1px solid #CBD5E1",
+            background: activeSectionIdx === "faqs" ? "#ECFDF5" : "#F8FAFC",
+            color: activeSectionIdx === "faqs" ? "#047857" : "#0F172A",
+            transition: "all 0.15s ease",
+            whiteSpace: "nowrap",
+          }}
+        >
+          FAQs ({blog.faqs.length})
+        </button>
+      </div>
+
       {blog.intro.map((p, i) => (
         <p key={i} className={i === 0 ? "p3-lead-p" : ""}>
           {renderText(p)}
@@ -2095,7 +2891,7 @@ function BlogRenderer({
       ))}
 
       {blog.sections.map((s, sIdx) => (
-        <div key={sIdx} className="p3-section">
+        <div key={sIdx} data-toc-id={`sec-${sIdx}`} className="p3-section" style={{ scrollMarginTop: "16px" }}>
           <h3 className="p3-h3">
             <PawHeadIcon />
             {renderText(s.heading)}
@@ -2153,13 +2949,88 @@ function BlogRenderer({
         <p key={i}>{renderText(p)}</p>
       ))}
 
-      <h3 className="p3-h3">
-        <PawHeadIcon />
-        Frequently Asked Questions
-      </h3>
+      <div
+        data-toc-id="sec-faqs"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "10px",
+          marginTop: "20px",
+          marginBottom: "8px",
+          scrollMarginTop: "16px",
+        }}
+      >
+        <h3 className="p3-h3" style={{ margin: 0 }}>
+          <PawHeadIcon />
+          Frequently Asked Questions
+        </h3>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <button
+            type="button"
+            onClick={() => setAllFaqsOpen((prev) => !prev)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "5px 10px",
+              borderRadius: "8px",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              border: "1px solid #CBD5E1",
+              background: "#FFFFFF",
+              color: "#334155",
+            }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points={allFaqsOpen ? "18 15 12 9 6 15" : "6 9 12 15 18 9"} />
+            </svg>
+            {allFaqsOpen ? "Collapse All" : "Expand All"}
+          </button>
+
+          <button
+            type="button"
+            onClick={copyFaqSchemaJsonLd}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "5px 11px",
+              borderRadius: "8px",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              border: schemaCopied ? "1px solid #166534" : "1px solid #A7F3D0",
+              background: schemaCopied ? "#15803D" : "#ECFDF5",
+              color: schemaCopied ? "#FFFFFF" : "#047857",
+              transition: "all 0.15s ease",
+            }}
+          >
+            {schemaCopied ? (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Copied JSON-LD!
+              </>
+            ) : (
+              <>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+                Copy FAQ Schema (JSON-LD)
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
       <div className="p3-faq-container">
         {blog.faqs.map((f, i) => (
-          <details key={i} className="p3-faq-accordion" open={i === 0}>
+          <details key={`${i}-${allFaqsOpen}`} className="p3-faq-accordion" open={allFaqsOpen || i === 0}>
             <summary className="p3-faq-summary">
               <span className="p3-faq-q">
                 {renderText(f.question)}
@@ -2212,6 +3083,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
     resetBlogState,
     blogHistory,
     loadBlogFromHistory,
+    deleteBlogHistoryItem,
   } = useBlogGeneration();
 
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -3210,6 +4082,7 @@ export default function Page3({ onBack, isActive }: Page3Props) {
             setShowWorkspace(true);
           }}
           onOpenHistory={() => setIsHistoryOpen(true)}
+          onDeleteItem={(id) => deleteBlogHistoryItem(id)}
         />
       )}
 
